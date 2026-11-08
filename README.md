@@ -9,7 +9,7 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Abrir `http://localhost:5173`. La API queda en `http://localhost:8080` y PostgreSQL localmente en el puerto `55432`.
+Abrir `http://localhost:5173`. La API queda en `http://localhost:8080` y PostgreSQL localmente en el puerto `55478`. Si ese puerto está ocupado, cambiar `POSTGRES_PORT` en `.env` antes de iniciar Compose.
 
 Usuarios de demostración (todos con contraseña `password`):
 

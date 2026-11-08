@@ -2,7 +2,7 @@
 
 | Módulo | Fuente principal | Documento | Estado |
 |---|---|---|---|
-| Arranque y errores | `RestaurantAdminApplication`, `common/` | [plataforma.md](plataforma.md) | Implementado |
+| Arranque y errores | `RestaurantAdminApplication`, `common/`, `compose.yaml` | [plataforma.md](plataforma.md) | Implementado; PostgreSQL local en 55478 por defecto |
 | Autenticación y tenancy | `security/`, `administracion/MeController` | [seguridad-tenancy.md](seguridad-tenancy.md) | Implementado para demo local; 401 JSON sin diálogo nativo |
 | Resumen compartido | `administracion/DashboardController`, `pedidos/OrderReportingService` | [resumen-negocio.md](resumen-negocio.md) | Implementado; lectura para tres roles |
 | Menú | `menu/MenuController` | [menu.md](menu.md) | Consulta y alta por catálogo implementadas |

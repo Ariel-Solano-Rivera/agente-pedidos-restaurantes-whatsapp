@@ -32,7 +32,7 @@ backend/sdd/
 - Si el cambio cruza frontend y backend, actualizar ambos SDD y `docs/contratos-api.md` cuando varíen entradas, salidas, errores o permisos. Mantener `TBD` con una pregunta concreta en vez de inventar una decisión.
 - El SDD describe la implementación verificada: propósito, fuente, actores, contratos/estados visibles, validaciones, efectos de datos, dependencias, pruebas y exclusiones. No duplica el informe ni contradice sus reglas.
 
-**Última sincronización SDD:** 2026-11-07 — Sidebar ordenado Inicio → Pedidos → Menú → Catálogo; tarjetas de Pedidos compactas; Menú con búsqueda y Catálogos con diálogos; reserva y pago siguen TBD.
+**Última sincronización SDD:** 2026-11-08 — Compose usa 55478 como puerto local predeterminado de PostgreSQL y permite configurarlo en `.env`; shell, Pedidos, Menú y Catálogos mantienen su alcance; reserva y pago siguen TBD.
 
 ## Etapa actual y entregables
 

@@ -6,7 +6,7 @@ Arranca el monolito reactivo y centraliza la traducción de errores de validaci�
 
 ## Fuente y dependencias
 
-- Código: `RestaurantAdminApplication.java`, `common/ApiExceptionHandler.java`, `common/TransactionConfig.java`.
+- Código: `RestaurantAdminApplication.java`, `common/ApiExceptionHandler.java`, `common/TransactionConfig.java` y `compose.yaml`.
 - Dependencias: Spring WebFlux, R2DBC y `ReactiveTransactionManager`.
 
 ## Contratos y permisos
@@ -18,10 +18,11 @@ Arranca el monolito reactivo y centraliza la traducción de errores de validaci�
 
 - No usar `block()`, JDBC síncrono ni I/O bloqueante en rutas WebFlux.
 - Las operaciones que combinan múltiples escrituras deben declarar su límite transaccional antes de implementarse.
+- Compose publica PostgreSQL en `127.0.0.1:55478` por defecto y permite cambiar el puerto mediante `POSTGRES_PORT`; el backend se conecta al puerto interno `5432`.
 
 ## Pruebas
 
-- `docker compose build backend` y prueba de humo contra el servicio levantado.
+- `docker compose build backend`, arranque de los tres servicios y prueba de humo contra el servicio levantado.
 
 ## TBD / exclusiones
 
