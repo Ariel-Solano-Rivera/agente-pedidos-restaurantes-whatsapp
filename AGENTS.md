@@ -26,19 +26,21 @@ backend/sdd/
   persistencia.md
 ```
 
+- Las tareas T4 y T5 crean además `crm.md` y `marca.md` en `frontend/sdd/` y en `backend/sdd/`, con `template.md` y su fila en el índice.
 - Antes de cambiar una función o componente cubierto, leer el `index.md` y el registro SDD de su módulo. Si no existe, crearlo con `template.md` en la misma tarea.
 - **Regla obligatoria:** cada adición, modificación o eliminación de UI, endpoint, contrato, permiso, regla, estado, migración o comportamiento cubierto exige actualizar los archivos SDD correspondientes y este `AGENTS.md` en el mismo commit o tarea. No se permite diferir esa sincronización.
 - Para mantener este archivo compacto, actualizar la línea `Última sincronización SDD` con el alcance real del cambio; actualizar además el índice y el documento de módulo, no solo la fecha.
 - Si el cambio cruza frontend y backend, actualizar ambos SDD y `docs/contratos-api.md` cuando varíen entradas, salidas, errores o permisos. Mantener `TBD` con una pregunta concreta en vez de inventar una decisión.
 - El SDD describe la implementación verificada: propósito, fuente, actores, contratos/estados visibles, validaciones, efectos de datos, dependencias, pruebas y exclusiones. No duplica el informe ni contradice sus reglas.
 
-**Última sincronización SDD:** 2026-11-08 — Compose usa 55478 como puerto local predeterminado de PostgreSQL y permite configurarlo en `.env`; shell, Pedidos, Menú y Catálogos mantienen su alcance; reserva y pago siguen TBD.
+**Última sincronización SDD:** 2026-11-08 — Se definen las reglas del incremento T1–T5 (pedidos con avanzar, retroceder y deshacer según rol, filtros y búsqueda; filtros de menú; dashboard de ADMIN; CRM; marca del restaurante); su implementación y los SDD correspondientes quedan pendientes. Compose usa 55478 como puerto local predeterminado de PostgreSQL; reserva y pago siguen TBD.
 
 ## Etapa actual y entregables
 
 - **Etapa actual: plataforma web y su backend.** Construir primero los contratos, la persistencia, las reglas de negocio y el panel. Usar pedidos y conversaciones sintéticos para probar las pantallas hasta que se integre WhatsApp.
 - Mantener en el diseño los límites para integrar después WhatsApp, agente y RAG; no implementar todavía esos adaptadores, el modelo ni el índice de recuperación.
 - El panel inicial administra pedidos existentes de prueba; no incluye captura manual de pedidos ni un sistema de punto de venta. Las ventas presenciales solo ajustan disponibilidad desde el panel.
+- **Incremento en curso (T1–T5):** pedidos con avanzar, retroceder, deshacer, filtros y búsqueda; filtros de menú; dashboard de ADMIN; CRM de conversaciones y clientes; y marca del restaurante. Se trabaja una rama por tarea, cada una a partir de la anterior, y cada tarea sincroniza SDD, índices y este archivo.
 - El orden de trabajo de esta etapa prioriza completar las pantallas de pedidos antes de integrar el agente. **TBD — cronograma académico:** ¿debe actualizarse la tabla de sprints de `Informe/tesis.tex`, que ubica RAG antes del flujo de pedidos? No modificar el informe sin acordarlo.
 
 ## Alcance obligatorio del MVP
@@ -61,6 +63,7 @@ backend/sdd/
 - Pasarelas o verificación automática de pagos.
 - Garantías sobre alérgenos: cualquier mención de alergia se deriva al personal.
 - Notas de voz, repetir automáticamente el pedido anterior, descuentos por chat y búsqueda basada en videos no configurados en el menú.
+- Cálculo de ganancia: el sistema no guarda costos, recetas ni compras; el dashboard muestra ingresos, cobros y ventas no concretadas. Un costo opcional por plato queda `TBD` para una etapa posterior.
 
 ## Arquitectura y límites
 
@@ -76,15 +79,18 @@ backend/sdd/
 ## Panel web: funciones y permisos
 
 - Diseñar para computadora o tableta en caja y cocina, y para móvil del administrador. Mostrar claramente cargas, errores de validación, cambios pendientes y confirmaciones de operaciones sensibles.
-- `ADMIN`: configura usuarios, menú, horarios, zonas, tarifas, recepción de pedidos y disponibilidad; consulta pedidos, pagos y conversaciones derivadas.
-- `CAJA`: consulta menú y configuración; ajusta disponibilidad por ventas locales o agotados; acepta o rechaza solicitudes; actualiza estados permitidos; registra y confirma pagos manualmente; atiende derivaciones.
-- `COCINA`: consulta pedidos aceptados y sus modificaciones **por unidad** en una vista de solo lectura. No cambia precios, disponibilidad, estados ni pagos.
-- Menú: gestionar categorías, platos, descripciones, ingredientes informativos, variantes, extras con recargo e ingredientes retirables. Permitir instrucciones de preparación únicamente cuando el plato las tenga configuradas; las solicitudes fuera de configuración pasan a una persona.
+- `ADMIN`: configura usuarios, menú, horarios, zonas, tarifas, recepción de pedidos y disponibilidad; consulta pedidos, pagos y conversaciones derivadas; avanza pedidos y puede retroceder un paso con motivo obligatorio; ve el dashboard completo, usa el CRM y configura la marca del restaurante.
+- `CAJA`: consulta menú y configuración; ajusta disponibilidad por ventas locales o agotados; acepta o rechaza solicitudes; actualiza estados permitidos; registra y confirma pagos manualmente; atiende derivaciones; puede retroceder un paso un pedido con motivo obligatorio; usa el CRM y ve el cobrado y por cobrar del día.
+- `COCINA`: consulta pedidos aceptados y sus modificaciones **por unidad**. Solo puede pasar un pedido de aceptado a preparando y de preparando a listo, con un toque y sin motivo, y puede **deshacer** su propio último cambio dentro de una ventana corta configurable. No retrocede estados, no acepta, rechaza, completa ni cancela, no cambia precios, disponibilidad ni pagos, y no ve montos.
+- Menú: gestionar categorías, platos, descripciones, ingredientes informativos, variantes, extras con recargo e ingredientes retirables. Permitir instrucciones de preparación únicamente cuando el plato las tenga configuradas; las solicitudes fuera de configuración pasan a una persona. Incluir búsqueda por nombre, descripción o ingrediente y filtros por categoría, disponibilidad y visibilidad; el backend indica si cada plato está disponible.
 - Operación diaria: mostrar disponibilidad por plato o porción, marcar agotado y registrar ajustes por ventas presenciales con motivo y autor. Administrar horarios y cierres excepcionales; permitir pausar o reanudar la recepción de nuevas solicitudes.
 - Retiro y entrega: configurar zonas habilitadas y tarifa por zona. El personal asigna la zona según la dirección indicada; no inferir ubicación con geolocalización. Para retiro, conservar nombre y hora acordada; para entrega, nombre, teléfono, dirección y referencia cuando se necesite.
-- Pedidos: lista filtrable por estado y detalle con unidades separadas, variantes, extras, ingredientes retirados, subtotal, tarifa de entrega, total, modalidad y hora estimada. Mostrar quién confirmó el cliente y si el restaurante aceptó o rechazó. Permitir transiciones y cancelaciones solo si el backend las autoriza.
+- Pedidos: lista con el número de pedido destacado, filtrable por estado, modalidad, estado de pago y rango de fechas (zona horaria del restaurante), con búsqueda por número, nombre o teléfono del cliente y paginación en el backend; y detalle con unidades separadas, variantes, extras, ingredientes retirados, subtotal, tarifa de entrega, total, modalidad y hora estimada. Mostrar quién confirmó el cliente y si el restaurante aceptó o rechazó. Permitir transiciones, retrocesos, deshacer y cancelaciones solo si el backend las autoriza: el backend devuelve las transiciones permitidas según el rol y el frontend solo muestra esas. Cada retroceso o deshacer registra usuario, rol, fecha, estado anterior y nuevo, motivo si existe y `correlation_id`. **TBD:** ¿número correlativo por restaurante (#0001) en lugar de `PED-XXXXXXXX`?
 - Pagos: mostrar medio, importe, comprobante o referencia cuando exista, estado y persona que lo verificó. Recibir una imagen o declaración de pago nunca cambia por sí sola el estado a confirmado.
-- Derivaciones: lista de conversaciones que requieren atención, motivo, contexto, responsable y control humano. Mientras el personal tenga el control, el agente no responde.
+- Derivaciones: lista de conversaciones que requieren atención, motivo, contexto, responsable y control humano. Mientras el personal tenga el control, el agente no responde. Tomar el control solo es posible si la derivación está abierta o ya es de quien la toma; tomar y liberar quedan en la auditoría y se ejecutan en una sola transacción.
+- Dashboard de `ADMIN` (Inicio, solo lectura): rango de hoy, 7 o 30 días, con comparación frente al período anterior de igual duración. Indicadores: cobrado, por cobrar, ventas completadas (por fecha de completado), ventas no concretadas por causa, ticket promedio, tasa de aceptación, tiempos de decisión y de preparación, pedidos por hora, platos y extras más vendidos, retiro frente a entrega, clientes nuevos y recurrentes, derivaciones sin contestar, platos agotados y retrocesos por rol por día. El backend los calcula con decimal exacto y la zona horaria del restaurante, y sus definiciones viven en `backend/sdd/resumen-negocio.md`. CAJA ve solo cobrado y por cobrar del día; COCINA no ve montos.
+- CRM (`ADMIN` y `CAJA`): conversaciones con las pestañas "Por contestar" (el último mensaje es del cliente; se calcula, no se guarda), "Con control humano" y "Todas"; búsqueda por nombre o teléfono; hilo de mensajes y ficha del cliente con sus pedidos. Responder como persona exige tener el control, guarda el mensaje como `STAFF` con idempotencia y **no envía nada por WhatsApp** (TBD). Los mensajes se deduplican por identificador externo.
+- Marca del restaurante (Configuración, solo `ADMIN`): color principal y secundario (formato hexadecimal) y logo PNG, JPEG o WebP de hasta 2 MB, validado por su contenido real en el servidor y guardado en PostgreSQL mediante R2DBC. El backend calcula los avisos de contraste WCAG AA (4.5:1) y el panel solo los muestra; todo cambio queda auditado. Cada restaurante ve y modifica únicamente su marca.
 
 ## Backend y contratos del panel
 
@@ -111,11 +117,14 @@ backend/sdd/
 - Flujo de pedido esperado: borrador/carrito -> confirmado por cliente -> pendiente de decisión del restaurante -> aceptado o rechazado -> preparando -> listo -> completado. También se contemplan cancelado y vencido.
 - Definir formalmente los valores persistidos y todas las transiciones permitidas antes de codificar. Los estados exactos de pago y el momento exacto de creación de la reserva son `TBD` hasta validación del diseño.
 - Las operaciones que afectan disponibilidad, reserva, total, aceptación, cancelación y pago manual requieren validación en el backend, trazabilidad y pruebas de concurrencia o idempotencia según corresponda.
+- Transiciones de pedido (decide solo el backend; valores persistidos en inglés): `PENDING_DECISION` pasa a `ACCEPTED` o `REJECTED`; `ACCEPTED` a `PREPARING` o `CANCELLED`; `PREPARING` a `READY`; `READY` a `COMPLETED`. `COMPLETED`, `REJECTED`, `CANCELLED` y `EXPIRED` no tienen transiciones. Aceptar, rechazar, completar y cancelar corresponden a ADMIN y CAJA.
+- Retroceso (ADMIN y CAJA): `PREPARING` a `ACCEPTED` y `READY` a `PREPARING`, con motivo obligatorio elegido de una lista (`ERROR_AL_AVANZAR`, `CLIENTE_CAMBIO_PEDIDO`, `FALTA_PRODUCTO`, `OTRO`); el texto libre es obligatorio solo con `OTRO`. No se retrocede desde `COMPLETED`, `CANCELLED`, `REJECTED` ni `EXPIRED`. Volver de `ACCEPTED` a `PENDING_DECISION` no se permite: **TBD** según ADR-001, porque afecta la reserva.
+- COCINA solo avanza `ACCEPTED` a `PREPARING` y `PREPARING` a `READY`, sin motivo. Puede **deshacer** únicamente el último cambio hecho por esa misma persona, sin motivo, dentro de una ventana configurable (2 minutos por defecto) y solo si el pedido sigue en el estado que dejó; pasado ese tiempo lo corrige caja. Retroceder o deshacer no libera ni crea reservas ni cambia el pago. Cada cambio de estado guarda el rol de quien lo hizo y su tipo (`AVANCE`, `RETROCESO` o `DESHACER`). **TBD:** ¿cómo identificar a la persona si cocina comparte una cuenta (PIN por persona)?
 
 ## Base de datos y migraciones
 
 - Usar una base PostgreSQL para el prototipo, con `restaurante_id` en toda entidad de negocio dependiente del restaurante (excepto la propia entidad `restaurante`), claves y consultas que impidan referencias entre restaurantes. Incluir al menos dos restaurantes ficticios en pruebas de aislamiento.
-- Modelar restaurante y usuarios; categorías, platos, variantes, extras y opciones retirables; horarios y zonas; disponibilidad y movimientos; clientes, conversaciones y mensajes; carritos y unidades; pedidos, unidades configuradas e historial; reservas; pagos; derivaciones; auditoría e idempotencia.
+- Modelar restaurante (con zona horaria y marca: colores y logo) y usuarios; categorías, platos, variantes, extras y opciones retirables; horarios y zonas; disponibilidad y movimientos; clientes, conversaciones y mensajes; carritos y unidades; pedidos, unidades configuradas e historial; reservas; pagos; derivaciones; auditoría e idempotencia.
 - Cada unidad de carrito y pedido tiene su propia configuración. No representar dos unidades distintas mediante una sola fila con cantidad y una única lista de modificaciones.
 - La disponibilidad representa platos, unidades o porciones vendibles, no materias primas. Cada ajuste, reserva, liberación y consumo debe poder explicarse desde el historial.
 - Crear y versionar migraciones solo después de aprobar el modelo y los estados. Añadir restricciones y claves para cantidades no negativas, unicidad de mensajes externos y relaciones válidas por restaurante. No guardar contraseñas, tokens ni datos de pago sensibles en texto plano.
