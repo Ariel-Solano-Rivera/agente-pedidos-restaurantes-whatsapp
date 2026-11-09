@@ -11,3 +11,4 @@ tmp/
 /build.log
 /build-error.log
 /scripts/generate_panel_pdf.py
+.DS_Store

@@ -26,8 +26,8 @@ Inicia React, autentica al usuario de demostración mediante HTTP Basic y muestr
 
 ## Pruebas
 
-- `npm run build`.
-- Prueba de humo: acceso, `GET /me` y proxy `/api` mediante `scripts/smoke.ps1` desde la raíz.
+- `npm run build` (comprueba tipos de `src/` y de `vite.config.ts` sin emitir archivos) y `npm run lint` (ESLint con reglas de TypeScript y de hooks de React). Las versiones quedan fijadas por `package-lock.json`.
+- Prueba de humo: `scripts/smoke.ps1` desde la raíz comprueba acceso, `GET /me` y la carga del panel en `:5173`; llama a la API directamente en `:8080`, no a través del proxy `/api`.
 - Verificación visual responsiva: formulario, Sidebar fijo y foco visible en 1440 px, 768 px y 390 px; entrada reducida cuando `prefers-reduced-motion` está activo.
 
 ## TBD / exclusiones
