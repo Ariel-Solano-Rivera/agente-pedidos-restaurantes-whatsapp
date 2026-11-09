@@ -2,10 +2,12 @@ import { FormEvent, useEffect, useState } from 'react';
 import { AppShell, View } from './components/AppShell';
 import { CatalogPage } from './features/catalogo/CatalogPage';
 import { CrmPage } from './features/crm/CrmPage';
+import { SettingsPage } from './features/configuracion/SettingsPage';
 import { HomePage } from './features/inicio/HomePage';
 import { MenuPage } from './features/menu/MenuPage';
 import { OrdersPage } from './features/pedidos/OrdersPage';
 import { api, User } from './shared/api';
+import { useBranding } from './shared/branding';
 
 const initialAuth = localStorage.getItem('restaurant.auth') || '';
 
@@ -17,8 +19,9 @@ function Login({ onLogin }: { onLogin: (auth: string, user: User) => void }) {
 
 export default function App() {
   const [auth, setAuth] = useState(initialAuth); const [user, setUser] = useState<User | null>(null); const [view, setView] = useState<View>('inicio');
+  const brand = useBranding(auth, Boolean(auth && user));
   useEffect(() => { if (auth) api<User>('/me', auth).then(setUser).catch(() => { setAuth(''); localStorage.removeItem('restaurant.auth'); }); }, [auth]);
   if (!auth || !user) return <Login onLogin={(nextAuth, nextUser) => { localStorage.setItem('restaurant.auth', nextAuth); setAuth(nextAuth); setUser(nextUser); }} />;
-  const content = view === 'inicio' ? <HomePage auth={auth} user={user} /> : view === 'catalogo' ? <CatalogPage auth={auth} user={user} /> : view === 'menu' ? <MenuPage auth={auth} user={user} /> : view === 'crm' ? <CrmPage auth={auth} /> : <OrdersPage auth={auth} user={user} />;
-  return <AppShell user={user} view={view} onViewChange={setView} onLogout={() => { localStorage.removeItem('restaurant.auth'); setAuth(''); }}>{content}</AppShell>;
+  const content = view === 'inicio' ? <HomePage auth={auth} user={user} logoUrl={brand.logoUrl} /> : view === 'catalogo' ? <CatalogPage auth={auth} user={user} /> : view === 'menu' ? <MenuPage auth={auth} user={user} /> : view === 'crm' ? <CrmPage auth={auth} /> : view === 'configuracion' ? <SettingsPage auth={auth} branding={brand.branding} logoUrl={brand.logoUrl} onBrandingChanged={brand.reload} /> : <OrdersPage auth={auth} user={user} />;
+  return <AppShell user={user} logoUrl={brand.logoUrl} view={view} onViewChange={setView} onLogout={() => { localStorage.removeItem('restaurant.auth'); setAuth(''); setUser(null); setView('inicio'); }}>{content}</AppShell>;
 }

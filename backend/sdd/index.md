@@ -12,4 +12,5 @@
 | Pagos | `pagos/PaymentController` | [pagos.md](pagos.md) | Solo lectura; ADR pendiente |
 | Intervención humana | `intervencion/HandoffController`, `HandoffReportingService` | [intervencion-humana.md](intervencion-humana.md) | Tomar/liberar con regla de dueño, transacción y auditoría |
 | CRM | `intervencion/CrmController`, `pedidos/OrderReportingService.customerHistory` | [crm.md](crm.md) | Conversaciones con pestañas y búsqueda, hilo, respuesta STAFF idempotente, ficha del cliente (V12); sin WhatsApp |
-| Esquema y datos ficticios | `resources/db/migration/` | [persistencia.md](persistencia.md) | V1–V12; modelo sensible por revisar |
+| Marca del restaurante | `administracion/BrandingController`, `BrandingPolicy` | [marca.md](marca.md) | Colores y logo (V13), contraste WCAG AA contra blanco, tipo real del archivo, auditoría y aislamiento |
+| Esquema y datos ficticios | `resources/db/migration/` | [persistencia.md](persistencia.md) | V1–V13; modelo sensible por revisar |

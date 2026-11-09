@@ -7,6 +7,7 @@
 | HU-03 | Como personal, consulto pedidos sintéticos con cada unidad separada. | Cocina solo lee; se muestran importes y opciones históricas. | Implementar |
 | HU-04 | Como ADMIN, configuro horarios, zonas, tarifa y pausa. | CAJA consulta; solo ADMIN modifica. | Implementar |
 | HU-05 | Como CAJA, tomo una derivación humana. | Solo una persona puede controlar una conversación derivada; el historial permanece visible. | Implementado (T4) |
+| HU-12 | Como ADMIN, configuro la marca del restaurante. | Colores hexadecimales con aviso de contraste WCAG AA; logo PNG/JPEG/WebP hasta 2 MB validado por contenido; auditado; cada restaurante ve solo su marca. | Implementado (T5) |
 | HU-11 | Como ADMIN o CAJA, atiendo conversaciones desde un CRM. | Pestañas por contestar, control humano y todas; búsqueda; hilo; respuesta solo con control, idempotente y sin envío por WhatsApp; ficha del cliente con pedidos; aislado por restaurante. | Implementado (T4) |
 | HU-06 | Como personal, registro pagos manuales. | Pendiente de ADR-001; el comprobante no confirma un pago. | TBD |
 | HU-07 | Como restaurante, acepto o rechazo una solicitud y avanzo su preparación. | ADMIN/CAJA ejecutan transiciones y retrocesos con motivo; COCINA avanza a preparando/listo y deshace su último cambio en 2 minutos; todo idempotente y auditado con rol y tipo de cambio; la reserva al crear la solicitud sigue pendiente. | Implementado parcialmente (T1) |

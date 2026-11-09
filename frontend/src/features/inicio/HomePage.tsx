@@ -6,7 +6,7 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('es-EC', { weekday
 const formatTime = (value: string) => new Intl.DateTimeFormat('es-EC', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 const money = (value: number) => new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(value);
 
-export function HomePage({ auth, user }: { auth: string; user: User }) {
+export function HomePage({ auth, user, logoUrl }: { auth: string; user: User; logoUrl?: string }) {
   const { data, error } = useLoad<Summary>('/dashboard', auth);
   const admin = user.roles.includes('ROLE_ADMIN');
   if (error) return <section className="page-state"><h1>Inicio</h1><p className="error">No se pudo cargar el resumen: {error}</p></section>;
@@ -14,7 +14,7 @@ export function HomePage({ auth, user }: { auth: string; user: User }) {
   return <section className="home-page">
     <header className="page-heading"><div><h1>Bienvenido, {user.email.split('@')[0]}</h1><p>{formatDate(data.generatedAt)}</p></div><span className={data.receptionPaused ? 'reception paused' : 'reception'}>{data.receptionPaused ? 'Recepción pausada' : 'Recepción activa'}</span></header>
     <section className="business-overview" aria-label="Resumen del negocio">
-      <div className="business-identity"><img src="/tesis-logo.png" alt="" /><div><h2>{data.restaurantName}</h2><p>{data.receptionPaused ? data.pauseReason || 'La recepción está temporalmente pausada.' : 'El negocio está disponible para recibir solicitudes.'}</p></div></div>
+      <div className="business-identity"><img src={logoUrl || '/tesis-logo.png'} alt="" /><div><h2>{data.restaurantName}</h2><p>{data.receptionPaused ? data.pauseReason || 'La recepción está temporalmente pausada.' : 'El negocio está disponible para recibir solicitudes.'}</p></div></div>
       {!admin && <div className="top-dish"><span>Plato más vendido</span><strong>{data.topDish.name}</strong><p>{data.topDish.unitsSold ? `${data.topDish.unitsSold} unidades en pedidos registrados` : 'Aún no hay pedidos registrados.'}</p></div>}
     </section>
     {!admin && data.cash && <section className="kpi-grid compact cash-today" aria-label="Caja de hoy">
