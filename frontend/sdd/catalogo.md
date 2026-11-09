@@ -30,4 +30,4 @@ Centraliza categorías, presentaciones e ingredientes reutilizables del restaura
 
 ## TBD / exclusiones
 
-- Activar/desactivar elementos desde la interfaz y edición completa de platos existentes.
+- Activar/desactivar elementos desde la interfaz.

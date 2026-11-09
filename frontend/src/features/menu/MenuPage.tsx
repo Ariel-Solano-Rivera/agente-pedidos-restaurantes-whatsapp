@@ -1,9 +1,9 @@
-import { FormEvent, ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { FormEvent, ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { api, User, useLoad } from '../../shared/api';
 
 type Category = { id: string; name: string; description: string; displayOrder: number; active: boolean };
 type Option = { id: string; name: string; surcharge: number; removable?: boolean; active?: boolean };
-type Dish = { id: string; categoryId: string; category: string; name: string; description: string; ingredients: string; active: boolean; hasImage: boolean; variants: Array<{ id: string; name: string; price: number }>; extras: Option[]; removableIngredients: Option[] };
+type Dish = { id: string; categoryId: string; category: string; name: string; description: string; ingredients: string; active: boolean; available: boolean; hasImage: boolean; variants: Array<{ id: string; name: string; price: number }>; extras: Option[]; removableIngredients: Option[] };
 type CatalogItem = { id: string; name: string; active: boolean };
 type ExtraDraft = { ingredientId: string; name: string; surcharge: string };
 
@@ -61,10 +61,45 @@ function DishCard({ dish, auth, admin, categories, presentations, ingredients, o
   const [error, setError] = useState(''); const [working, setWorking] = useState(false);
   async function setActive(active: boolean) { setWorking(true); setError(''); try { await api<Dish>(`/admin/dishes/${dish.id}/active`, auth, { method: 'PATCH', body: JSON.stringify({ active }) }); onUpdated(); } catch (caught) { setError(caught instanceof Error ? caught.message : 'No se pudo actualizar el estado.'); } finally { setWorking(false); } }
   async function remove() { if (!window.confirm(`¿Eliminar “${dish.name}”? Esta acción no se puede deshacer.`)) return; setWorking(true); setError(''); try { await api<void>(`/admin/dishes/${dish.id}`, auth, { method: 'DELETE' }); onUpdated(); } catch (caught) { setError(caught instanceof Error ? caught.message : 'No se pudo eliminar el plato.'); } finally { setWorking(false); } }
-  return <article className="menu-dish-card"><div className="dish-photo"><DishImage dish={dish} auth={auth} /><div className="dish-photo-badges"><p className="dish-category">{dish.category}</p><span className={dish.active ? 'dish-state' : 'dish-state unavailable'}>{dish.active ? 'Activo' : 'Desactivado'}</span></div></div><div className="dish-card-content"><h2>{dish.name}</h2><section className="dish-summary"><p className="dish-description">{dish.description}</p><p className="dish-presentation">{dish.variants[0]?.name ?? 'Sin presentación'}</p></section><section className="dish-configuration" aria-label={`Opciones de ${dish.name}`}><div className="dish-options"><section><h3>Retirables</h3>{dish.removableIngredients.length ? <ul>{dish.removableIngredients.map(item => <li key={item.id}>{item.name}</li>)}</ul> : <p>Sin retirables.</p>}</section><section><h3>Extras</h3>{dish.extras.length ? <ul>{dish.extras.map(item => <li key={item.id}>{item.name}{Number(item.surcharge) > 0 ? ` +$${item.surcharge}` : ''}</li>)}</ul> : <p>Sin extras.</p>}</section></div></section><footer className="dish-card-footer"><p className="dish-price"><span>Desde</span>${dish.variants[0]?.price ?? '0.00'}</p>{admin && <div className="dish-card-actions"><DishEditDialog dish={dish} auth={auth} categories={categories} presentations={presentations} ingredients={ingredients} onUpdated={onUpdated} /><button type="button" className="dish-manage-action toggle" title={`${dish.active ? 'Desactivar' : 'Activar'} ${dish.name}`} aria-label={`${dish.active ? 'Desactivar' : 'Activar'} ${dish.name}`} disabled={working} onClick={() => void setActive(!dish.active)}><Icon name="power" /></button><button type="button" className="dish-manage-action delete" title={`Eliminar ${dish.name}`} aria-label={`Eliminar ${dish.name}`} disabled={working} onClick={() => void remove()}><Icon name="trash" /></button></div>}</footer>{error && <p className="card-error" role="alert">{error}</p>}</div></article>;
+  return <article className="menu-dish-card"><div className="dish-photo"><DishImage dish={dish} auth={auth} /><div className="dish-photo-badges"><p className="dish-category">{dish.category}</p><span className={dish.active ? 'dish-state' : 'dish-state unavailable'}>{dish.active ? 'Activo' : 'Desactivado'}</span>{!dish.available && <span className="dish-state sold-out">Agotado</span>}</div></div><div className="dish-card-content"><h2>{dish.name}</h2><section className="dish-summary"><p className="dish-description">{dish.description}</p><p className="dish-presentation">{dish.variants[0]?.name ?? 'Sin presentación'}</p></section><section className="dish-configuration" aria-label={`Opciones de ${dish.name}`}><div className="dish-options"><section><h3>Retirables</h3>{dish.removableIngredients.length ? <ul>{dish.removableIngredients.map(item => <li key={item.id}>{item.name}</li>)}</ul> : <p>Sin retirables.</p>}</section><section><h3>Extras</h3>{dish.extras.length ? <ul>{dish.extras.map(item => <li key={item.id}>{item.name}{Number(item.surcharge) > 0 ? ` +$${item.surcharge}` : ''}</li>)}</ul> : <p>Sin extras.</p>}</section></div></section><footer className="dish-card-footer"><p className="dish-price"><span>Desde</span>${dish.variants[0]?.price ?? '0.00'}</p>{admin && <div className="dish-card-actions"><DishEditDialog dish={dish} auth={auth} categories={categories} presentations={presentations} ingredients={ingredients} onUpdated={onUpdated} /><button type="button" className="dish-manage-action toggle" title={`${dish.active ? 'Desactivar' : 'Activar'} ${dish.name}`} aria-label={`${dish.active ? 'Desactivar' : 'Activar'} ${dish.name}`} disabled={working} onClick={() => void setActive(!dish.active)}><Icon name="power" /></button><button type="button" className="dish-manage-action delete" title={`Eliminar ${dish.name}`} aria-label={`Eliminar ${dish.name}`} disabled={working} onClick={() => void remove()}><Icon name="trash" /></button></div>}</footer>{error && <p className="card-error" role="alert">{error}</p>}</div></article>;
+}
+
+type MenuFilters = { q: string; categoryId: string; availability: '' | 'AVAILABLE' | 'SOLD_OUT'; visibility: '' | 'ACTIVE' | 'INACTIVE' };
+const emptyMenuFilters: MenuFilters = { q: '', categoryId: '', availability: '', visibility: '' };
+const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/** Filtra en el cliente: el backend ya entrega el menú completo del restaurante y decide `available`. */
+function filterDishes(dishes: Dish[], filters: MenuFilters) {
+  const terms = normalize(filters.q.trim()).split(/\s+/).filter(Boolean);
+  return dishes.filter(dish => {
+    if (filters.categoryId && dish.categoryId !== filters.categoryId) return false;
+    if (filters.availability === 'AVAILABLE' && !dish.available) return false;
+    if (filters.availability === 'SOLD_OUT' && dish.available) return false;
+    if (filters.visibility === 'ACTIVE' && !dish.active) return false;
+    if (filters.visibility === 'INACTIVE' && dish.active) return false;
+    if (!terms.length) return true;
+    const text = normalize([dish.name, dish.description, dish.ingredients, ...dish.extras.map(item => item.name), ...dish.removableIngredients.map(item => item.name)].join(' '));
+    return terms.every(term => text.includes(term));
+  });
 }
 
 export function MenuPage({ auth, user }: { auth: string; user: User }) {
   const menu = useLoad<Dish[]>('/menu/dishes', auth); const categories = useLoad<Category[]>('/menu/categories', auth); const presentations = useLoad<CatalogItem[]>('/menu/catalog/presentations', auth); const ingredients = useLoad<CatalogItem[]>('/menu/catalog/ingredients', auth); const admin = user.roles.includes('ROLE_ADMIN');
-  return <section className="page-content menu-page"><header className="page-heading menu-heading"><div><h1>Menú</h1><p>Configura platos con opciones definidas previamente en el Catálogo.</p></div>{admin && <div className="menu-actions"><DishDialog auth={auth} categories={categories.data || []} presentations={presentations.data || []} ingredients={ingredients.data || []} onCreated={() => menu.reload()} /></div>}</header>{menu.error && <p className="error">No se pudo cargar el menú: {menu.error}</p>}{!menu.data && !menu.error && <p className="empty-state">Cargando menú…</p>}{menu.data?.length === 0 && <section className="menu-empty"><h2>Aún no hay platos</h2><p>Configura el Catálogo y crea el primer plato para empezar.</p></section>}<section className="menu-card-grid">{menu.data?.map(dish => <DishCard key={dish.id} dish={dish} auth={auth} admin={admin} categories={categories.data || []} presentations={presentations.data || []} ingredients={ingredients.data || []} onUpdated={() => menu.reload()} />)}</section></section>;
+  const [filters, setFilters] = useState<MenuFilters>(emptyMenuFilters);
+  const visible = useMemo(() => filterDishes(menu.data || [], filters), [menu.data, filters]);
+  const filtering = Object.values(filters).some(Boolean);
+  const set = <K extends keyof MenuFilters>(key: K, value: MenuFilters[K]) => setFilters(current => ({ ...current, [key]: value }));
+  return <section className="page-content menu-page"><header className="page-heading menu-heading"><div><h1>Menú</h1><p>Configura platos con opciones definidas previamente en el Catálogo.</p></div>{admin && <div className="menu-actions"><DishDialog auth={auth} categories={categories.data || []} presentations={presentations.data || []} ingredients={ingredients.data || []} onCreated={() => menu.reload()} /></div>}</header>
+    <form className="filter-bar" role="search" onSubmit={event => event.preventDefault()}>
+      <label className="filter-search">Buscar<input type="search" value={filters.q} onChange={event => set('q', event.target.value)} placeholder="Nombre, descripción o ingrediente" maxLength={80} /></label>
+      <label>Categoría<select value={filters.categoryId} onChange={event => set('categoryId', event.target.value)}><option value="">Todas</option>{(categories.data || []).map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+      <label>Disponibilidad<select value={filters.availability} onChange={event => set('availability', event.target.value as MenuFilters['availability'])}><option value="">Todas</option><option value="AVAILABLE">Disponible</option><option value="SOLD_OUT">Agotado</option></select></label>
+      <label>Visibilidad<select value={filters.visibility} onChange={event => set('visibility', event.target.value as MenuFilters['visibility'])}><option value="">Todos</option><option value="ACTIVE">Activos</option><option value="INACTIVE">Desactivados</option></select></label>
+      {filtering && <button type="button" className="secondary" onClick={() => setFilters(emptyMenuFilters)}>Limpiar filtros</button>}
+    </form>
+    {menu.data && <p className="orders-count" aria-live="polite">{filtering ? `${visible.length} de ${menu.data.length} platos` : `${menu.data.length} platos`}</p>}
+    {menu.error && <p className="error">No se pudo cargar el menú: {menu.error}</p>}{!menu.data && !menu.error && <p className="empty-state">Cargando menú…</p>}
+    {menu.data?.length === 0 && <section className="menu-empty"><h2>Aún no hay platos</h2><p>Configura el Catálogo y crea el primer plato para empezar.</p></section>}
+    {menu.data && menu.data.length > 0 && visible.length === 0 && <section className="menu-empty"><h2>Ningún plato coincide</h2><p>Prueba con otra búsqueda o limpia los filtros.</p></section>}
+    <section className="menu-card-grid">{visible.map(dish => <DishCard key={dish.id} dish={dish} auth={auth} admin={admin} categories={categories.data || []} presentations={presentations.data || []} ingredients={ingredients.data || []} onUpdated={() => menu.reload()} />)}</section></section>;
 }

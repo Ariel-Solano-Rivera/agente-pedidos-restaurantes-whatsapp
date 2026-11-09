@@ -2,16 +2,19 @@
 
 ## Propósito y alcance
 
-Muestra el menú aislado por restaurante y permite a ADMIN crear categorías y platos con variantes, extras, ingredientes retirables e instrucciones permitidas.
+Muestra el menú aislado por restaurante con búsqueda y filtros, y permite a ADMIN crear, editar, activar/desactivar y eliminar platos con presentación, precio, extras e ingredientes retirables del Catálogo. Las categorías se gestionan en Catálogo; las instrucciones de preparación no se crean desde esta pantalla (se envía `instructions: []`).
 
 ## Fuente y dependencias
 
 - Código: `src/features/menu/MenuPage.tsx`, `src/shared/api.ts` y `src/styles.css`.
-- API: `GET /menu/categories`, `GET /menu/dishes`, `GET /menu/dishes/{id}/image`, `POST /admin/categories`, `POST /admin/dishes` y `POST /admin/dishes/{id}/image`.
+- API: `GET /menu/categories`, `GET /menu/catalog/presentations`, `GET /menu/catalog/ingredients`, `GET /menu/dishes`, `GET /menu/dishes/{id}/image`, `POST /admin/dishes`, `PUT /admin/dishes/{id}`, `PATCH /admin/dishes/{id}/active`, `DELETE /admin/dishes/{id}` y `POST /admin/dishes/{id}/image`.
 - Roles: ADMIN escribe; CAJA y COCINA consultan.
 
 ## Comportamiento visible
 
+- Barra de filtros: búsqueda por nombre, descripción o ingrediente (ingredientes informativos, extras y retirables; sin distinguir mayúsculas ni tildes; todas las palabras deben aparecer), categoría, disponibilidad (disponible/agotado según `available` del backend) y visibilidad (activos/desactivados). Muestra «X de Y platos» y «Limpiar filtros».
+- **Decisión:** el filtrado se hace en el cliente porque `GET /menu/dishes` ya devuelve el menú completo del restaurante; el cliente no calcula la disponibilidad, solo usa `available`. Si el menú creciera mucho, pasar los filtros al backend.
+- Un plato no disponible muestra la etiqueta roja «Agotado» junto a su estado.
 - Presenta cada plato en una tarjeta de 460 px de altura fija: categoría y estado en las esquinas superiores de la foto, nombre, descripción y presentación, retirables y extras desplazables sin título general, y precio con acciones a su lado. Si no existe foto, muestra un estado visual pendiente.
 - ADMIN ve iconos accesibles de Editar, Desactivar/Activar y Eliminar junto al precio; Eliminar tiene tratamiento rojo. No hay botón de ojo. La foto se cambia dentro de Editar.
 - ADMIN abre el diálogo de plato. En alta y edición, categoría, presentación, retirables y extras usan selectores buscables: filtran nombres mientras se escribe y solo permiten elegir opciones del catálogo. Los ingredientes se agregan de uno en uno y se quitan mediante un icono de papelera con nombre accesible.
@@ -27,7 +30,8 @@ Muestra el menú aislado por restaurante y permite a ADMIN crear categorías y p
 
 ## Pruebas
 
-- Construcción, búsqueda y selección por teclado y puntero en los cuatro campos, alta/edición de extras y retirables, activación/desactivación y eliminación segura; inspección visual de iconos y listas.
+- `npm run build` y `npm run lint`; `available` cubierto por `MenuAvailabilityIntegrationTest`.
+- Pendiente manual: búsqueda y combinación de filtros; construcción, búsqueda y selección por teclado y puntero en los cuatro campos, alta/edición de extras y retirables, activación/desactivación y eliminación segura; inspección visual de iconos y listas.
 - Comprobar estado de foto pendiente, vista previa y que CAJA/COCINA no ven acciones de alta.
 
 ## TBD / exclusiones

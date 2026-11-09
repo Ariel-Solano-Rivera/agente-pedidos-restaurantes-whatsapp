@@ -33,7 +33,7 @@ backend/sdd/
 - Si el cambio cruza frontend y backend, actualizar ambos SDD y `docs/contratos-api.md` cuando varíen entradas, salidas, errores o permisos. Mantener `TBD` con una pregunta concreta en vez de inventar una decisión.
 - El SDD describe la implementación verificada: propósito, fuente, actores, contratos/estados visibles, validaciones, efectos de datos, dependencias, pruebas y exclusiones. No duplica el informe ni contradice sus reglas.
 
-**Última sincronización SDD:** 2026-11-08 — T1 implementado: pedidos con filtros, búsqueda y paginación en backend (zona horaria del restaurante), `allowedTransitions` por rol, retroceso con motivo codificado (ADMIN/CAJA), deshacer de cocina (2 min), historial con rol y tipo de cambio (V10), COCINA sin montos, errores con código estable, Actuator, Maven Wrapper, ESLint y pruebas JUnit/Testcontainers. Pendientes T2–T5 (filtros de menú, dashboard de ADMIN, CRM, marca). Compose usa 55478 como puerto local predeterminado de PostgreSQL; reserva y pago siguen TBD.
+**Última sincronización SDD:** 2026-11-08 — T1 (pedidos: filtros, búsqueda y paginación en backend, `allowedTransitions` por rol, retroceso con motivo, deshacer de cocina, historial con rol y tipo de cambio, COCINA sin montos; V10) y T2 (menú: `available` por plato calculado en backend, `availability.tracked` en V11, búsqueda y filtros de categoría, disponibilidad y visibilidad en el cliente) implementados con pruebas JUnit/Testcontainers. Pendientes T3–T5 (dashboard de ADMIN, CRM, marca).
 
 ## Etapa actual y entregables
 

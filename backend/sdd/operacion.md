@@ -18,7 +18,7 @@ Gestiona estado operativo, disponibilidad vendible, zonas de entrega y horarios.
 
 ## Validaciones y efectos de estado
 
-- Ajuste requiere variante, motivo y clave de idempotencia; inserta la clave, actualiza solo si `on_hand + delta >= reserved` y registra movimiento `PANEL` con actor y correlación.
+- Ajuste requiere variante, motivo y clave de idempotencia; inserta la clave, actualiza solo si `on_hand + delta >= reserved`, quita la marca `sold_out`, activa el control de cantidad (`tracked=true`) y registra movimiento `PANEL` con actor y correlación. Una variante inexistente o de otro restaurante devuelve 400 (no 404).
 - Repetir la misma clave devuelve la disponibilidad actual sin aplicar otro movimiento.
 - Horario acepta día 0 a 6; zonas convierten tarifa a decimal en backend.
 - Pausa de recepción registra usuario y fecha.

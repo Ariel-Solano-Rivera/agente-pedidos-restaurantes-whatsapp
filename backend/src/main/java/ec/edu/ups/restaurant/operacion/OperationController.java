@@ -45,7 +45,7 @@ public class OperationController {
     return Tenant.restaurantId().flatMap(r -> tx.transactional(
       db.sql("INSERT INTO idempotency_operation(id,restaurante_id,operation_type,idempotency_key,result_reference) VALUES(:id,:r,'AVAILABILITY_ADJUST',:k,:v) ON CONFLICT(restaurante_id,operation_type,idempotency_key) DO NOTHING")
         .bind("id",UUID.randomUUID()).bind("r",r).bind("k",key).bind("v",input.variantId()).fetch().rowsUpdated()
-        .flatMap(inserted -> inserted==0 ? oneAvailability(r,input.variantId()) : db.sql("UPDATE availability SET on_hand=on_hand+:d, sold_out=false,updated_at=now() WHERE restaurante_id=:r AND variant_id=:v AND on_hand+:d>=reserved")
+        .flatMap(inserted -> inserted==0 ? oneAvailability(r,input.variantId()) : db.sql("UPDATE availability SET on_hand=on_hand+:d, sold_out=false, tracked=true, updated_at=now() WHERE restaurante_id=:r AND variant_id=:v AND on_hand+:d>=reserved")
           .bind("d",input.delta()).bind("r",r).bind("v",input.variantId()).fetch().rowsUpdated()
           .flatMap(rows -> rows==0 ? Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,"Ajuste inválido o disponibilidad insuficiente")) : db.sql("INSERT INTO availability_movement(id,restaurante_id,variant_id,delta,reason,source,actor_user_id,correlation_id) VALUES(:id,:r,:v,:d,:reason,'PANEL',:u,:c)")
             .bind("id",UUID.randomUUID()).bind("r",r).bind("v",input.variantId()).bind("d",input.delta()).bind("reason",input.reason()).bind("u",user.id()).bind("c",UUID.fromString(key)).fetch().rowsUpdated().then(oneAvailability(r,input.variantId()))))));

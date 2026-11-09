@@ -314,10 +314,10 @@ th { color: #52606d; background: #f8fafc; font-size: .8rem; }
 /* Pedidos: filtros, número destacado, confirmación de transición e historial (T1). */
 button.secondary { color: #0a3165; background: #eaf2fb; border: 1px solid #b7cbe0; }
 button.secondary:hover { background: #d9e7f6; }
-.order-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 0 0 12px; padding: 14px; border: 1px solid #c7d6e6; border-radius: 14px; background: #fff; }
-.order-filters label { display: grid; gap: 6px; color: #244b78; font-size: .82rem; font-weight: 720; }
-.order-filters input, .order-filters select { min-height: 40px; padding: 8px 10px; color: #14395f; border: 1px solid #b7cbe0; border-radius: 8px; background: #fff; }
-.order-filters .filter-search { flex: 1 1 240px; }
+.order-filters, .filter-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 0 0 12px; padding: 14px; border: 1px solid #c7d6e6; border-radius: 14px; background: #fff; }
+.order-filters label, .filter-bar label { display: grid; gap: 6px; color: #244b78; font-size: .82rem; font-weight: 720; }
+.order-filters input, .order-filters select, .filter-bar input, .filter-bar select { min-height: 40px; padding: 8px 10px; color: #14395f; border: 1px solid #b7cbe0; border-radius: 8px; background: #fff; }
+.order-filters .filter-search, .filter-bar .filter-search { flex: 1 1 240px; }
 .orders-count { margin: 0 0 12px; color: #4a6585; font-size: .9rem; }
 .order-code { margin: 0; color: #0a4e93; font-size: 1.35rem; font-weight: 850; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
 .order-card-total small { display: block; color: #4a6585; font-size: .78rem; }
@@ -347,4 +347,8 @@ button.secondary:hover { background: #d9e7f6; }
 .history-badge { padding: 2px 8px; color: #fff; border-radius: 999px; background: #0a5eae; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
 .history-badge.retroceso { background: #9a5d00; }
 .history-badge.deshacer { background: #5a3fa8; }
-@media (max-width: 640px) { .order-filters label { flex: 1 1 140px; } .order-code { font-size: 1.2rem; } }
+@media (max-width: 640px) { .order-filters label, .filter-bar label { flex: 1 1 140px; } .order-code { font-size: 1.2rem; } }
+
+/* Menú: plato agotado (T2). */
+.dish-state.sold-out { color: #fff; background: #a83a2b; }
+.dish-photo-badges { flex-wrap: wrap; }
