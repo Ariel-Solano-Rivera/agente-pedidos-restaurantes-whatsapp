@@ -20,3 +20,5 @@ El informe exige separar confirmación, aceptación y pago, y liberar reservas p
 - ¿Son adecuados los cinco estados de pago propuestos y la regla de efectivo pendiente?
 - ¿La cancelación previa a `PREPARING` debe ser automática o requiere aprobación de CAJA?
 - Validado: endpoint idempotente único y las cuatro transiciones operativas para ADMIN/CAJA.
+- Validado (2026-11-08, AGENTS.md): retrocesos `PREPARING→ACCEPTED` y `READY→PREPARING` solo para ADMIN/CAJA con motivo codificado; COCINA avanza `ACCEPTED→PREPARING→READY` y deshace su propio último avance en una ventana configurable. Retroceder y deshacer no tocan reservas ni pagos.
+- Pendiente: ¿se permite `ACCEPTED → PENDING_DECISION`? Afecta la reserva.

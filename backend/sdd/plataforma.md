@@ -12,8 +12,8 @@ Arranca el monolito reactivo y centraliza la traducción de errores de validaci�
 
 ## Contratos y permisos
 
-- `ApiExceptionHandler` devuelve `{code, message}` para `ResponseStatusException` y validaciones de cuerpo.
-- `TransactionalOperator` envuelve actualmente creación de platos y ajustes de disponibilidad.
+- `ApiExceptionHandler` devuelve `{code, message}` con un código estable: `ApiException` (código de negocio propio), validación de cuerpo (`VALIDATION`), parámetros o cabeceras inválidos (`BAD_REQUEST`), permiso denegado por rol (`FORBIDDEN`) y `ResponseStatusException` (nombre del estado HTTP, por ejemplo `NOT_FOUND`).
+- `TransactionalOperator` envuelve creación, edición y eliminación de platos, ajustes de disponibilidad, transiciones de pedidos y el deshacer de cocina.
 
 ## Validaciones y efectos de estado
 

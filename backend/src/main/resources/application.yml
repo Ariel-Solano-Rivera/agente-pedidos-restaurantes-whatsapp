@@ -19,3 +19,7 @@ management:
     web:
       exposure:
         include: health
+app:
+  orders:
+    # Ventana en la que COCINA puede deshacer su propio último avance (ISO-8601).
+    kitchen-undo-window: ${KITCHEN_UNDO_WINDOW:PT2M}

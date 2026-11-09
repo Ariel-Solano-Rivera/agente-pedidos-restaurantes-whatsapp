@@ -8,5 +8,6 @@
 | HU-04 | Como ADMIN, configuro horarios, zonas, tarifa y pausa. | CAJA consulta; solo ADMIN modifica. | Implementar |
 | HU-05 | Como CAJA, tomo una derivación humana. | Solo una persona puede controlar una conversación derivada; el historial permanece visible. | Implementar |
 | HU-06 | Como personal, registro pagos manuales. | Pendiente de ADR-001; el comprobante no confirma un pago. | TBD |
-| HU-07 | Como restaurante, acepto o rechazo una solicitud y avanzo su preparación. | ADMIN/CAJA solo ejecutan transiciones autorizadas, idempotentes y auditadas; la reserva al crear la solicitud sigue pendiente. | Implementar parcialmente |
+| HU-07 | Como restaurante, acepto o rechazo una solicitud y avanzo su preparación. | ADMIN/CAJA ejecutan transiciones y retrocesos con motivo; COCINA avanza a preparando/listo y deshace su último cambio en 2 minutos; todo idempotente y auditado con rol y tipo de cambio; la reserva al crear la solicitud sigue pendiente. | Implementado parcialmente (T1) |
+| HU-09 | Como personal, filtro y busco pedidos. | Filtros por estado, modalidad, pago y fecha (zona del restaurante), búsqueda por número, nombre o teléfono y paginación en el backend, siempre aislados por restaurante. | Implementado (T1) |
 | HU-08 | Como miembro del personal, consulto un inicio compartido del restaurante. | Ve solo el nombre, estado, plato más vendido y tareas de su restaurante; no puede modificar tareas en este incremento. | Implementado |
