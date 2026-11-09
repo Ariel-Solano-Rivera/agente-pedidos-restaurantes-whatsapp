@@ -7,7 +7,7 @@
 | Catálogo de menú | `src/features/catalogo/CatalogPage.tsx` | [catalogo.md](catalogo.md) | Implementado; selector, búsqueda, diálogos y CRUD de tres catálogos |
 | Operación, disponibilidad, zonas y horarios | `src/App.tsx` (`Operation`, `Availability`, `Settings`) | [operacion.md](operacion.md) | Implementado parcialmente |
 | Menú y opciones | `src/features/menu/MenuPage.tsx` | [menu.md](menu.md) | Implementado parcialmente; tarjetas fijas y formularios con selección buscable |
-| Pedidos y vista de cocina por rol | `src/features/pedidos/OrdersPage.tsx` | [pedidos.md](pedidos.md) | Tarjetas compactas con detalle desplazable, tarifa visible y transiciones autorizadas |
+| Pedidos y vista de cocina por rol | `src/features/pedidos/OrdersPage.tsx` | [pedidos.md](pedidos.md) | Filtros, búsqueda y paginación del backend; número destacado; avanzar/retroceder con confirmación y motivo; deshacer de cocina; historial en la comanda |
 | Pagos y derivaciones | `src/App.tsx` (`Payments`, `Handoffs`) | [pagos-derivaciones.md](pagos-derivaciones.md) | Pago solo lectura; derivaciones implementadas |
 
 `App.tsx` compone autenticación, shell y las cuatro secciones vigentes; cada pantalla vive en `src/features/` y los elementos compartidos en `src/components/` o `src/shared/`.

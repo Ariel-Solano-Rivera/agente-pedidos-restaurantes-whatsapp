@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export type User = { email: string; restaurantId: string; roles: string[] };
 type ApiError = { message: string };
@@ -15,7 +15,7 @@ export async function api<T>(path: string, auth: string, init?: RequestInit): Pr
 
 export function useLoad<T>(path: string, auth: string) {
   const [data, setData] = useState<T>(); const [error, setError] = useState('');
-  const load = () => api<T>(path, auth).then(setData).catch(caught => setError(caught instanceof Error ? caught.message : 'Error de conexión'));
-  useEffect(() => { void load(); }, [path, auth]);
+  const load = useCallback(() => api<T>(path, auth).then(setData).catch(caught => setError(caught instanceof Error ? caught.message : 'Error de conexión')), [path, auth]);
+  useEffect(() => { void load(); }, [load]);
   return { data, error, reload: load };
 }

@@ -310,3 +310,41 @@ th { color: #52606d; background: #f8fafc; font-size: .8rem; }
 @media (max-width: 780px) { .login { grid-template-columns: 1fr; background: #fff; } .login-brand { min-height: unset; padding: 30px 24px 24px; align-items: flex-start; text-align: left; gap: 14px; } .login-brand img { width: 104px; } .login-brand p { font-size: .98rem; } .login-panel { padding: 36px 24px 42px; } .login-heading { margin-bottom: 27px; } .business-overview { grid-template-columns: 1fr; } .business-identity { min-height: 0; border-right: 0; border-bottom: 1px solid #316da8; } .top-dish { min-height: 170px; } }
 @media (max-width: 780px) { .orders-layout { grid-template-columns: 1fr; gap: 24px; } .order-queue { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); } .order-queue h2 { grid-column: 1 / -1; } }
 @media (max-width: 540px) { .workspace { padding: 26px 16px 34px; } .page-heading { display: block; margin-bottom: 24px; } .reception { display: inline-block; margin-top: 15px; } .business-identity { align-items: flex-start; gap: 16px; padding: 24px; } .business-identity img { width: 72px; height: 72px; border-radius: 14px; } .scheduled-tasks { margin-top: 20px; padding: 22px; } .login-panel { padding: 32px 20px 38px; } .login-brand { padding: 25px 20px 20px; } .login form { gap: 17px; } .login-demo { margin-top: 22px; } .menu-actions { display: grid; grid-template-columns: 1fr; margin-top: 16px; } .menu-actions button { width: 100%; } .form-grid, .dish-options { grid-template-columns: 1fr; } .add-option-row, .add-option-row:has(.price-input), .catalog-add, .catalog-edit { grid-template-columns: 1fr; } .catalog-actions { align-self: flex-start; } .order-queue { display: flex; overflow-x: auto; grid-template-columns: none; padding-bottom: 3px; } .order-queue h2 { display: none; } .order-queue-item { flex: 0 0 210px; } .ticket-header, .ticket-customer, .ticket-units, .ticket-summary, .ticket-footer { padding-left: 20px; padding-right: 20px; } }
+
+/* Pedidos: filtros, número destacado, confirmación de transición e historial (T1). */
+button.secondary { color: #0a3165; background: #eaf2fb; border: 1px solid #b7cbe0; }
+button.secondary:hover { background: #d9e7f6; }
+.order-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 0 0 12px; padding: 14px; border: 1px solid #c7d6e6; border-radius: 14px; background: #fff; }
+.order-filters label { display: grid; gap: 6px; color: #244b78; font-size: .82rem; font-weight: 720; }
+.order-filters input, .order-filters select { min-height: 40px; padding: 8px 10px; color: #14395f; border: 1px solid #b7cbe0; border-radius: 8px; background: #fff; }
+.order-filters .filter-search { flex: 1 1 240px; }
+.orders-count { margin: 0 0 12px; color: #4a6585; font-size: .9rem; }
+.order-code { margin: 0; color: #0a4e93; font-size: 1.35rem; font-weight: 850; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
+.order-card-total small { display: block; color: #4a6585; font-size: .78rem; }
+.order-action.backward { color: #0a3165; background: #fff; border: 1px solid #0a5eae; }
+.order-action.backward:hover { background: #eaf2fb; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 22px 0 6px; color: #244b78; }
+.transition-dialog { width: min(520px, calc(100vw - 28px)); }
+.transition-path { margin: 0; color: #244b78; font-size: 1rem; }
+.transition-path b { color: #0a4e93; font-size: 1.15rem; }
+.transition-path .destructive { color: #a83a2b; font-weight: 800; }
+.reason-options { display: grid; gap: 8px; margin: 0; padding: 12px; border: 1px solid #c7d6e6; border-radius: 10px; }
+.reason-options legend { padding: 0 6px; color: #244b78; font-weight: 760; }
+.reason-options label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.menu-form textarea { width: 100%; padding: 10px 11px; color: #14395f; border: 1px solid #b7cbe0; border-radius: 8px; font: inherit; resize: vertical; }
+.warning { margin: 0; padding: 10px; color: #7a2a1f; border-radius: 8px; background: #fde9e5; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.order-dialog .order-ticket { display: grid; gap: 16px; margin: 18px 22px 22px; padding: 18px; }
+.order-dialog .order-ticket section { display: grid; gap: 6px; }
+.order-dialog .order-ticket h3 { margin: 0; color: #123862; font-size: 1rem; }
+.ticket-meta { color: #4a6585; font-size: .88rem; }
+.order-history { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.order-history li { display: grid; gap: 3px; padding: 10px 12px; border-left: 4px solid #0a5eae; border-radius: 6px; background: #f4f8fc; }
+.order-history li.history-retroceso { border-left-color: #c07a12; background: #fff7e8; }
+.order-history li.history-deshacer { border-left-color: #6b4fbb; background: #f4f0fd; }
+.order-history div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.order-history small { color: #4a6585; }
+.history-badge { padding: 2px 8px; color: #fff; border-radius: 999px; background: #0a5eae; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.history-badge.retroceso { background: #9a5d00; }
+.history-badge.deshacer { background: #5a3fa8; }
+@media (max-width: 640px) { .order-filters label { flex: 1 1 140px; } .order-code { font-size: 1.2rem; } }

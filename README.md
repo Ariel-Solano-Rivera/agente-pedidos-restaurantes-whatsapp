@@ -27,7 +27,7 @@ Con los servicios ya levantados, se puede repetir la comprobación básica con `
 - Inicio de sesión HTTP Basic de demostración, roles y aislamiento por `restaurante_id` resuelto desde el usuario autenticado.
 - Menú con categorías, platos, variantes, extras, ingredientes retirables, instrucciones y disponibilidad; ADMIN puede crear categorías y platos por API; ADMIN/CAJA registra ajustes de disponibilidad idempotentes.
 - Pausa de recepción, zonas/tarifas y horarios en el panel; ADMIN modifica configuración.
-- Pedidos sintéticos existentes y su detalle histórico por unidad. COCINA accede solamente a la lectura de pedidos operativos.
+- Pedidos sintéticos con filtros, búsqueda y paginación; ADMIN/CAJA avanzan y retroceden con motivo; COCINA avanza a preparando/listo, deshace su último cambio y no ve montos.
 - Consulta de pagos y toma/liberación de derivaciones humanas; un pago no se confirma automáticamente.
 
 Los contratos, permisos, entradas, salidas y errores están en [docs/contratos-api.md](docs/contratos-api.md). Arquitectura y organización paralela: [docs/arquitectura.md](docs/arquitectura.md).

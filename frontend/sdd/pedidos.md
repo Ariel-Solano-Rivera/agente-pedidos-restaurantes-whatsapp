@@ -2,31 +2,43 @@
 
 ## Propósito y alcance
 
-Consulta pedidos sintéticos existentes como comandas y permite a ADMIN/CAJA avanzar solo las transiciones autorizadas por el backend. No permite captura manual.
+Muestra pedidos sintéticos como comandas, con filtros y búsqueda resueltos en el backend, y permite ejecutar solo los cambios de estado que el backend devuelve en `allowedTransitions`. No permite captura manual de pedidos.
 
 ## Fuente y dependencias
 
-- Código: `src/features/pedidos/OrdersPage.tsx` y `src/shared/api.ts`.
-- API: `GET /orders`, `GET /orders/{id}`, `POST /orders/{id}/transitions`.
-- Roles: ADMIN y CAJA consultan y ejecutan transiciones; COCINA recibe solo estados operativos desde el backend y no ve acciones mutantes.
+- Código: `src/features/pedidos/OrdersPage.tsx`, `src/shared/api.ts` y la sección «Pedidos» de `src/styles.css`.
+- API: `GET /orders` (paginada), `GET /orders/{id}`, `POST /orders/{id}/transitions`, `POST /orders/{id}/undo`.
+- Roles: ADMIN y CAJA avanzan, rechazan, cancelan y retroceden con confirmación; COCINA avanza con un toque y puede deshacer su último cambio. El rol solo se usa para elegir textos y la confirmación: las acciones visibles salen de `allowedTransitions` y `undo`.
 
 ## Comportamiento visible
 
-- Presenta solicitudes en tarjetas de altura fija y desplazamiento interno. El número y estado tienen mayor jerarquía visual; el bloque de cliente se conserva. La modalidad compacta dice Local o Envío; en Envío muestra la tarifa junto a la modalidad y debajo dirección, referencia y zona. Cada unidad muestra solo las opciones presentes. El total y las acciones permanecen al pie.
-- El botón de ojo abre una comanda ampliada para lectura más cómoda; no es necesario para conocer toda la información operativa del pedido en la tarjeta.
-- Para local muestra la hora acordada; para envío muestra dirección, referencia y zona. La sección «Importes y confirmación» ya no aparece en la tarjeta; subtotal, pago, confirmación y hora de recepción siguen disponibles en la comanda ampliada.
-- Muestra unidades históricas con plato, variante, extras, ingredientes retirados, instrucciones y total de línea, omitiendo por completo los renglones de opciones vacías.
-- La tarjeta ofrece solo la siguiente acción válida: aceptar/rechazar, iniciar preparación/cancelar, marcar listo o completar. Las acciones destructivas requieren confirmación local; el servidor decide si la transición procede.
+- Barra de filtros: búsqueda libre (número `PED-…`, nombre o teléfono; espera 300 ms tras escribir), estado, modalidad (retiro/entrega), estado de pago (oculto para COCINA) y fecha (todas, hoy, últimos 7 días o personalizado con «Desde» y «Hasta»). «Limpiar filtros» aparece cuando hay alguno activo. Cambiar un filtro vuelve a la página 1.
+- Contador de resultados y paginación de 12 pedidos por página («Anterior», «Página X de Y», «Siguiente»).
+- Cada tarjeta muestra el número `PED-XXXXXXXX` como dato principal, la hora de recepción, el estado, cliente, modalidad (dirección/zona/tarifa o hora acordada), unidades con extras, ingredientes retirados e instrucciones, y el total con estado de pago. Si el backend no envía montos (COCINA), no se muestran importes.
+- Botones de acción derivados de `allowedTransitions`: «Avanzar a ‹estado›», «Retroceder a ‹estado›» (estilo con borde), «Rechazar» y «Cancelar pedido» (rojo).
+- ADMIN/CAJA: toda acción abre un diálogo que muestra `PED-… estado actual → estado destino`. Un retroceso exige elegir un motivo (Se avanzó por error, El cliente cambió el pedido, Falta un producto, Otro motivo) y escribir el detalle si es «Otro motivo». Las acciones destructivas muestran un aviso.
+- COCINA: «Avanzar» actúa con un toque, sin diálogo ni motivo. Si el backend devuelve `undo`, aparece «Deshacer (volver a ‹estado›)»; si la ventana venció, se muestra el mensaje del backend pidiendo avisar a caja.
+- El ojo abre la comanda ampliada con contacto, importes (si corresponden), confirmación del cliente, quién decidió, pago, recepción e **historial de estados**: los retrocesos y deshacer se distinguen con etiqueta y color, con autor, rol, fecha y motivo.
 
 ## Validaciones y errores
 
-- La consulta, detalle y transición son filtrados por restaurante; COCINA no recibe ni puede invocar transiciones.
-- Precios, estados y configuración son datos del servidor; el cliente no recalcula ni autoriza cambios. Cada transición envía una clave de idempotencia nueva.
+- El cliente no recalcula precios ni decide transiciones o permisos: solo muestra lo que el backend envía. Cada acción envía una `Idempotency-Key` nueva.
+- La validación de motivo en el diálogo es una ayuda; el backend la repite y su mensaje de error se muestra dentro del diálogo. Los errores de COCINA (incluida la ventana vencida) aparecen en el aviso de la página.
+
+## Estados de interfaz
+
+- Carga: contador «Cargando pedidos…» y `aria-busy` en la grilla; botón de la tarjeta en curso muestra «Actualizando…».
+- Vacío: mensaje distinto con filtros activos o sin pedidos.
+- Error de carga: alerta con el mensaje de la API.
+- Éxito: aviso `PED-…: ‹nuevo estado›`.
 
 ## Pruebas
 
-- `scripts/smoke.ps1` comprueba que COCINA puede consultar pedidos; probar transición válida, repetición con la misma clave, transición inválida y rechazo por rol; inspección visual de número/estado, modalidad/tarifa, opciones condicionales y altura fija.
+- `npm run build` y `npm run lint`.
+- Contrato verificado por `backend/.../OrdersIntegrationTest`; `scripts/smoke.ps1` comprueba que COCINA no recibe montos.
+- Pendiente: pruebas de componentes con Vitest e inspección visual en 1440, 768 y 390 px.
 
 ## TBD / exclusiones
 
-- Filtros, vista de cocina separada, reserva efectiva, vencimiento y flujo de pedido desde conversación. La creación de pedidos con reserva sigue pendiente.
+- Vista de cocina separada (tablero por columnas), actualización automática de la cola y número correlativo por restaurante (TBD en el backend).
+- Creación de pedidos, reserva efectiva y vencimiento.

@@ -33,7 +33,7 @@ backend/sdd/
 - Si el cambio cruza frontend y backend, actualizar ambos SDD y `docs/contratos-api.md` cuando varíen entradas, salidas, errores o permisos. Mantener `TBD` con una pregunta concreta en vez de inventar una decisión.
 - El SDD describe la implementación verificada: propósito, fuente, actores, contratos/estados visibles, validaciones, efectos de datos, dependencias, pruebas y exclusiones. No duplica el informe ni contradice sus reglas.
 
-**Última sincronización SDD:** 2026-11-08 — Se definen las reglas del incremento T1–T5 (pedidos con avanzar, retroceder y deshacer según rol, filtros y búsqueda; filtros de menú; dashboard de ADMIN; CRM; marca del restaurante); su implementación y los SDD correspondientes quedan pendientes. Compose usa 55478 como puerto local predeterminado de PostgreSQL; reserva y pago siguen TBD.
+**Última sincronización SDD:** 2026-11-08 — T1 implementado: pedidos con filtros, búsqueda y paginación en backend (zona horaria del restaurante), `allowedTransitions` por rol, retroceso con motivo codificado (ADMIN/CAJA), deshacer de cocina (2 min), historial con rol y tipo de cambio (V10), COCINA sin montos, errores con código estable, Actuator, Maven Wrapper, ESLint y pruebas JUnit/Testcontainers. Pendientes T2–T5 (filtros de menú, dashboard de ADMIN, CRM, marca). Compose usa 55478 como puerto local predeterminado de PostgreSQL; reserva y pago siguen TBD.
 
 ## Etapa actual y entregables
 
