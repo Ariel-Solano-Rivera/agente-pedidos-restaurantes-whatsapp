@@ -3,7 +3,7 @@
 | Módulo | Fuente | Documento | Estado |
 |---|---|---|---|
 | Shell, sesión y API | `src/App.tsx`, `src/components/AppShell.tsx`, `src/shared/api.ts`, `src/main.tsx`, `src/styles.css`, `public/tesis-logo.png` | [app-shell-auth.md](app-shell-auth.md) | Implementado; Sidebar Inicio → Pedidos → Menú → Catálogo |
-| Inicio y resumen compartido | `src/features/inicio/HomePage.tsx` | [inicio.md](inicio.md) | Implementado; solo lectura |
+| Inicio y dashboard | `src/features/inicio/HomePage.tsx`, `AdminDashboard.tsx` | [inicio.md](inicio.md) | Resumen por rol; dashboard de ADMIN con rango, comparación, tarjetas y gráficos accesibles; caja de hoy para CAJA |
 | Catálogo de menú | `src/features/catalogo/CatalogPage.tsx` | [catalogo.md](catalogo.md) | Implementado; selector, búsqueda, diálogos y CRUD de tres catálogos |
 | Operación, disponibilidad, zonas y horarios | `src/App.tsx` (`Operation`, `Availability`, `Settings`) | [operacion.md](operacion.md) | Implementado parcialmente |
 | Menú y opciones | `src/features/menu/MenuPage.tsx` | [menu.md](menu.md) | CRUD de platos; búsqueda y filtros por categoría, disponibilidad y visibilidad en el cliente; etiqueta «Agotado» |

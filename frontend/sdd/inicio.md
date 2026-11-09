@@ -1,34 +1,42 @@
-# Inicio y resumen compartido
+# Inicio, resumen compartido y dashboard de ADMIN
 
 ## Propósito y alcance
 
-Muestra a cualquier usuario autenticado un resumen de su restaurante: identidad visual de la tesis, fecha, estado de recepción, plato más vendido y tareas programadas compartidas. No crea ni modifica tareas en este incremento.
+Muestra a cada usuario autenticado un resumen de su restaurante. ADMIN ve además el dashboard de indicadores del negocio. CAJA ve el cobrado y por cobrar de hoy. COCINA conserva el resumen sin montos. No crea ni modifica tareas.
 
 ## Fuente y dependencias
 
-- Código: `src/components/AppShell.tsx`, `src/features/inicio/HomePage.tsx`, `src/shared/api.ts` y `src/styles.css`.
-- API: `GET /dashboard`.
-- Roles: ADMIN, CAJA y COCINA.
+- Código: `src/features/inicio/HomePage.tsx`, `src/features/inicio/AdminDashboard.tsx`, `src/shared/api.ts` y la sección «Inicio» de `src/styles.css`.
+- API: `GET /dashboard` (todos) y `GET /dashboard/admin?range=` (ADMIN).
+- Roles: ADMIN (dashboard completo), CAJA (caja de hoy), COCINA (sin montos). El rol solo elige qué bloques pedir; los montos y permisos los decide el backend (`cash` llega `null` a COCINA y `/dashboard/admin` responde 403 a otros roles).
 
 ## Comportamiento visible
 
-- El shell cambia entre Inicio, Menú y Pedidos sin recalcular datos de negocio en el cliente.
-- Inicio muestra carga, error y estado vacío de tareas; el backend decide el restaurante y entrega el plato más vendido.
-- El logo es el activo común `public/tesis-logo.png` para la demostración de tesis, no un logo configurable de cada restaurante.
-- Inicio usa una superficie con bordes visibles para separar encabezado, resumen y tareas. Solo al montar Inicio aplica una entrada de 220 ms por opacidad y desplazamiento vertical breve; no hay movimiento ligado al scroll.
+- Todos: saludo, fecha, estado de recepción, identidad del restaurante y tareas programadas.
+- CAJA y COCINA: plato más vendido histórico. CAJA, además, tarjetas «Cobrado hoy» y «Por cobrar hoy».
+- ADMIN: selector segmentado Hoy / 7 días / 30 días (por defecto Hoy), con una nota que indica contra qué período se compara y la zona horaria.
+  - Tarjetas: cobrado, por cobrar, ventas completadas (con número de pedidos), ticket promedio, tasa de aceptación, tiempos de decisión y preparación, y clientes nuevos (con recurrentes). Cada tarjeta muestra la variación con flecha y texto («▲ $3,50 vs. ayer a esta hora»), sin depender del color.
+  - Ventas no concretadas: rechazados, cancelados y vencidos, con importe, cantidad y valor del período anterior.
+  - Pedidos por hora: columnas SVG de un tono (`#0a5eae`, validado con el script de la skill de visualización), tooltip por hora, foco por teclado, indicación de la hora pico y tabla alternativa en «Ver tabla».
+  - Platos y extras más vendidos y retiro frente a entrega: barras horizontales con etiqueta directa de unidades e importe.
+  - «Ahora mismo»: derivaciones sin contestar y platos agotados (con sus nombres).
+  - Retrocesos y deshacer por día, rol y tipo, en tabla.
+- Animaciones sutiles: las tarjetas aparecen (220 ms) y las barras crecen (320 ms); con `prefers-reduced-motion` no hay movimiento. Al cambiar el rango, el contenido anterior se atenúa mientras carga.
 
 ## Validaciones y errores
 
-- No acepta `restaurante_id` desde la URL ni el cuerpo.
-- Si la consulta falla, muestra el error de API sin ocultar la navegación ni abrir diálogos nativos.
+- No acepta `restaurante_id` desde la URL ni el cuerpo; no calcula indicadores: solo formatea los valores del backend.
+- Si una consulta falla, muestra el error de API sin ocultar la navegación.
+
+## Estados de interfaz
+
+- Carga inicial («Calculando indicadores…»), recarga atenuada con `aria-busy`, error en alerta, y vacíos explícitos («Sin pedidos completados en el período», «Sin retrocesos en el período», «Sin datos para comparar»).
 
 ## Pruebas
 
-- `npm run build` dentro de Docker.
-- Consulta autenticada de `/api/v1/dashboard` con ADMIN, CAJA y COCINA; comprobar que Sierra Verde no recibe los datos de Mar Azul.
-- Revisión visual en escritorio, tableta y móvil.
-- `prefers-reduced-motion` conserva una transición de opacidad sin desplazamiento.
+- `npm run build` y `npm run lint`; definiciones y permisos cubiertos por `DashboardIntegrationTest` del backend.
+- Pendiente: inspección visual en 1440, 768 y 390 px y tema oscuro (el panel aún no tiene tema oscuro).
 
 ## TBD / exclusiones
 
-- Alta, asignación, edición y completado de tareas; configuración de logotipo por restaurante; indicadores financieros y alertas de pedidos.
+- Alta, asignación y completado de tareas; exportación; logo por restaurante (T5); tema oscuro.

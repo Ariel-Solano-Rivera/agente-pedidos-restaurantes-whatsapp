@@ -4,7 +4,7 @@
 |---|---|---|---|
 | Arranque y errores | `RestaurantAdminApplication`, `common/`, `compose.yaml` | [plataforma.md](plataforma.md) | Implementado; errores `{code,message}` con código estable; Actuator health; Maven Wrapper y Testcontainers |
 | Autenticación y tenancy | `security/`, `administracion/MeController` | [seguridad-tenancy.md](seguridad-tenancy.md) | Implementado para demo local; 401 JSON sin diálogo nativo |
-| Resumen compartido | `administracion/DashboardController`, `pedidos/OrderReportingService` | [resumen-negocio.md](resumen-negocio.md) | Implementado; lectura para tres roles |
+| Resumen y dashboard | `administracion/DashboardController`, `DashboardPeriod`, `pedidos/OrderMetricsService`, `OrderReportingService`, `pagos/PaymentReportingService`, `menu/MenuReportingService`, `intervencion/HandoffReportingService` | [resumen-negocio.md](resumen-negocio.md) | Resumen para tres roles con caja de hoy (ADMIN/CAJA); dashboard de ADMIN con indicadores definidos y comparación; pruebas unitarias y de integración |
 | Menú | `menu/MenuController` | [menu.md](menu.md) | CRUD de platos por catálogo; `available` por plato y `tracked` por variante (V11); prueba de integración |
 | Catálogo de menú | `menu/CatalogController` | [catalogo.md](catalogo.md) | CRUD de presentaciones e ingredientes; borrado seguro de categorías |
 | Operación y disponibilidad | `operacion/OperationController` | [operacion.md](operacion.md) | Implementado parcialmente |

@@ -5,7 +5,8 @@ Base: `/api/v1`. Autenticación HTTP Basic de demostración; no usar fuera del e
 | Operación | Actor | Entrada / salida | Errores |
 |---|---|---|---|
 | `GET /me` | cualquier rol | usuario, restaurante y permisos | 401 |
-| `GET /dashboard` | ADMIN, CAJA, COCINA | resumen aislado: restaurante, estado de recepción, fecha, plato más vendido y máximo tres tareas programadas | 401 |
+| `GET /dashboard` | ADMIN, CAJA, COCINA | resumen aislado: restaurante, estado de recepción, fecha, plato más vendido, máximo tres tareas programadas y `cash {collected, receivable}` de hoy (`null` para COCINA) | 401 |
+| `GET /dashboard/admin?range=TODAY\|LAST_7_DAYS\|LAST_30_DAYS` | ADMIN | indicadores con `{current, previous}` frente al período anterior de igual duración, ventas no concretadas por causa, pedidos por hora, platos y extras top, retiro/entrega, derivaciones abiertas, platos agotados y retrocesos por día y rol; definiciones en `backend/sdd/resumen-negocio.md` | 400 `RANGE_INVALID`, 401, 403 |
 | `GET /menu/categories`, `GET /menu/catalog/presentations`, `GET /menu/catalog/ingredients`, `GET /menu/dishes`, `GET /menu/dishes/{id}` | cualquier rol | menú y catálogos del restaurante actual; cada plato incluye `active` (visibilidad) y `available` (calculado por el backend: alguna variante activa, no agotada y con unidades libres si `tracked`); cada variante incluye `tracked` | 401, 404 |
 | `GET /menu/dishes/{id}/image` | cualquier rol | imagen binaria del plato propio, si existe | 401, 404 |
 | `POST/PUT/DELETE /admin/categories/{id?}` | ADMIN | categoría validada; el borrado solo procede sin platos asociados | 400, 403, 404, 409 |
