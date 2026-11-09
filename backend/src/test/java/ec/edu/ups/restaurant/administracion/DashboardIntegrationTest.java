@@ -64,6 +64,6 @@ class DashboardIntegrationTest extends IntegrationTest {
     Map<String, Object> other = get(OTHER_ADMIN, "/api/v1/dashboard/admin?range=LAST_30_DAYS");
     assertThat(((Number) map(other, "completedOrders").get("current")).longValue()).isZero();
     assertThat(list(other, "topDishes")).noneMatch(item -> item.get("name").equals("Encebollado clásico"));
-    assertThat(((Number) other.get("openHandoffs")).longValue()).isZero();
+    assertThat(((Number) other.get("openHandoffs")).longValue()).as("solo su derivación sembrada en V12").isEqualTo(1L);
   }
 }

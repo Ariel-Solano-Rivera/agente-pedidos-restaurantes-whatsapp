@@ -10,5 +10,6 @@
 | Operación y disponibilidad | `operacion/OperationController` | [operacion.md](operacion.md) | Implementado parcialmente |
 | Pedidos | `pedidos/OrderController`, `OrderTransitionPolicy`, `OrderFilter`, `OrderReportingService` | [pedidos.md](pedidos.md) | Filtros y paginación en backend; avanzar, retroceder con motivo y deshacer de cocina por rol, con historial e idempotencia; COCINA sin montos; pruebas unitarias y de integración |
 | Pagos | `pagos/PaymentController` | [pagos.md](pagos.md) | Solo lectura; ADR pendiente |
-| Intervención humana | `intervencion/HandoffController` | [intervencion-humana.md](intervencion-humana.md) | Implementado parcialmente |
-| Esquema y datos ficticios | `resources/db/migration/` | [persistencia.md](persistencia.md) | V1–V11; modelo sensible por revisar |
+| Intervención humana | `intervencion/HandoffController`, `HandoffReportingService` | [intervencion-humana.md](intervencion-humana.md) | Tomar/liberar con regla de dueño, transacción y auditoría |
+| CRM | `intervencion/CrmController`, `pedidos/OrderReportingService.customerHistory` | [crm.md](crm.md) | Conversaciones con pestañas y búsqueda, hilo, respuesta STAFF idempotente, ficha del cliente (V12); sin WhatsApp |
+| Esquema y datos ficticios | `resources/db/migration/` | [persistencia.md](persistencia.md) | V1–V12; modelo sensible por revisar |

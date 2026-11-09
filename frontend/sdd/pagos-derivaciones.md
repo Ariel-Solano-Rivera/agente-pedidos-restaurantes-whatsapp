@@ -2,11 +2,11 @@
 
 ## Propósito y alcance
 
-Muestra pagos sintéticos en solo lectura y permite a ADMIN/CAJA tomar o liberar derivaciones humanas.
+**Estado real:** no existe una pantalla de pagos en el panel. Las derivaciones se atienden desde la sección CRM (`crm.md`). Este documento conserva el alcance previsto de pagos.
 
 ## Fuente y dependencias
 
-- Código: `src/App.tsx` (`Payments`, `Handoffs`).
+- Código: no implementado (los componentes `Payments` y `Handoffs` citados antes no existen). Derivaciones: `src/features/crm/CrmPage.tsx`.
 - API: `GET /payments`, `GET /handoffs`, `POST /handoffs/{id}/claim`, `POST /handoffs/{id}/release`.
 - Roles: ADMIN y CAJA; COCINA no ve estas pestañas.
 

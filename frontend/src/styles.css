@@ -398,3 +398,49 @@ button.secondary:hover { background: #d9e7f6; }
 @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 @media (prefers-reduced-motion: reduce) { .kpi-tile, .hour-chart .bar { animation: none; } .bar-fill, .dashboard-body { transition: none; } }
+
+/* CRM (T4). */
+.crm-layout { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 16px; align-items: start; }
+.crm-list, .crm-thread, .crm-customer { padding: 14px; border: 1px solid #c7d6e6; border-radius: 14px; background: #fff; }
+.crm-list ul { display: grid; gap: 6px; max-height: 64vh; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.crm-list .segmented { display: flex; width: 100%; }
+.crm-list .segmented button { flex: 1; padding: 7px 6px; font-size: .8rem; }
+.crm-search { display: grid; gap: 6px; margin: 12px 0 6px; color: #244b78; font-size: .82rem; font-weight: 720; }
+.crm-search input { min-height: 40px; padding: 8px 10px; border: 1px solid #b7cbe0; border-radius: 8px; }
+.crm-item { display: grid; gap: 4px; width: 100%; padding: 10px; text-align: left; color: #20476e; background: #f7fafd; border: 1px solid transparent; }
+.crm-item:hover { background: #eaf2fb; }
+.crm-item.active { background: #eaf2fb; border-color: #0a5eae; }
+.crm-item-head { display: flex; justify-content: space-between; gap: 8px; }
+.crm-item-head time { color: #4a6585; font-size: .75rem; font-weight: 500; }
+.crm-item-preview { overflow: hidden; color: #4a6585; font-size: .82rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.crm-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.badge { padding: 2px 7px; color: #0a3165; border-radius: 999px; background: #dfeaf6; font-size: .7rem; font-style: normal; font-weight: 760; }
+.badge.pending { color: #fff; background: #9a5d00; }
+.badge.human { color: #fff; background: #5a3fa8; }
+.crm-detail { display: grid; grid-template-columns: 1fr minmax(220px, 280px); gap: 16px; align-items: start; }
+.crm-thread-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.crm-thread-header h2 { margin: 0; color: #123862; font-size: 1.15rem; }
+.crm-thread-header span { color: #4a6585; font-size: .85rem; }
+.crm-handoff { margin: 10px 0; padding: 10px; border-left: 4px solid #9a5d00; border-radius: 6px; background: #fff7e8; color: #5c3b06; font-size: .88rem; }
+.crm-handoff.in_progress { border-left-color: #5a3fa8; background: #f4f0fd; color: #3b2a72; }
+.crm-handoff.resolved { border-left-color: #6b7f95; background: #f3f6f9; color: #34495e; }
+.crm-messages { display: grid; gap: 8px; max-height: 46vh; margin: 10px 0; padding: 0; overflow-y: auto; list-style: none; }
+.bubble { max-width: 80%; padding: 8px 12px; border-radius: 12px; background: #f1f5f9; }
+.bubble p { margin: 2px 0 0; color: #1d3550; white-space: pre-wrap; }
+.bubble small { color: #4a6585; font-size: .72rem; }
+.bubble.agent { justify-self: end; background: #eaf2fb; }
+.bubble.staff { justify-self: end; background: #e9f6ee; border: 1px solid #b9dfc6; }
+.crm-reply { display: grid; gap: 6px; }
+.crm-reply label { color: #244b78; font-size: .85rem; font-weight: 720; }
+.crm-reply textarea { width: 100%; padding: 10px; border: 1px solid #b7cbe0; border-radius: 8px; font: inherit; resize: vertical; }
+.crm-reply div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.crm-reply small { color: #4a6585; }
+.crm-customer h3, .crm-customer h4 { margin: 0 0 8px; color: #123862; }
+.crm-customer h4 { margin-top: 12px; font-size: .92rem; }
+.crm-spent { margin: 10px 0 0; color: #244b78; font-size: .88rem; }
+.crm-orders { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: .82rem; }
+.crm-orders li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 6px 8px; border-radius: 8px; background: #f7fafd; }
+.crm-orders small { color: #4a6585; }
+.crm-placeholder { min-height: 200px; display: grid; place-items: center; }
+@media (max-width: 1100px) { .crm-detail { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .crm-layout { grid-template-columns: 1fr; } .bubble { max-width: 92%; } }

@@ -6,7 +6,7 @@ Describe las migraciones PostgreSQL que sostienen el incremento administrativo. 
 
 ## Fuente y dependencias
 
-- Migraciones: `src/main/resources/db/migration/V1__administrative_schema.sql` a `V11__availability_tracking.sql`.
+- Migraciones: `src/main/resources/db/migration/V1__administrative_schema.sql` a `V12__crm_customers_messages.sql`.
 - Arranque: Flyway se ejecuta por JDBC solo durante inicio; las rutas usan R2DBC.
 
 ## Reglas implementadas
@@ -20,11 +20,12 @@ Describe las migraciones PostgreSQL que sostienen el incremento administrativo. 
 - `menu_presentation` y `catalog_ingredient` son catálogos aislados por restaurante y únicos por nombre. No son FKs de las opciones de plato, para que una edición o baja posterior no modifique configuraciones o ventas históricas.
 - Restricciones evitan saldo o precio negativo en las tablas definidas y FKs relacionan recursos del mismo restaurante cuando están modeladas.
 - V11 añade `availability.tracked` (por defecto `TRUE` para las variantes existentes): indica si la variante controla cantidad. Los platos creados desde el panel nacen con `tracked=false` y el primer ajuste de disponibilidad lo activa.
+- V12 crea `customer` (único por `(restaurante_id, phone)`), añade `customer_id` con FK compuesta a `conversation` y `customer_order` (rellenado por teléfono), crea `conversation_message` (autor `CUSTOMER|AGENT|STAFF`, cuerpo de 1 a 2000 caracteres, `external_message_id` único por restaurante, FK compuesta a la conversación, `STAFF` exige `author_user_id`) y CHECK de `conversation.control_mode` y `human_handoff.status`. Siembra 7 conversaciones ficticias (6 de Mar Azul, 1 de Sierra Verde) con mensajes y derivaciones abiertas, en atención y resueltas.
 - Credenciales de demostración se regeneran como BCrypt en la migración V5 y son solo para entorno local.
 
 ## Pruebas
 
-- Arranque Docker y `OrdersIntegrationTest` (Testcontainers) aplican Flyway V1 a V11 correctamente.
+- Arranque Docker y `OrdersIntegrationTest` (Testcontainers) aplican Flyway V1 a V12 correctamente.
 - La prueba de humo valida aislamiento entre los dos restaurantes ficticios.
 
 ## TBD / exclusiones
