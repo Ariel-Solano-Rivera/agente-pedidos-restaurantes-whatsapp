@@ -2,6 +2,7 @@
 
 | Módulo | Fuente | Documento | Estado |
 |---|---|---|---|
+| Sistema de diseño | `src/design/tokens.css`, `src/design/components.css`, `public/fonts/`, `muestra-sistema.html` | [sistema-de-diseno.md](sistema-de-diseno.md) | Aprobado (etapa 0): Geist + Geist Mono, tokens claro/oscuro con preferencia Claro/Oscuro/Sistema, estados con icono y texto, componentes `ds-*`; las páginas lo adoptan al rediseñarse |
 | Shell, sesión y API | `src/App.tsx`, `src/components/AppShell.tsx`, `src/shared/api.ts`, `src/main.tsx`, `src/styles.css`, `public/tesis-logo.png` | [app-shell-auth.md](app-shell-auth.md) | Implementado; Sidebar Inicio → Pedidos → CRM (ADMIN/CAJA) → Menú → Catálogo → Configuración (ADMIN); tema por variables CSS |
 | Inicio y dashboard | `src/features/inicio/HomePage.tsx`, `AdminDashboard.tsx` | [inicio.md](inicio.md) | Resumen por rol; dashboard de ADMIN con rango, comparación, tarjetas y gráficos accesibles; caja de hoy para CAJA |
 | Catálogo de menú | `src/features/catalogo/CatalogPage.tsx` | [catalogo.md](catalogo.md) | Implementado; selector, búsqueda, diálogos y CRUD de tres catálogos |

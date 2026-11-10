@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de diseño</title>
+<link rel="preload" href="/fonts/geist/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/src/design/tokens.css">
+<link rel="stylesheet" href="/src/design/components.css">
+<style>
+
+  body { margin: 0; }
+  .toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-8); align-items: end; padding: var(--space-3) var(--space-6); background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  .toolbar .ds-chip { min-height: 38px; }
+  .page { max-width: 1160px; margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-14); display: grid; gap: var(--space-10); }
+  /* Regla del sistema: los hijos de grid/flex que contienen tablas o textos largos llevan min-width: 0. */
+  .page > *, .grid-2 > *, .kitchen > * { min-width: 0; }
+  section > header { flex-wrap: wrap; }
+  .intro h1 { font-size: var(--text-2xl); }
+  .intro p { margin: var(--space-2) 0 0; max-width: 70ch; color: var(--text-muted); }
+  section > header { display: flex; justify-content: space-between; gap: var(--space-4); align-items: baseline; margin-bottom: var(--space-4); }
+  section > header h2 { font-size: var(--text-xl); }
+  .grid-2 { display: grid; gap: var(--space-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+  .stack { display: grid; gap: var(--space-3); }
+  .specimen h1 { font-size: var(--text-3xl); }
+  .specimen h2 { font-size: var(--text-2xl); margin-top: var(--space-3); }
+  .specimen h3 { font-size: var(--text-xl); margin-top: var(--space-2); }
+  .specimen p { margin: var(--space-2) 0 0; max-width: 62ch; }
+  .digits { font-size: var(--text-2xl); font-weight: var(--weight-semibold); line-height: 1.25; }
+  .digits { width: max-content; text-align: right; }
+  .digits span { display: block; }
+  .combo-note { display: grid; gap: var(--space-2); }
+  .combo-note dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px var(--space-4); margin: 0; font-size: var(--text-sm); }
+  .combo-note dt { color: var(--text-subtle); }
+  .combo-note dd { margin: 0; }
+  .check { display: inline-flex; gap: 6px; align-items: center; font-size: var(--text-sm); font-weight: var(--weight-semibold); }
+  .check[data-ok="true"] { color: var(--success); }
+  .check[data-ok="false"] { color: var(--danger); }
+  /* Tarjeta de pedido */
+  .order-card { display: grid; gap: var(--space-4); }
+  .order-card__top { display: flex; justify-content: space-between; gap: var(--space-3); align-items: start; }
+  .order-code { font-family: var(--font-code); font-size: var(--text-xl); font-weight: var(--weight-bold); letter-spacing: -.01em; }
+  .meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); color: var(--text-muted); }
+  .meta span { display: inline-flex; gap: 6px; align-items: center; }
+  .meta svg { width: 16px; height: 16px; }
+  .order-card__total { display: flex; justify-content: space-between; align-items: center; padding-top: var(--space-3); border-top: 1px solid var(--border); }
+  .order-card__total b { font-size: var(--text-xl); }
+  /* Cocina (siempre oscuro) */
+  .kitchen { padding: var(--space-6); border-radius: var(--radius-xl); background: var(--bg); color: var(--text); display: grid; gap: var(--space-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+  .kitchen-col { display: grid; gap: var(--space-3); align-content: start; }
+  .kitchen-col > h3 { display: flex; justify-content: space-between; align-items: center; font-size: var(--text-md); }
+  .kcard { display: grid; gap: var(--space-4); padding: var(--space-5); border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--line, var(--border)); }
+  .kcard__head { display: flex; justify-content: space-between; align-items: center; }
+  .kcard .order-code { font-size: var(--text-2xl); }
+  .elapsed { display: inline-flex; gap: 6px; align-items: center; font-size: var(--text-lg); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; color: var(--st-pending-fg); }
+  .elapsed svg { width: 20px; height: 20px; }
+  .units { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+  .units li { display: grid; gap: 4px; padding-left: var(--space-3); border-left: 2px solid var(--border-strong); }
+  .units b { font-size: var(--text-lg); }
+  .mods { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mod { padding: 2px 8px; border-radius: var(--radius-sm); font-size: var(--text-sm); font-weight: var(--weight-medium); background: var(--surface-sunken); color: var(--text-muted); }
+  .mod--minus { color: var(--st-rejected-fg); background: var(--st-rejected-bg); }
+  .mod--plus { color: var(--st-ready-fg); background: var(--st-ready-bg); }
+  /* Paleta y contraste */
+  .contrast-table td:first-child { display: flex; gap: var(--space-2); align-items: center; }
+  .sw { width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid var(--border); display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
+  .ds-chip[aria-pressed="true"] .sw { border-color: var(--on-action); }
+  .skeleton-card { display: grid; gap: var(--space-3); }
+  @media (max-width: 640px) { .toolbar { position: static; padding: var(--space-3) var(--space-4); } .page { padding: var(--space-6) var(--space-4) var(--space-10); } }
+</style>
+</head>
+<body class="ds-root">
+<!-- Iconos de línea propios (24×24, trazo 1.75). En la app pasarán a componentes React. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c3.9 0 6.5-2.6 6.5-6.2 0-3.9-3-6.4-4.4-9.8-1.6 1.8-2.2 3.7-2.1 5.6-1.2-.8-2-2-2.3-3.4C7.3 9.2 5.5 11.8 5.5 14.8 5.5 18.4 8.1 21 12 21Z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17h16M6 17a6 6 0 0 1 12 0M12 8V6M10 20h4"/></symbol>
+    <symbol id="i-check-double" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m2.5 12.5 4.5 4.5L16.5 7.5M12 16.5l.5.5L22 7.5"/></symbol>
+    <symbol id="i-x-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/></symbol>
+    <symbol id="i-dashed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-dasharray="3 3"><circle cx="12" cy="12" r="9"/></symbol>
+    <symbol id="i-minus-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m5-5-5 5 5 5"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+    <symbol id="i-moto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17" r="3"/><circle cx="18.5" cy="17" r="3"/><path d="M8.5 17h6l2-6h-4M14 6h2.5l2 5M5.5 17l3-6h4"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></symbol>
+  </defs>
+</svg>
+
+<div class="toolbar" role="region" aria-label="Opciones de la muestra">
+  <fieldset class="ds-filter-group" aria-label="Tema" data-control="theme">
+    <legend class="ds-eyebrow">Tema</legend>
+    <button class="ds-chip" type="button" data-value="light" aria-pressed="true"><svg class="ds-chip__check"><use href="#i-check"/></svg>Claro</button>
+    <button class="ds-chip" type="button" data-value="dark" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Oscuro</button>
+    <button class="ds-chip" type="button" data-value="system" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Sistema</button>
+  </fieldset>
+  <fieldset class="ds-filter-group" aria-label="Color de marca de ejemplo" data-control="brand">
+    <legend class="ds-eyebrow">Marca de ejemplo</legend>
+    <button class="ds-chip" type="button" data-value="#0a3165" aria-pressed="true"><svg class="ds-chip__check"><use href="#i-check"/></svg><span class="sw" style="background:#0a3165;width:16px;height:16px"></span>Por defecto</button>
+    <button class="ds-chip" type="button" data-value="#2f5d3a" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg><span class="sw" style="background:#2f5d3a;width:16px;height:16px"></span>Verde</button>
+    <button class="ds-chip" type="button" data-value="#a3402a" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg><span class="sw" style="background:#a3402a;width:16px;height:16px"></span>Terracota</button>
+    <button class="ds-chip" type="button" data-value="#e0b43a" data-low="true" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg><span class="sw" style="background:#e0b43a;width:16px;height:16px"></span>Mostaza (sin AA)</button>
+  </fieldset>
+</div>
+
+<main class="page">
+  <div class="intro">
+    <p class="ds-eyebrow">Etapa 0 · aprobado</p>
+    <h1>Sistema de diseño del panel</h1>
+    <p>Guía viva de tokens y componentes base (solo desarrollo). Tipografía: Geist y Geist Mono. Cambia el tema o la marca de ejemplo arriba. Los datos son ficticios. Los colores salen de los tokens de <code>src/design/tokens.css</code> y la marca de ejemplo simula la respuesta de <code>GET /branding</code>.</p>
+  </div>
+
+  <!-- 1. Tipografía -->
+  <section aria-labelledby="t-tipo">
+    <header><h2 id="t-tipo">Tipografía</h2><span class="check" id="tnum-check" role="status"></span></header>
+    <div class="grid-2">
+      <div class="ds-card specimen">
+        <p class="ds-eyebrow">Títulos y texto</p>
+        <h1>Pedidos de hoy</h1>
+        <h2>Encebollado mixto, grande</h2>
+        <h3>Ñoquis de calabaza con piñones</h3>
+        <p>El cliente pidió el encebollado <b>sin cebolla</b> y con doble porción de chifles. ¿Confirmas el pedido? ¡Está listo para retirar a las 12:40!</p>
+        <p class="ds-muted">El veloz murciélago hindú comía feliz cardillo y kiwi. La cigüeña tocaba el saxofón detrás del palenque de paja.</p>
+        <p class="ds-muted" style="font-size:var(--text-sm)">Texto pequeño (14 px) · Tamaño de etiqueta y celdas densas · 1 l I | 0 O</p>
+      </div>
+      <div class="ds-card stack">
+        <p class="ds-eyebrow">Cifras tabulares</p>
+        <div class="digits ds-num"><span>$1.111,11</span><span>$8.808,80</span><span>$245,50</span><span>$7,05</span></div>
+        <p class="ds-eyebrow" style="margin-top:var(--space-3)">Número de pedido</p>
+        <span class="order-code">PED-7F3A9C21</span>
+        <div class="combo-note"><p class="ds-eyebrow" style="margin-top:var(--space-3)">Tipografía elegida</p><b>Geist + Geist Mono</b><dl><dt>Uso</dt><dd>Geist en títulos, texto y cifras; Geist Mono solo en el número de pedido.</dd><dt>Peso</dt><dd>52 KB en woff2 (latín, variable)</dd><dt>Licencia</dt><dd>SIL Open Font License 1.1</dd></dl></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Tabla con precios -->
+  <section aria-labelledby="t-tabla">
+    <header><h2 id="t-tabla">Tabla con precios</h2><span class="ds-muted" style="font-size:var(--text-sm)">Unidades separadas, cada una con su configuración</span></header>
+    <div class="ds-table-wrap">
+      <table class="ds-table">
+        <thead><tr><th scope="col">Unidad</th><th scope="col">Plato y modificaciones</th><th scope="col" class="is-num">Precio</th></tr></thead>
+        <tbody>
+          <tr><td class="ds-num">1</td><td><b>Encebollado mixto</b> · Grande<div class="mods" style="margin-top:4px"><span class="mod mod--plus">+ Chifles</span><span class="mod mod--minus">Sin cebolla</span></div></td><td class="is-num" data-money="7.25"></td></tr>
+          <tr><td class="ds-num">2</td><td><b>Encebollado mixto</b> · Mediano</td><td class="is-num" data-money="5.5"></td></tr>
+          <tr><td class="ds-num">3</td><td><b>Jugo de naranjilla</b> · 500 ml<div class="mods" style="margin-top:4px"><span class="mod">Sin azúcar</span></div></td><td class="is-num" data-money="2"></td></tr>
+          <tr><td class="ds-num">4</td><td><b>Bandeja familiar de mariscos</b> · Para 4</td><td class="is-num" data-money="101.25"></td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td></td><td class="ds-muted">Subtotal</td><td class="is-num" data-money="116"></td></tr>
+          <tr><td></td><td class="ds-muted">Tarifa de entrega · Zona Norte</td><td class="is-num" data-money="2.5"></td></tr>
+          <tr><td></td><td>Total</td><td class="is-num" data-money="118.5" style="font-size:var(--text-lg)"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- 3. Botones -->
+  <section aria-labelledby="t-botones">
+    <header><h2 id="t-botones">Botones</h2><span class="ds-muted" style="font-size:var(--text-sm)">44 px en el panel · 56 px en cocina</span></header>
+    <div class="ds-card stack">
+      <div class="row">
+        <button class="ds-btn ds-btn--primary" type="button" data-open-modal>Pasar a En preparación<svg><use href="#i-arrow-right"/></svg></button>
+        <button class="ds-btn ds-btn--secondary" type="button"><svg><use href="#i-arrow-left"/></svg>Retroceder a Aceptado</button>
+        <button class="ds-btn ds-btn--ghost" type="button"><svg><use href="#i-undo"/></svg>Deshacer</button>
+        <button class="ds-btn ds-btn--danger" type="button">Rechazar pedido</button>
+        <button class="ds-btn ds-btn--primary" type="button" disabled>Guardando…</button>
+      </div>
+      <div class="row">
+        <button class="ds-btn ds-btn--primary ds-btn--lg" type="button">Pasar a Listo<svg><use href="#i-arrow-right"/></svg></button>
+        <button class="ds-btn ds-btn--secondary ds-btn--lg" type="button"><svg><use href="#i-undo"/></svg>Deshacer</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Insignias -->
+  <section aria-labelledby="t-estados">
+    <header><h2 id="t-estados">Estados del pedido y del pago</h2><span class="ds-muted" style="font-size:var(--text-sm)">Color, icono y texto a la vez</span></header>
+    <div class="ds-card stack">
+      <p class="ds-eyebrow">Pedido</p>
+      <div class="row">
+        <span class="ds-badge" data-status="PENDING_DECISION"><svg><use href="#i-clock"/></svg>Por aceptar</span>
+        <span class="ds-badge" data-status="ACCEPTED"><svg><use href="#i-check"/></svg>Aceptado</span>
+        <span class="ds-badge" data-status="PREPARING"><svg><use href="#i-flame"/></svg>En preparación</span>
+        <span class="ds-badge" data-status="READY"><svg><use href="#i-bell"/></svg>Listo</span>
+        <span class="ds-badge" data-status="COMPLETED"><svg><use href="#i-check-double"/></svg>Completado</span>
+        <span class="ds-badge" data-status="REJECTED"><svg><use href="#i-x-circle"/></svg>Rechazado</span>
+        <span class="ds-badge" data-status="CANCELLED"><svg><use href="#i-ban"/></svg>Cancelado</span>
+        <span class="ds-badge" data-status="EXPIRED"><svg><use href="#i-hourglass"/></svg>Vencido</span>
+      </div>
+      <p class="ds-eyebrow" style="margin-top:var(--space-2)">Pago</p>
+      <div class="row">
+        <span class="ds-badge" data-payment="PENDING"><svg><use href="#i-dashed"/></svg>Pago pendiente</span>
+        <span class="ds-badge" data-payment="PENDING_VERIFICATION"><svg><use href="#i-receipt"/></svg>Pago por verificar</span>
+        <span class="ds-badge" data-payment="CONFIRMED"><svg><use href="#i-check-circle"/></svg>Pago confirmado</span>
+        <span class="ds-badge" data-payment="REJECTED"><svg><use href="#i-x-circle"/></svg>Pago rechazado</span>
+        <span class="ds-badge" data-payment="NOT_REQUIRED"><svg><use href="#i-minus-circle"/></svg>Pago no requerido</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Filtros y búsqueda -->
+  <section aria-labelledby="t-filtros">
+    <header><h2 id="t-filtros">Filtros como botones</h2><button class="ds-btn ds-btn--ghost" type="button" id="clear-filters">Limpiar filtros</button></header>
+    <div class="ds-card stack" style="gap:var(--space-5)">
+      <label class="ds-search"><span class="ds-field__label" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">Buscar pedido</span><svg><use href="#i-search"/></svg><input class="ds-input" type="search" placeholder="Buscar por número, nombre o teléfono"></label>
+      <fieldset class="ds-filter-group demo-filter" data-multi>
+        <legend class="ds-eyebrow">Estado</legend>
+        <button class="ds-chip" type="button" aria-pressed="true"><svg class="ds-chip__check"><use href="#i-check"/></svg>Por aceptar<span class="ds-chip__count">4</span></button>
+        <button class="ds-chip" type="button" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Aceptado<span class="ds-chip__count">3</span></button>
+        <button class="ds-chip" type="button" aria-pressed="true"><svg class="ds-chip__check"><use href="#i-check"/></svg>En preparación<span class="ds-chip__count">6</span></button>
+        <button class="ds-chip" type="button" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Listo<span class="ds-chip__count">2</span></button>
+        <button class="ds-chip" type="button" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Completado<span class="ds-chip__count">18</span></button>
+      </fieldset>
+      <div class="row" style="align-items:start;gap:var(--space-8)">
+        <fieldset class="ds-filter-group demo-filter">
+          <legend class="ds-eyebrow">Modalidad</legend>
+          <button class="ds-chip" type="button" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Retiro<span class="ds-chip__count">12</span></button>
+          <button class="ds-chip" type="button" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Entrega<span class="ds-chip__count">21</span></button>
+        </fieldset>
+        <fieldset class="ds-filter-group demo-filter">
+          <legend class="ds-eyebrow">Rango</legend>
+          <button class="ds-chip" type="button" aria-pressed="true"><svg class="ds-chip__check"><use href="#i-check"/></svg>Hoy</button>
+          <button class="ds-chip" type="button" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>7 días</button>
+          <button class="ds-chip" type="button" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Personalizado</button>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Tarjetas -->
+  <section aria-labelledby="t-tarjetas">
+    <header><h2 id="t-tarjetas">Tarjeta de pedido</h2><span class="ds-muted" style="font-size:var(--text-sm)">Las acciones salen de allowedTransitions</span></header>
+    <div class="grid-2">
+      <article class="ds-card ds-card--interactive order-card">
+        <div class="order-card__top">
+          <div><span class="order-code">PED-7F3A9C21</span><div style="font-weight:var(--weight-semibold);margin-top:2px">Lucía Peñafiel</div></div>
+          <span class="ds-badge" data-status="PENDING_DECISION"><svg><use href="#i-clock"/></svg>Por aceptar</span>
+        </div>
+        <div class="meta"><span><svg><use href="#i-moto"/></svg>Entrega · Zona Norte</span><span><svg><use href="#i-phone"/></svg>+593 99 000 0001</span><span><svg><use href="#i-clock"/></svg>hace 6 min</span></div>
+        <div class="order-card__total"><span class="ds-badge" data-payment="PENDING_VERIFICATION"><svg><use href="#i-receipt"/></svg>Pago por verificar</span><b class="ds-num" data-money="118.5"></b></div>
+        <div class="row"><button class="ds-btn ds-btn--primary" type="button">Aceptar</button><button class="ds-btn ds-btn--secondary" type="button">Rechazar</button><button class="ds-btn ds-btn--ghost" type="button" style="margin-left:auto">Ver detalle</button></div>
+      </article>
+      <article class="ds-card ds-card--interactive order-card">
+        <div class="order-card__top">
+          <div><span class="order-code">PED-21B0D4E8</span><div style="font-weight:var(--weight-semibold);margin-top:2px">Andrés Muñoz</div></div>
+          <span class="ds-badge" data-status="PREPARING"><svg><use href="#i-flame"/></svg>En preparación</span>
+        </div>
+        <div class="meta"><span><svg><use href="#i-bag"/></svg>Retiro · 12:40</span><span><svg><use href="#i-phone"/></svg>+593 99 000 0002</span><span><svg><use href="#i-clock"/></svg>hace 14 min</span></div>
+        <div class="order-card__total"><span class="ds-badge" data-payment="CONFIRMED"><svg><use href="#i-check-circle"/></svg>Pago confirmado</span><b class="ds-num" data-money="12.75"></b></div>
+        <div class="row"><button class="ds-btn ds-btn--primary" type="button">Pasar a Listo<svg><use href="#i-arrow-right"/></svg></button><button class="ds-btn ds-btn--secondary" type="button"><svg><use href="#i-arrow-left"/></svg>Retroceder</button><button class="ds-btn ds-btn--ghost" type="button" style="margin-left:auto">Ver detalle</button></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 7. Cocina (tema oscuro) -->
+  <section aria-labelledby="t-cocina">
+    <header><h2 id="t-cocina">Cocina · tema oscuro</h2><span class="ds-muted" style="font-size:var(--text-sm)">Sin montos · objetivos de 56 px</span></header>
+    <div class="kitchen ds-root" data-theme="dark">
+      <div class="kitchen-col">
+        <h3><span class="ds-badge" data-status="ACCEPTED"><svg><use href="#i-check"/></svg>Por preparar</span><span class="ds-num ds-muted">2</span></h3>
+        <article class="kcard" style="--line:var(--st-accepted-line)">
+          <div class="kcard__head"><span class="order-code">PED-9C04A1F2</span><span class="elapsed"><svg><use href="#i-clock"/></svg>4 min</span></div>
+          <div class="meta"><span><svg><use href="#i-bag"/></svg>Retiro · 13:05</span></div>
+          <ul class="units"><li><b>Seco de pollo</b><div class="mods"><span class="mod">Presa: pierna</span><span class="mod mod--minus">Sin maduro</span></div></li></ul>
+          <button class="ds-btn ds-btn--primary ds-btn--lg" type="button">Pasar a En preparación<svg><use href="#i-arrow-right"/></svg></button>
+        </article>
+      </div>
+      <div class="kitchen-col">
+        <h3><span class="ds-badge" data-status="PREPARING"><svg><use href="#i-flame"/></svg>En preparación</span><span class="ds-num ds-muted">1</span></h3>
+        <article class="kcard" style="--line:var(--st-preparing-line)">
+          <div class="kcard__head"><span class="order-code">PED-21B0D4E8</span><span class="elapsed"><svg><use href="#i-clock"/></svg>14 min</span></div>
+          <div class="meta"><span><svg><use href="#i-moto"/></svg>Entrega · Zona Norte</span></div>
+          <ul class="units">
+            <li><b>Encebollado mixto · Grande</b><div class="mods"><span class="mod mod--plus">+ Chifles</span><span class="mod mod--minus">Sin cebolla</span></div></li>
+            <li><b>Encebollado mixto · Mediano</b><span class="ds-muted" style="font-size:var(--text-sm)">Sin modificaciones</span></li>
+          </ul>
+          <div class="row"><button class="ds-btn ds-btn--primary ds-btn--lg" type="button" style="flex:1">Pasar a Listo<svg><use href="#i-arrow-right"/></svg></button><button class="ds-btn ds-btn--secondary ds-btn--lg" type="button" aria-label="Deshacer el último cambio"><svg><use href="#i-undo"/></svg></button></div>
+        </article>
+      </div>
+      <div class="kitchen-col">
+        <h3><span class="ds-badge" data-status="READY"><svg><use href="#i-bell"/></svg>Listo</span><span class="ds-num ds-muted">1</span></h3>
+        <article class="kcard" style="--line:var(--st-ready-line)">
+          <div class="kcard__head"><span class="order-code">PED-5E77C310</span><span class="elapsed" style="color:var(--st-ready-fg)"><svg><use href="#i-check"/></svg>Listo</span></div>
+          <ul class="units"><li><b>Ceviche de camarón</b><div class="mods"><span class="mod">Con canguil aparte</span></div></li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Campos, interruptor, pestañas y modal -->
+  <section aria-labelledby="t-campos">
+    <header><h2 id="t-campos">Campos, pestañas y modal</h2></header>
+    <div class="grid-2">
+      <div class="ds-card stack" style="gap:var(--space-4)">
+        <label class="ds-field"><span class="ds-field__label">Nombre del plato</span><input class="ds-input" value="Encebollado mixto"></label>
+        <label class="ds-field"><span class="ds-field__label">Precio base</span><input class="ds-input ds-num" value="5,5O" aria-invalid="true" aria-describedby="err-precio"><span class="ds-field__error" id="err-precio"><svg width="16" height="16"><use href="#i-alert"/></svg>Escribe un precio válido, por ejemplo 5,50.</span></label>
+        <label class="ds-switch"><input type="checkbox" checked role="switch"> Disponible para pedidos</label>
+      </div>
+      <div class="ds-card stack">
+        <div class="ds-tabs" role="tablist" aria-label="Conversaciones">
+          <button class="ds-tab" role="tab" aria-selected="true">Por contestar</button>
+          <button class="ds-tab" role="tab" aria-selected="false">Con control humano</button>
+          <button class="ds-tab" role="tab" aria-selected="false">Todas</button>
+        </div>
+        <p class="ds-muted" style="margin:var(--space-2) 0">El modal confirma operaciones sensibles con el estado de destino visible.</p>
+        <div><button class="ds-btn ds-btn--secondary" type="button" data-open-modal>Abrir modal de confirmación</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Vacío y carga -->
+  <section aria-labelledby="t-vacio">
+    <header><h2 id="t-vacio">Estado vacío y carga</h2></header>
+    <div class="grid-2">
+      <div class="ds-card ds-empty">
+        <svg viewBox="0 0 160 110" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 96h132"/>
+          <path d="M40 96V54h80v42"/><path d="M34 54h92"/>
+          <path d="M60 54c0-12 9-22 20-22s20 10 20 22"/><path d="M80 32v-6"/><circle cx="80" cy="23" r="3"/>
+          <path d="M58 70h44M58 80h28"/>
+          <path d="M128 30l4-4M134 40h6M124 20v-6" stroke-dasharray="0"/>
+        </svg>
+        <h3>No hay pedidos con estos filtros</h3>
+        <p>Prueba con otro rango de fechas o quita algún filtro para ver más pedidos.</p>
+        <button class="ds-btn ds-btn--primary" type="button">Limpiar filtros</button>
+      </div>
+      <div class="ds-card skeleton-card" aria-busy="true" aria-label="Cargando pedidos">
+        <span class="ds-skeleton" style="width:40%;height:22px"></span>
+        <span class="ds-skeleton" style="width:65%;height:14px"></span>
+        <span class="ds-skeleton" style="width:100%;height:56px;border-radius:var(--radius-md)"></span>
+        <span class="ds-skeleton" style="width:100%;height:56px;border-radius:var(--radius-md)"></span>
+        <span class="ds-skeleton" style="width:30%;height:44px;border-radius:var(--radius-md)"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. Contraste de tokens -->
+  <section aria-labelledby="t-contraste">
+    <header><h2 id="t-contraste">Contraste de los tokens</h2><span class="ds-muted" style="font-size:var(--text-sm)">Calculado sobre el tema activo · mínimo 4.5:1</span></header>
+    <div class="ds-table-wrap"><table class="ds-table contrast-table"><thead><tr><th scope="col">Par</th><th scope="col">Uso</th><th scope="col" class="is-num">Relación</th><th scope="col">AA</th></tr></thead><tbody id="contrast-body"></tbody></table></div>
+  </section>
+</main>
+
+<dialog class="ds-modal" id="confirm" aria-labelledby="m-title">
+  <form method="dialog">
+    <div class="ds-modal__body">
+      <h2 id="m-title" style="font-size:var(--text-xl)">¿Pasar PED-21B0D4E8 a En preparación?</h2>
+      <p class="ds-muted" style="margin:0">Cocina verá el pedido en la columna «En preparación». Puedes deshacer el cambio durante 2 minutos.</p>
+      <div class="row"><span class="ds-badge" data-status="ACCEPTED"><svg><use href="#i-check"/></svg>Aceptado</span><svg width="18" height="18" aria-hidden="true"><use href="#i-arrow-right"/></svg><span class="ds-badge" data-status="PREPARING"><svg><use href="#i-flame"/></svg>En preparación</span></div>
+    </div>
+    <div class="ds-modal__actions"><button class="ds-btn ds-btn--secondary" value="cancel">Cancelar</button><button class="ds-btn ds-btn--primary" value="ok">Confirmar</button></div>
+  </form>
+</dialog>
+
+<script type="module">
+  const html = document.documentElement;
+  const money = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
+  document.querySelectorAll('[data-money]').forEach(el => { el.textContent = money.format(Number(el.dataset.money)); });
+
+
+  function tnumWorks(family) {
+    const probe = document.createElement('span');
+    probe.style.cssText = `position:absolute;visibility:hidden;font-family:"${family}";font-size:40px;font-variant-numeric:tabular-nums;white-space:pre`;
+    document.body.append(probe);
+    probe.textContent = '111111'; const ones = probe.getBoundingClientRect().width;
+    probe.textContent = '000000'; const zeros = probe.getBoundingClientRect().width;
+    probe.remove();
+    return Math.abs(ones - zeros) < 0.5;
+  }
+
+  async function renderFonts() {
+    await Promise.all(['Geist', 'Geist Mono'].map(f => document.fonts.load(`500 16px "${f}"`)));
+    const loaded = ['Geist', 'Geist Mono'].every(f => document.fonts.check(`500 16px "${f}"`));
+    const tnum = tnumWorks('Geist');
+    const check = document.getElementById('tnum-check');
+    check.dataset.ok = String(loaded && tnum);
+    check.textContent = `${loaded ? '✓ Fuentes cargadas' : '✗ Fuente no cargada'} · ${tnum ? '✓ cifras tabulares' : '✗ sin cifras tabulares'} (Geist)`;
+  }
+
+  function select(group, button) {
+    group.querySelectorAll('.ds-chip').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+  }
+  // Preferencia de tema: Claro, Oscuro o Sistema (se resuelve con matchMedia y sigue los cambios del sistema).
+  const darkQuery = matchMedia('(prefers-color-scheme: dark)'); let themePref = 'light';
+  function applyTheme() {
+    const dark = themePref === 'dark' || (themePref === 'system' && darkQuery.matches);
+    if (dark) html.dataset.theme = 'dark'; else delete html.dataset.theme;
+    requestAnimationFrame(renderContrast);
+  }
+  darkQuery.addEventListener('change', () => { if (themePref === 'system') applyTheme(); });
+  document.querySelectorAll('[data-control]').forEach(group => group.addEventListener('click', event => {
+    const button = event.target.closest('.ds-chip'); if (!button) return;
+    select(group, button);
+    const value = button.dataset.value;
+    if (group.dataset.control === 'theme') { themePref = value; applyTheme(); }
+    if (group.dataset.control === 'brand') {
+      html.style.setProperty('--brand-primary', value);
+      // Simula contrast[].passesAA = false de GET /branding; el panel no calcula el contraste de la marca.
+      if (button.dataset.low) html.dataset.brandContrast = 'low'; else delete html.dataset.brandContrast;
+      requestAnimationFrame(renderContrast);
+    }
+  }));
+  document.querySelectorAll('.demo-filter').forEach(group => group.addEventListener('click', event => {
+    const button = event.target.closest('.ds-chip'); if (!button) return;
+    if (group.hasAttribute('data-multi')) button.setAttribute('aria-pressed', String(button.getAttribute('aria-pressed') !== 'true'));
+    else select(group, button);
+  }));
+  document.getElementById('clear-filters').addEventListener('click', () => document.querySelectorAll('.demo-filter .ds-chip').forEach(b => b.setAttribute('aria-pressed', 'false')));
+  document.querySelectorAll('[data-open-modal]').forEach(b => b.addEventListener('click', () => document.getElementById('confirm').showModal()));
+
+  // Contraste WCAG de los pares de tokens en el tema activo (verificación del sistema, no de la marca del restaurante).
+  const pairs = [
+    ['--text', '--surface', 'Texto principal'], ['--text-muted', '--surface', 'Texto secundario'], ['--text-subtle', '--surface', 'Texto auxiliar'],
+    ['--text-subtle', '--surface-sunken', 'Encabezado de tabla'], ['--text-muted', '--bg', 'Secundario sobre fondo'], ['--on-action', '--action-bg', 'Botón principal'],
+    ['--danger', '--surface', 'Error de campo'], ['--on-danger', '--danger', 'Botón de peligro'],
+    ['--st-pending-fg', '--st-pending-bg', 'Por aceptar'], ['--st-accepted-fg', '--st-accepted-bg', 'Aceptado'], ['--st-preparing-fg', '--st-preparing-bg', 'En preparación'],
+    ['--st-ready-fg', '--st-ready-bg', 'Listo'], ['--st-completed-fg', '--st-completed-bg', 'Completado'], ['--st-rejected-fg', '--st-rejected-bg', 'Rechazado'],
+    ['--st-cancelled-fg', '--st-cancelled-bg', 'Cancelado'], ['--st-expired-fg', '--st-expired-bg', 'Vencido'],
+    ['--pay-pending-fg', '--pay-pending-bg', 'Pago pendiente'], ['--pay-verifying-fg', '--pay-verifying-bg', 'Pago por verificar'], ['--pay-confirmed-fg', '--pay-confirmed-bg', 'Pago confirmado'],
+  ];
+  pairs.push(['--text-subtle', '--bg', 'Auxiliar sobre fondo'], ['--text-muted', '--surface-sunken', 'Contador de filtro']);
+  const probe = document.createElement('i'); probe.style.display = 'none'; document.body.append(probe);
+  const ctx = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d', { willReadFrequently: true });
+  // El canvas convierte cualquier color calculado (rgb, color(srgb), oklch) a sRGB de 8 bits.
+  function rgb(token) {
+    probe.style.color = `var(${token})`;
+    ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = getComputedStyle(probe).color; ctx.fillRect(0, 0, 1, 1);
+    return [...ctx.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+  }
+  const lum = ([r, g, b]) => [r, g, b].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }).reduce((s, v, i) => s + v * [.2126, .7152, .0722][i], 0);
+  function renderContrast() {
+    const body = document.getElementById('contrast-body');
+    body.innerHTML = pairs.map(([fg, bg, use]) => {
+      const [a, b] = [lum(rgb(fg)), lum(rgb(bg))];
+      const ratio = (Math.max(a, b) + .05) / (Math.min(a, b) + .05); const ok = ratio >= 4.5;
+      return `<tr><td><span class="sw" style="color:var(${fg});background:var(${bg})">Aa</span><code style="font-size:12px">${fg} / ${bg}</code></td><td>${use}</td><td class="is-num">${ratio.toFixed(2)}:1</td><td><span class="check" data-ok="${ok}">${ok ? '✓ Cumple' : '✗ No cumple'}</span></td></tr>`;
+    }).join('');
+  }
+  renderFonts(); renderContrast();
+  // ?theme=dark&brand=%23a3402a abre directamente una variante.
+  const params = new URLSearchParams(location.search);
+  for (const control of ['theme', 'brand']) {
+    const value = params.get(control);
+    if (value) document.querySelector(`[data-control="${control}"] .ds-chip[data-value="${CSS.escape(value)}"]`)?.click();
+  }
+</script>
+</body>
+</html>

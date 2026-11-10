@@ -10,7 +10,7 @@ Si una propuesta de implementación contradice el informe o este archivo, debe d
 
 ## Skills locales de diseño
 
-Las skills de esta tesis viven exclusivamente en `.agents/skills/`: `animate` (animación de interfaz), `impeccable` (jerarquía y layout), `taste-skill` (referencias y dirección visual) y `sdd-restaurant-tesis` (mantenimiento SDD). Úsalas cuando la tarea corresponda; no se consideran configuración global ni se trasladan a otros proyectos.
+Las skills de esta tesis viven exclusivamente en `.agents/skills/`: `animate` (animación de interfaz), `impeccable` (jerarquía y layout), `taste-skill` (referencias y dirección visual) y `sdd-restaurant-tesis` (mantenimiento SDD). Úsalas cuando la tarea corresponda; no se consideran configuración global ni se trasladan a otros proyectos. **TBD:** `animate`, `impeccable` y `taste-skill` no están en el repositorio; ¿se agregan o se retira su mención?
 
 ## SDD obligatorio y mantenimiento sincronizado
 
@@ -18,8 +18,8 @@ El proyecto usa Specification-Driven Development (SDD) junto al código. La estr
 
 ```text
 frontend/sdd/
-  index.md, template.md, app-shell-auth.md, inicio.md, catalogo.md, operacion.md, menu.md,
-  pedidos.md, pagos-derivaciones.md
+  index.md, template.md, sistema-de-diseno.md, app-shell-auth.md, inicio.md, catalogo.md,
+  operacion.md, menu.md, pedidos.md, pagos-derivaciones.md
 backend/sdd/
   index.md, template.md, plataforma.md, seguridad-tenancy.md, menu.md, catalogo.md,
   operacion.md, pedidos.md, pagos.md, intervencion-humana.md, resumen-negocio.md,
@@ -33,7 +33,7 @@ backend/sdd/
 - Si el cambio cruza frontend y backend, actualizar ambos SDD y `docs/contratos-api.md` cuando varíen entradas, salidas, errores o permisos. Mantener `TBD` con una pregunta concreta en vez de inventar una decisión.
 - El SDD describe la implementación verificada: propósito, fuente, actores, contratos/estados visibles, validaciones, efectos de datos, dependencias, pruebas y exclusiones. No duplica el informe ni contradice sus reglas.
 
-**Última sincronización SDD:** 2026-11-08 — T1 (pedidos: filtros, búsqueda y paginación en backend, `allowedTransitions` por rol, retroceso con motivo, deshacer de cocina, historial con rol y tipo de cambio, COCINA sin montos; V10) y T2 (menú: `available` por plato calculado en backend, `availability.tracked` en V11, búsqueda y filtros de categoría, disponibilidad y visibilidad en el cliente) implementados con pruebas JUnit/Testcontainers. T3 (Inicio: dashboard de ADMIN con rango hoy/7/30 días, comparación, indicadores definidos en `backend/sdd/resumen-negocio.md` y servicios de lectura por módulo; CAJA ve cobrado y por cobrar de hoy; COCINA sin montos). T4 (CRM: `customer`, `conversation_message` y CHECK de estados en V12; pestañas, búsqueda, hilo, respuesta STAFF idempotente con control y sin WhatsApp, ficha del cliente; tomar/liberar con regla de dueño, transacción y auditoría). T5 (marca: `restaurant_branding` en V13, colores con contraste WCAG AA contra blanco calculado en backend, logo validado por contenido y guardado por R2DBC, auditoría; panel con Configuración → Marca y tema por variables CSS). Reserva y pago siguen TBD (ADR-001).
+**Última sincronización SDD:** 2026-11-09 — Rediseño del frontend, etapa 0 (rama `feature/rediseno-frontend`): sistema de diseño en `frontend/sdd/sistema-de-diseno.md` con Geist y Geist Mono autoalojadas (OFL), tokens claro y oscuro derivados de la marca (sin AA según el backend, la acción usa el color por defecto), preferencia de tema Claro/Oscuro/Sistema por persona (Oscuro por defecto en COCINA; se implementa en la etapa 1), estados de pedido y pago con color, icono y texto, componentes `ds-*` y guía viva `muestra-sistema.html`; proxy `/api` de Vite para desarrollo. Sin cambios de API, permisos ni reglas; ninguna página adoptada aún. Antes, 2026-11-08 — T1 (pedidos: filtros, búsqueda y paginación en backend, `allowedTransitions` por rol, retroceso con motivo, deshacer de cocina, historial con rol y tipo de cambio, COCINA sin montos; V10) y T2 (menú: `available` por plato calculado en backend, `availability.tracked` en V11, búsqueda y filtros de categoría, disponibilidad y visibilidad en el cliente) implementados con pruebas JUnit/Testcontainers. T3 (Inicio: dashboard de ADMIN con rango hoy/7/30 días, comparación, indicadores definidos en `backend/sdd/resumen-negocio.md` y servicios de lectura por módulo; CAJA ve cobrado y por cobrar de hoy; COCINA sin montos). T4 (CRM: `customer`, `conversation_message` y CHECK de estados en V12; pestañas, búsqueda, hilo, respuesta STAFF idempotente con control y sin WhatsApp, ficha del cliente; tomar/liberar con regla de dueño, transacción y auditoría). T5 (marca: `restaurant_branding` en V13, colores con contraste WCAG AA contra blanco calculado en backend, logo validado por contenido y guardado por R2DBC, auditoría; panel con Configuración → Marca y tema por variables CSS). Reserva y pago siguen TBD (ADR-001).
 
 ## Etapa actual y entregables
 
@@ -79,6 +79,7 @@ backend/sdd/
 ## Panel web: funciones y permisos
 
 - Diseñar para computadora o tableta en caja y cocina, y para móvil del administrador. Mostrar claramente cargas, errores de validación, cambios pendientes y confirmaciones de operaciones sensibles.
+- Sistema de diseño común (`frontend/sdd/sistema-de-diseno.md`): el estado nunca se indica solo con color (color, icono y texto), contraste mínimo de 4.5:1, foco visible, objetivos táctiles de 44 px (56 px en Cocina), animaciones de 300 ms como máximo que respetan `prefers-reduced-motion`. Tema claro como base y preferencia Claro/Oscuro/Sistema por persona, con Oscuro por defecto en COCINA.
 - `ADMIN`: configura usuarios, menú, horarios, zonas, tarifas, recepción de pedidos y disponibilidad; consulta pedidos, pagos y conversaciones derivadas; avanza pedidos y puede retroceder un paso con motivo obligatorio; ve el dashboard completo, usa el CRM y configura la marca del restaurante.
 - `CAJA`: consulta menú y configuración; ajusta disponibilidad por ventas locales o agotados; acepta o rechaza solicitudes; actualiza estados permitidos; registra y confirma pagos manualmente; atiende derivaciones; puede retroceder un paso un pedido con motivo obligatorio; usa el CRM y ve el cobrado y por cobrar del día.
 - `COCINA`: consulta pedidos aceptados y sus modificaciones **por unidad**. Solo puede pasar un pedido de aceptado a preparando y de preparando a listo, con un toque y sin motivo, y puede **deshacer** su propio último cambio dentro de una ventana corta configurable. No retrocede estados, no acepta, rechaza, completa ni cancela, no cambia precios, disponibilidad ni pagos, y no ve montos.

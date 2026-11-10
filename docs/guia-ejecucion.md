@@ -11,4 +11,5 @@ La base de datos usa un volumen Docker. Para reiniciar solamente datos ficticios
 
 - Backend (JDK 21): `cd backend && ./mvnw test` ejecuta pruebas unitarias y de integración. Las de integración levantan PostgreSQL con Testcontainers, así que Docker debe estar abierto. `./mvnw -DskipTests package` solo compila.
 - Frontend (Node 22): `cd frontend && npm ci && npm run lint && npm run build`.
+- Frontend en modo desarrollo (recarga en caliente): con `db` y `backend` levantados, detener el contenedor `frontend` (`docker compose stop frontend`) y ejecutar `cd frontend && npm run dev`. Vite sirve en `http://localhost:5173` y reenvía `/api` a `http://localhost:8080` (cambiar con `VITE_API_PROXY`).
 - Prueba de humo con el stack levantado: `pwsh -File scripts/smoke.ps1`.

@@ -1,0 +1,165 @@
+/*
+ * Sistema de diseño — componentes base (prefijo ds-). Usan solo tokens de tokens.css.
+ * Documentado en frontend/sdd/sistema-de-diseno.md.
+ */
+
+.ds-root {
+  font-family: var(--font-text);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  font-weight: var(--weight-regular);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+}
+.ds-root :where(h1, h2, h3) { font-family: var(--font-display); line-height: var(--leading-tight); letter-spacing: -.02em; margin: 0; font-weight: var(--weight-semibold); }
+.ds-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.ds-code { font-family: var(--font-code); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.ds-eyebrow { font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: .08em; text-transform: uppercase; color: var(--text-subtle); }
+.ds-muted { color: var(--text-muted); }
+
+/* Foco visible y común a todo control */
+.ds-root :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus-ring); outline-offset: 2px;
+}
+
+/* — Botón — */
+.ds-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-height: var(--hit); padding: 0 var(--space-4);
+  border: 1px solid transparent; border-radius: var(--radius-md);
+  font: inherit; font-weight: var(--weight-semibold); font-size: var(--text-sm);
+  cursor: pointer; white-space: nowrap;
+  transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+.ds-btn svg { width: 18px; height: 18px; flex: none; }
+.ds-btn:active:not(:disabled) { transform: scale(.98); }
+.ds-btn:disabled { cursor: not-allowed; opacity: .55; }
+.ds-btn--primary { color: var(--on-action); background: var(--action-bg); }
+.ds-btn--primary:hover:not(:disabled) { background: var(--action-hover); }
+.ds-btn--secondary { color: var(--text); background: var(--surface); border-color: var(--border-strong); }
+.ds-btn--secondary:hover:not(:disabled) { background: var(--surface-sunken); }
+.ds-btn--ghost { color: var(--text-muted); background: transparent; }
+.ds-btn--ghost:hover:not(:disabled) { color: var(--text); background: var(--surface-sunken); }
+.ds-btn--danger { color: var(--on-danger); background: var(--danger); }
+.ds-btn--lg { min-height: var(--hit-kitchen); padding: 0 var(--space-6); font-size: var(--text-md); border-radius: var(--radius-lg); }
+
+/* — Tarjeta — */
+.ds-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); padding: var(--space-5);
+}
+.ds-card--interactive { transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
+.ds-card--interactive:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+
+/* — Tabla — */
+.ds-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.ds-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.ds-table th { text-align: left; font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: .06em; text-transform: uppercase; color: var(--text-subtle); background: var(--surface-sunken); padding: var(--space-3) var(--space-4); }
+.ds-table td { padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border); vertical-align: middle; }
+.ds-table tbody tr { transition: background-color var(--duration-fast) var(--ease-out); }
+.ds-table tbody tr:hover { background: color-mix(in srgb, var(--surface-sunken) 60%, transparent); }
+.ds-table .is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ds-table tfoot td { font-weight: var(--weight-semibold); border-top: 2px solid var(--border-strong); }
+
+/* — Insignia de estado: icono + texto + color, nunca solo color — */
+.ds-badge {
+  --fg: var(--st-completed-fg); --bg-badge: var(--st-completed-bg); --line: var(--st-completed-line);
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px;
+  border: 1px solid var(--line); border-radius: var(--radius-pill);
+  color: var(--fg); background: var(--bg-badge);
+  font-size: var(--text-xs); font-weight: var(--weight-semibold); line-height: 1.4; white-space: nowrap;
+}
+.ds-badge svg { width: 14px; height: 14px; flex: none; }
+.ds-badge[data-status="PENDING_DECISION"] { --fg: var(--st-pending-fg); --bg-badge: var(--st-pending-bg); --line: var(--st-pending-line); }
+.ds-badge[data-status="ACCEPTED"] { --fg: var(--st-accepted-fg); --bg-badge: var(--st-accepted-bg); --line: var(--st-accepted-line); }
+.ds-badge[data-status="PREPARING"] { --fg: var(--st-preparing-fg); --bg-badge: var(--st-preparing-bg); --line: var(--st-preparing-line); }
+.ds-badge[data-status="READY"] { --fg: var(--st-ready-fg); --bg-badge: var(--st-ready-bg); --line: var(--st-ready-line); }
+.ds-badge[data-status="COMPLETED"] { --fg: var(--st-completed-fg); --bg-badge: var(--st-completed-bg); --line: var(--st-completed-line); }
+.ds-badge[data-status="REJECTED"] { --fg: var(--st-rejected-fg); --bg-badge: var(--st-rejected-bg); --line: var(--st-rejected-line); }
+.ds-badge[data-status="CANCELLED"] { --fg: var(--st-cancelled-fg); --bg-badge: var(--st-cancelled-bg); --line: var(--st-cancelled-line); }
+.ds-badge[data-status="EXPIRED"] { --fg: var(--st-expired-fg); --bg-badge: var(--st-expired-bg); --line: var(--st-expired-line); }
+.ds-badge[data-payment="PENDING"] { --fg: var(--pay-pending-fg); --bg-badge: var(--pay-pending-bg); --line: transparent; }
+.ds-badge[data-payment="PENDING_VERIFICATION"] { --fg: var(--pay-verifying-fg); --bg-badge: var(--pay-verifying-bg); --line: transparent; }
+.ds-badge[data-payment="CONFIRMED"] { --fg: var(--pay-confirmed-fg); --bg-badge: var(--pay-confirmed-bg); --line: transparent; }
+.ds-badge[data-payment="REJECTED"] { --fg: var(--st-rejected-fg); --bg-badge: var(--st-rejected-bg); --line: transparent; }
+.ds-badge[data-payment="NOT_REQUIRED"] { --fg: var(--st-expired-fg); --bg-badge: var(--st-expired-bg); --line: transparent; }
+
+/* — Botones de filtro (grupo de selección con contador) — */
+.ds-filter-group { display: flex; flex-wrap: wrap; gap: var(--space-2); border: 0; margin: 0; padding: 0; min-inline-size: 0; /* un fieldset no se encoge por defecto y desborda en móvil */ }
+.ds-filter-group legend { padding: 0; margin-bottom: var(--space-2); }
+.ds-chip {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  min-height: var(--hit); padding: 0 var(--space-3) 0 var(--space-4);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-pill);
+  font: inherit; font-size: var(--text-sm); font-weight: var(--weight-medium);
+  color: var(--text); background: var(--surface); cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+.ds-chip:hover { border-color: var(--text-subtle); }
+.ds-chip__count { min-width: 24px; padding: 1px 7px; border-radius: var(--radius-pill); font-size: var(--text-xs); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; text-align: center; color: var(--text-muted); background: var(--surface-sunken); }
+.ds-chip__check { display: none; width: 16px; height: 16px; }
+.ds-chip[aria-pressed="true"] { color: var(--on-action); background: var(--action-bg); border-color: var(--action-bg); }
+.ds-chip[aria-pressed="true"] .ds-chip__check { display: block; }
+.ds-chip[aria-pressed="true"] .ds-chip__count { color: var(--action-bg); background: var(--on-action); }
+
+/* — Campos — */
+.ds-field { display: grid; gap: 6px; }
+.ds-field__label { font-size: var(--text-sm); font-weight: var(--weight-semibold); }
+.ds-field__hint { font-size: var(--text-xs); color: var(--text-muted); }
+.ds-input {
+  width: 100%; min-height: var(--hit); padding: 0 var(--space-3);
+  font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+.ds-input::placeholder { color: var(--text-subtle); opacity: 1; }
+.ds-input:focus { border-color: var(--action-bg); box-shadow: 0 0 0 3px var(--brand-primary-soft); outline: none; }
+.ds-input:focus-visible { outline: none; }
+.ds-input[aria-invalid="true"] { border-color: var(--danger); }
+.ds-field__error { display: flex; gap: 6px; align-items: center; font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--danger); }
+.ds-search { position: relative; }
+.ds-search svg { position: absolute; left: 12px; top: 50%; translate: 0 -50%; width: 18px; height: 18px; color: var(--text-subtle); pointer-events: none; }
+.ds-search .ds-input { padding-left: 40px; }
+
+/* — Interruptor (disponibilidad) — */
+.ds-switch { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--hit); cursor: pointer; font-size: var(--text-sm); }
+.ds-switch input { appearance: none; position: relative; width: 44px; height: 26px; margin: 0; border-radius: var(--radius-pill); background: var(--border-strong); cursor: pointer; transition: background-color var(--duration-base) var(--ease-out); }
+.ds-switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm); transition: translate var(--duration-base) var(--ease-out); }
+.ds-switch input:checked { background: var(--success); }
+.ds-switch input:checked::after { translate: 18px 0; }
+
+/* — Pestañas — */
+.ds-tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.ds-tab {
+  position: relative; min-height: var(--hit); padding: 0 var(--space-4);
+  border: 0; background: none; font: inherit; font-size: var(--text-sm); font-weight: var(--weight-medium);
+  color: var(--text-muted); cursor: pointer; white-space: nowrap;
+}
+.ds-tab:hover { color: var(--text); }
+.ds-tab[aria-selected="true"] { color: var(--text); font-weight: var(--weight-semibold); }
+.ds-tab[aria-selected="true"]::after { content: ""; position: absolute; left: var(--space-3); right: var(--space-3); bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--action-bg); }
+
+/* — Modal (sobre <dialog>) — */
+.ds-modal {
+  width: min(480px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--border); border-radius: var(--radius-xl);
+  color: var(--text); background: var(--surface-raised); box-shadow: var(--shadow-lg);
+  opacity: 0; translate: 0 8px; transition: opacity var(--duration-base) var(--ease-out), translate var(--duration-base) var(--ease-out), overlay var(--duration-base) allow-discrete, display var(--duration-base) allow-discrete;
+}
+.ds-modal[open] { opacity: 1; translate: 0 0; }
+@starting-style { .ds-modal[open] { opacity: 0; translate: 0 8px; } }
+.ds-modal::backdrop { background: var(--overlay); }
+.ds-modal__body { padding: var(--space-6); display: grid; gap: var(--space-3); }
+.ds-modal__actions { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-4) var(--space-6); border-top: 1px solid var(--border); background: var(--surface-sunken); border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+
+/* — Estado vacío — */
+.ds-empty { display: grid; justify-items: center; gap: var(--space-2); padding: var(--space-10) var(--space-6); text-align: center; }
+.ds-empty svg { width: 140px; height: auto; color: var(--text-subtle); margin-bottom: var(--space-2); }
+.ds-empty h3 { font-size: var(--text-lg); }
+.ds-empty p { margin: 0 0 var(--space-3); max-width: 36ch; color: var(--text-muted); font-size: var(--text-sm); }
+
+/* — Esqueleto de carga — */
+.ds-skeleton { display: block; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--surface-sunken) 0%, color-mix(in srgb, var(--surface-sunken) 40%, var(--surface)) 50%, var(--surface-sunken) 100%) 0 0 / 200% 100%; animation: ds-shimmer 1.4s linear infinite; }
+@keyframes ds-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .ds-skeleton { animation: none; } }
