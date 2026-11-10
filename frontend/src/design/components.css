@@ -177,3 +177,10 @@
 
 .ds-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
+
+/* — Botón de icono (acciones por fila) — */
+.ds-icon-btn { display: inline-grid; place-items: center; width: var(--hit); height: var(--hit); padding: 0; border: 1px solid transparent; border-radius: var(--radius-md); color: var(--text-muted); background: transparent; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.ds-icon-btn:hover:not(:disabled) { color: var(--text); background: var(--surface-sunken); }
+.ds-icon-btn:disabled { opacity: .5; cursor: not-allowed; }
+.ds-icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.ds-icon-btn--danger:hover:not(:disabled) { color: var(--danger); background: var(--danger-soft); }

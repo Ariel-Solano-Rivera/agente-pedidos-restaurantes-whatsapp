@@ -1,0 +1,45 @@
+/* Operación diaria (rediseño, etapa 8). Usa solo tokens. */
+.op { display: grid; }
+.op .ds-page-header { margin-bottom: var(--space-5); }
+.op-tabs { margin-bottom: var(--space-4); }
+.op-tabs .ds-tab { display: inline-flex; align-items: center; gap: var(--space-2); }
+.op-notice { margin-bottom: var(--space-4); }
+.op-panel { display: grid; gap: var(--space-4); padding: var(--space-6); }
+.op-loading { display: grid; gap: var(--space-2); }
+.op-hint { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+.op-muted { color: var(--text-muted); }
+.op-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+
+/* Recepción */
+.op-reception { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); padding: var(--space-5); border-radius: var(--radius-lg); color: var(--st-ready-fg); background: var(--st-ready-bg); border: 1px solid var(--st-ready-line); }
+.op-reception[data-paused="true"] { color: var(--st-pending-fg); background: var(--st-pending-bg); border-color: var(--st-pending-line); }
+.op-reception__icon { display: grid; place-items: center; width: 64px; height: 64px; flex: none; border-radius: 50%; background: var(--surface); }
+.op-reception__text { display: grid; gap: 4px; flex: 1; min-width: 220px; }
+.op-reception__text h2 { font-size: var(--text-xl); }
+.op-reception__text p { margin: 0; color: var(--text); }
+.op-reception__text .op-hint { color: var(--text-muted); }
+
+/* Tablas */
+.op-table td { vertical-align: middle; }
+.op-actions { text-align: right; }
+
+/* Ajuste de porciones */
+.op-stepper { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.op-stepper .ds-btn { min-width: 56px; font-variant-numeric: tabular-nums; }
+.op-stepper__value { width: 110px; }
+.op-stepper__value input { width: 96px; text-align: center; font-size: var(--text-lg) !important; font-weight: var(--weight-semibold) !important; font-variant-numeric: tabular-nums; }
+
+/* Horarios */
+.op-days { list-style: none; margin: 0; padding: 0; display: grid; }
+.op-day { display: grid; grid-template-columns: 140px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); min-height: 56px; border-bottom: 1px solid var(--border); }
+.op-day:last-child { border-bottom: 0; }
+.op-day__hours { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.op-day__range { font-weight: var(--weight-semibold); }
+
+@media (max-width: 680px) {
+  .op-panel { padding: var(--space-4); }
+  .op-tabs .ds-tab { padding: 0 var(--space-3); }
+  .op-day { grid-template-columns: minmax(0, 1fr) auto; }
+  .op-day__hours { grid-column: 1 / -1; grid-row: 2; padding-bottom: var(--space-2); }
+  .op-reception .ds-btn { width: 100%; }
+}

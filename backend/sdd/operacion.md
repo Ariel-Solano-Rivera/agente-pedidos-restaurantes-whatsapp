@@ -15,6 +15,7 @@ Gestiona estado operativo, disponibilidad vendible, zonas de entrega y horarios.
 - Consultas: `GET /operation/settings`, `/availability`, `/operation/zones`, `/operation/schedules`.
 - ADMIN: `PUT /admin/operation/settings`, `POST /admin/zones`, `POST /admin/schedules`.
 - ADMIN o CAJA: `POST /availability/adjustments` con `Idempotency-Key` UUID.
+- Horarios: `day_of_week` va de 0 (domingo) a 6 (sábado), como `EXTRACT(DOW)` de PostgreSQL (confirmado por el equipo el 2026-11-10).
 - ADMIN o CAJA: `PUT /availability/dishes/{dishId}/sold-out` con cuerpo `{ soldOut }` y `Idempotency-Key` UUID. Marca o quita «agotado» en todas las variantes de un plato propio (crea la fila de disponibilidad sin control de cantidad si faltaba). En una transacción registra la operación idempotente y una fila en `audit_log` (`DISH_SOLD_OUT` o `DISH_SOLD_OUT_CLEARED`, entidad `dish`, usuario y `correlation_id`). No cambia cantidades, reservas ni movimientos. Repetir la clave devuelve el estado sin repetir efectos. Errores: 400 `IDEMPOTENCY_KEY_REQUIRED`, 403 (COCINA) y 404 `DISH_NOT_FOUND` (también para platos de otro restaurante). Responde `{dishId, soldOut, variants}`.
 
 ## Validaciones y efectos de estado

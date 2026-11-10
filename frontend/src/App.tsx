@@ -5,6 +5,7 @@ import { CatalogPage } from './features/catalogo/CatalogPage';
 import { CrmPage } from './features/crm/CrmPage';
 import { SettingsPage } from './features/configuracion/SettingsPage';
 import { KitchenBoard } from './features/cocina/KitchenBoard';
+import { OperationPage } from './features/operacion/OperationPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { HomePage } from './features/inicio/HomePage';
 import { MenuPage } from './features/menu/MenuPage';
@@ -35,7 +36,8 @@ export default function App() {
   const content = current === 'inicio' ? <HomePage auth={auth} user={user} onNavigate={navigate} />
     : current === 'dashboard' ? <DashboardPage auth={auth} onNavigate={view => navigate(view)} />
     : current === 'cocina' ? <KitchenBoard auth={auth} user={user} />
-      : current === 'catalogo' ? legacy(<CatalogPage auth={auth} user={user} />)
+      : current === 'catalogo' ? <CatalogPage auth={auth} user={user} />
+        : current === 'operacion' ? <OperationPage auth={auth} user={user} />
         : current === 'menu' ? <MenuPage auth={auth} user={user} />
           : current === 'crm' ? <CrmPage auth={auth} onOpenOrder={code => navigate('pedidos', { q: code })} />
             : current === 'configuracion' ? legacy(<SettingsPage auth={auth} branding={brand.branding} logoUrl={brand.logoUrl} onBrandingChanged={brand.reload} />)

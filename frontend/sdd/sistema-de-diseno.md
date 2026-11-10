@@ -69,6 +69,7 @@ Las etiquetas son las que ya usa el panel. Los iconos son SVG de línea propios 
 | Formulario en diálogo | `<dialog class="ds-modal ds-form-dialog">` (`src/design/forms.css`) | Da estilo con tokens a `menu-form`, `form-grid`, `form-field`, `search-select`, `chips-editor`, `option-chips` y `photo-picker`; lo adoptan Menú y, en sus etapas, Catálogo y Configuración |
 | Estado vacío | `.ds-empty`, `<EmptyState illustration compact>` | Ilustración SVG de línea de un color (`empty`, `error`, `done`), título, una línea y botón; `error` se anuncia como alerta |
 | Encabezado de página | `<PageHeader title subtitle aside>` | Título y fecha a la izquierda; estado y acciones a la derecha |
+| Botón de icono | `.ds-icon-btn`, `--danger` | 44 px, transparente; hover en `--surface-sunken` (o rojo suave si es peligroso); siempre con `aria-label` y `title` |
 | Iconos | `<Icon name size label>` | Decorativos con `aria-hidden` salvo que reciban `label` |
 | Esqueleto | `.ds-skeleton`, `<Skeleton width height>` | Brillo desactivado con movimiento reducido |
 

@@ -125,8 +125,8 @@ export function MenuPage({ auth, user }: { auth: string; user: User }) {
                   <td data-label="Visible"><span className="mn-visible" data-active={dish.active}><Icon name={dish.active ? 'eye' : 'eyeOff'} size={16} />{dish.active ? 'Visible' : 'Oculto'}</span></td>
                   {admin && <td className="mn-actions" data-label="Acciones">
                     <DishEditDialog dish={dish} {...forms} onUpdated={reloadAll} />
-                    <button type="button" className="mn-icon-btn" disabled={busy === dish.id} onClick={() => void toggleVisible(dish)} aria-label={`${dish.active ? 'Ocultar' : 'Mostrar'} ${dish.name} en el menú`} title={dish.active ? 'Ocultar del menú' : 'Mostrar en el menú'}><Icon name={dish.active ? 'eyeOff' : 'eye'} size={18} /></button>
-                    <button type="button" className="mn-icon-btn mn-icon-btn--danger" disabled={busy === dish.id} onClick={() => setDeleting(dish)} aria-label={`Eliminar ${dish.name}`} title="Eliminar plato"><Icon name="trash" size={18} /></button>
+                    <button type="button" className="ds-icon-btn" disabled={busy === dish.id} onClick={() => void toggleVisible(dish)} aria-label={`${dish.active ? 'Ocultar' : 'Mostrar'} ${dish.name} en el menú`} title={dish.active ? 'Ocultar del menú' : 'Mostrar en el menú'}><Icon name={dish.active ? 'eyeOff' : 'eye'} size={18} /></button>
+                    <button type="button" className="ds-icon-btn ds-icon-btn--danger" disabled={busy === dish.id} onClick={() => setDeleting(dish)} aria-label={`Eliminar ${dish.name}`} title="Eliminar plato"><Icon name="trash" size={18} /></button>
                   </td>}
                 </tr>;
               })}</tbody>
