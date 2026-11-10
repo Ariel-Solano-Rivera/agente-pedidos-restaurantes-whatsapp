@@ -9,7 +9,7 @@
 | Catálogo de menú | `src/features/catalogo/CatalogPage.tsx` | [catalogo.md](catalogo.md) | Implementado; selector, búsqueda, diálogos y CRUD de tres catálogos |
 | Operación, disponibilidad, zonas y horarios | `src/App.tsx` (`Operation`, `Availability`, `Settings`) | [operacion.md](operacion.md) | Implementado parcialmente |
 | Menú y opciones | `src/features/menu/MenuPage.tsx` | [menu.md](menu.md) | CRUD de platos; búsqueda y filtros por categoría, disponibilidad y visibilidad en el cliente; etiqueta «Agotado» |
-| Pedidos y vista de cocina por rol | `src/features/pedidos/OrdersPage.tsx` | [pedidos.md](pedidos.md) | Filtros, búsqueda y paginación del backend; número destacado; avanzar/retroceder con confirmación y motivo; deshacer de cocina; historial en la comanda |
+| Pedidos (lista) | `src/features/pedidos/OrdersPage.tsx`, `orders.css`, `TransitionDialog.tsx`, `orderTypes.ts`, `LegacyOrderDetail.tsx` | [pedidos.md](pedidos.md) | Rediseñado (etapa 2): filtros como botones con contador del backend, búsqueda, tarjetas con acciones de `allowedTransitions`, confirmación con motivo, paginación; detalle con diseño de T1 hasta la etapa 3 |
 | Pagos y derivaciones | — | [pagos-derivaciones.md](pagos-derivaciones.md) | Pantalla de pagos no implementada; derivaciones en CRM |
 | Configuración: marca | `src/features/configuracion/SettingsPage.tsx`, `src/shared/branding.ts` | [marca.md](marca.md) | Pestaña Marca (ADMIN); tema aplicado con variables CSS para todos; logo en barra lateral e Inicio |
 | CRM | `src/features/crm/CrmPage.tsx` | [crm.md](crm.md) | Pestañas, búsqueda, hilo, tomar/liberar control, respuesta y ficha del cliente |

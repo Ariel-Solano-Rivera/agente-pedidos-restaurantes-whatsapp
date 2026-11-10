@@ -59,8 +59,8 @@ Las etiquetas son las que ya usa el panel. Los iconos son SVG de línea propios 
 | Botón | `.ds-btn` + `--primary/--secondary/--ghost/--danger`, `--lg` | 44 px; `--lg` de 56 px para Cocina; icono opcional |
 | Tarjeta | `.ds-card`, `--interactive` | Borde suave, radio de 14 px |
 | Tabla | `.ds-table-wrap`, `.ds-table`, `.is-num` | Encabezado en mayúsculas pequeñas; montos alineados a la derecha con cifras tabulares; desplazamiento horizontal propio |
-| Insignia de estado | `.ds-badge[data-status]`, `[data-payment]` | Siempre icono más texto |
-| Botones de filtro | `.ds-filter-group` (`fieldset`), `.ds-chip[aria-pressed]`, `.ds-chip__count` | Selección con relleno de acción y check; contador por opción |
+| Insignia de estado | `.ds-badge[data-status]`, `[data-payment]`; `<StatusBadge>`, `<PaymentBadge>` (`src/design/StatusBadge.tsx`, con etiquetas e iconos) | Siempre icono más texto |
+| Botones de filtro | `.ds-filter-group` (`fieldset`), `.ds-chip[aria-pressed]`, `.ds-chip__count`; `<FilterGroup>` (`src/design/FilterGroup.tsx`) | Selección única con relleno de acción y check; contador por opción; la opción `''` es «Todos» |
 | Campos | `.ds-field`, `.ds-input`, `.ds-search`, `.ds-field__error` | Error con icono y texto, `aria-invalid` y `aria-describedby` |
 | Interruptor | `.ds-switch` (`input[role=switch]`) | Disponibilidad en Menú |
 | Pestañas | `.ds-tabs`, `.ds-tab[aria-selected]` | Con desplazamiento horizontal en móvil |

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { View } from '../../components/AppShell';
+import { Filters } from '../pedidos/orderTypes';
 import { Icon, IconName } from '../../design/Icon';
 import { EmptyState, PageHeader, Skeleton } from '../../design/States';
 import { api, User } from '../../shared/api';
@@ -9,7 +10,7 @@ type Summary = { restaurantName: string; receptionPaused: boolean; pauseReason: 
 type Page = { total: number };
 type Dish = { name: string; active: boolean; available: boolean };
 type Tone = 'pending' | 'accepted' | 'preparing' | 'ready' | 'money' | 'chat' | 'alert';
-type Tile = { key: string; label: string; value: string | null; hint: string; icon: IconName; tone: Tone; target: View; action: string; short: string };
+type Tile = { key: string; label: string; value: string | null; hint: string; icon: IconName; tone: Tone; target: View; action: string; short: string; preset?: Partial<Filters> };
 type Role = 'ADMIN' | 'CAJA' | 'COCINA';
 
 const money = (value: number) => new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(value);
@@ -31,9 +32,9 @@ async function loadTiles(role: Role, auth: string, summary: Summary): Promise<Ti
   if (role === 'COCINA') {
     const [accepted, preparing, ready] = (await Promise.allSettled([count('ACCEPTED'), count('PREPARING'), count('READY')])).map(settled);
     return [
-      { key: 'accepted', label: 'Por preparar', value: accepted === null ? null : String(accepted), hint: accepted ? 'Pedidos aceptados que esperan en cocina.' : 'No hay pedidos esperando.', icon: 'check', tone: 'accepted', target: 'pedidos', action: 'Ver pedidos por preparar', short: 'Ver pedidos' },
-      { key: 'preparing', label: 'En preparación', value: preparing === null ? null : String(preparing), hint: preparing ? 'Pedidos que se están preparando ahora.' : 'Nada en preparación.', icon: 'flame', tone: 'preparing', target: 'pedidos', action: 'Ver pedidos en preparación', short: 'Ver pedidos' },
-      { key: 'ready', label: 'Listos', value: ready === null ? null : String(ready), hint: ready ? 'Esperan retiro o entrega.' : 'No hay pedidos listos.', icon: 'bell', tone: 'ready', target: 'pedidos', action: 'Ver pedidos listos', short: 'Ver pedidos' },
+      { key: 'accepted', label: 'Por preparar', value: accepted === null ? null : String(accepted), hint: accepted ? 'Pedidos aceptados que esperan en cocina.' : 'No hay pedidos esperando.', icon: 'check', tone: 'accepted', target: 'pedidos', action: 'Ver pedidos por preparar', short: 'Ver pedidos', preset: { status: 'ACCEPTED' } },
+      { key: 'preparing', label: 'En preparación', value: preparing === null ? null : String(preparing), hint: preparing ? 'Pedidos que se están preparando ahora.' : 'Nada en preparación.', icon: 'flame', tone: 'preparing', target: 'pedidos', action: 'Ver pedidos en preparación', short: 'Ver pedidos', preset: { status: 'PREPARING' } },
+      { key: 'ready', label: 'Listos', value: ready === null ? null : String(ready), hint: ready ? 'Esperan retiro o entrega.' : 'No hay pedidos listos.', icon: 'bell', tone: 'ready', target: 'pedidos', action: 'Ver pedidos listos', short: 'Ver pedidos', preset: { status: 'READY' } },
     ];
   }
   const [pendingResult, conversationsResult, dishesResult] = await Promise.allSettled([
@@ -44,10 +45,10 @@ async function loadTiles(role: Role, auth: string, summary: Summary): Promise<Ti
   const pending = settled(pendingResult); const conversations = settled(conversationsResult); const dishes = settled(dishesResult);
   const cash = summary.cash;
   const tiles: Tile[] = [
-    { key: 'pending', label: 'Por aceptar', value: pending === null ? null : String(pending), hint: pending ? 'Solicitudes que esperan tu decisión.' : 'No hay solicitudes por decidir.', icon: 'clock', tone: 'pending', target: 'pedidos', action: 'Ver pedidos por aceptar', short: 'Ver pedidos' },
+    { key: 'pending', label: 'Por aceptar', value: pending === null ? null : String(pending), hint: pending ? 'Solicitudes que esperan tu decisión.' : 'No hay solicitudes por decidir.', icon: 'clock', tone: 'pending', target: 'pedidos', action: 'Ver pedidos por aceptar', short: 'Ver pedidos', preset: { status: 'PENDING_DECISION' } },
   ];
-  if (role === 'CAJA') tiles.push({ key: 'collected', label: 'Cobrado hoy', value: cash ? money(cash.collected) : null, hint: 'Pagos confirmados por el personal.', icon: 'coins', tone: 'money', target: 'pedidos', action: 'Ver pedidos de hoy', short: 'Ver pedidos' });
-  tiles.push({ key: 'receivable', label: 'Por cobrar hoy', value: cash ? money(cash.receivable) : null, hint: 'Pedidos aceptados hoy sin pago confirmado.', icon: 'wallet', tone: 'money', target: 'pedidos', action: 'Ver pedidos por cobrar', short: 'Ver pedidos' });
+  if (role === 'CAJA') tiles.push({ key: 'collected', label: 'Cobrado hoy', value: cash ? money(cash.collected) : null, hint: 'Pagos confirmados por el personal.', icon: 'coins', tone: 'money', target: 'pedidos', action: 'Ver pedidos de hoy', short: 'Ver pedidos', preset: { range: 'TODAY', paymentStatus: 'CONFIRMED' } });
+  tiles.push({ key: 'receivable', label: 'Por cobrar hoy', value: cash ? money(cash.receivable) : null, hint: 'Pedidos aceptados hoy sin pago confirmado.', icon: 'wallet', tone: 'money', target: 'pedidos', action: 'Ver pedidos por cobrar', short: 'Ver pedidos', preset: { range: 'TODAY' } });
   tiles.push({ key: 'conversations', label: 'Por contestar', value: conversations === null ? null : String(conversations), hint: conversations ? 'Conversaciones cuyo último mensaje es del cliente.' : 'Todas las conversaciones están al día.', icon: 'chat', tone: 'chat', target: 'crm', action: 'Abrir conversaciones por contestar', short: 'Abrir CRM' });
   if (role === 'ADMIN') {
     const soldOut = dishes?.filter(dish => dish.active && !dish.available).map(dish => dish.name) ?? null;
@@ -64,7 +65,7 @@ const quickLinks: Array<{ view: View; title: string; text: string; icon: IconNam
   { view: 'configuracion', title: 'Configuración', text: 'Colores y logo del restaurante.', icon: 'settings' },
 ];
 
-export function HomePage({ auth, user, onNavigate }: { auth: string; user: User; onNavigate: (view: View) => void }) {
+export function HomePage({ auth, user, onNavigate }: { auth: string; user: User; onNavigate: (view: View, preset?: Partial<Filters>) => void }) {
   const role = roleOf(user);
   const [summary, setSummary] = useState<Summary>(); const [tiles, setTiles] = useState<Tile[]>();
   const [error, setError] = useState(''); const [loading, setLoading] = useState(true); const [updatedAt, setUpdatedAt] = useState<Date>();
@@ -107,7 +108,7 @@ export function HomePage({ auth, user, onNavigate }: { auth: string; user: User;
 
     <h2 className="ds-eyebrow home-section-label">Ahora mismo</h2>
     <div className={`home-tiles home-tiles--${role.toLowerCase()}`}>
-      {tiles ? tiles.map(tile => <button key={tile.key} type="button" className="home-tile" data-tone={tile.tone} onClick={() => onNavigate(tile.target)} aria-label={`${tile.label}: ${tile.value ?? 'no disponible'}. ${tile.action}`}>
+      {tiles ? tiles.map(tile => <button key={tile.key} type="button" className="home-tile" data-tone={tile.tone} onClick={() => onNavigate(tile.target, tile.preset)} aria-label={`${tile.label}: ${tile.value ?? 'no disponible'}. ${tile.action}`}>
         <span className="home-tile__head"><span className="home-tile__icon"><Icon name={tile.icon} /></span><span className="home-tile__label">{tile.label}</span></span>
         <span className="home-tile__value ds-num">{tile.value ?? '—'}</span>
         <span className="home-tile__hint">{tile.value === null ? 'No se pudo cargar este dato.' : tile.hint}</span>

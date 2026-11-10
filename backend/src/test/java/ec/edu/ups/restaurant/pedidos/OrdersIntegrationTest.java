@@ -119,4 +119,34 @@ class OrdersIntegrationTest extends IntegrationTest {
     as(ADMIN).get().uri("/api/v1/orders?status=VOLANDO").exchange().expectStatus().isBadRequest();
     as(COCINA).get().uri("/api/v1/orders?paymentStatus=CONFIRMED").exchange().expectStatus().isForbidden();
   }
+
+  @SuppressWarnings("unchecked")
+  private static Map<String, Number> facet(Map<String, Object> body, String group) { return (Map<String, Number>) body.get(group); }
+  private static long sum(Map<String, Number> counts) { return counts.values().stream().mapToLong(Number::longValue).sum(); }
+  private long total(String email, String query) { return ((Number) get(email, "/api/v1/orders?size=1" + query).get("total")).longValue(); }
+
+  @Test
+  void facetsCountEachGroupWithTheOtherFiltersAndStayIsolated() {
+    Map<String, Object> facets = get(ADMIN, "/api/v1/orders/facets");
+    long all = total(ADMIN, "");
+    assertThat(sum(facet(facets, "status"))).isEqualTo(all);
+    assertThat(sum(facet(facets, "fulfillment"))).isEqualTo(all);
+    assertThat(facet(facets, "range").get("ALL").longValue()).isEqualTo(all);
+    assertThat(facet(facets, "range").get("TODAY").longValue()).isEqualTo(total(ADMIN, "&range=TODAY"));
+    assertThat(facet(facets, "status").get("PENDING_DECISION").longValue()).isEqualTo(total(ADMIN, "&status=PENDING_DECISION"));
+
+    // Con un estado elegido, su propio grupo no cambia y los demás cuentan solo ese estado.
+    Map<String, Object> filtered = get(ADMIN, "/api/v1/orders/facets?status=COMPLETED");
+    assertThat(filtered.get("status")).isEqualTo(facets.get("status"));
+    assertThat(sum(facet(filtered, "fulfillment"))).isEqualTo(total(ADMIN, "&status=COMPLETED"));
+    assertThat(facet(filtered, "paymentStatus").get("CONFIRMED").longValue()).isEqualTo(total(ADMIN, "&status=COMPLETED&paymentStatus=CONFIRMED"));
+
+    Map<String, Object> kitchen = get(COCINA, "/api/v1/orders/facets");
+    assertThat(facet(kitchen, "paymentStatus")).isEmpty();
+    assertThat(facet(kitchen, "status").keySet()).isSubsetOf("ACCEPTED", "PREPARING", "READY", "COMPLETED");
+    as(COCINA).get().uri("/api/v1/orders/facets?paymentStatus=CONFIRMED").exchange().expectStatus().isForbidden();
+
+    assertThat(sum(facet(get(OTHER_ADMIN, "/api/v1/orders/facets"), "status"))).isEqualTo(total(OTHER_ADMIN, ""));
+    as(ADMIN).get().uri("/api/v1/orders/facets?status=NOPE").exchange().expectStatus().isBadRequest();
+  }
 }

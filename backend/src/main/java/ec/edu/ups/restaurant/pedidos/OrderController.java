@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -76,6 +78,47 @@ public class OrderController {
         }).all().collectList();
       return Mono.zip(items, total).map(values -> new Page<>(values.getT1(), filter.page(), filter.size(), values.getT2()));
     });
+  }
+
+  /** Conteos por opción de cada grupo de filtros. Cada grupo aplica los demás filtros activos, no el propio. */
+  public record Facets(Map<String, Long> status, Map<String, Long> fulfillment, Map<String, Long> paymentStatus, Map<String, Long> range) {}
+
+  @GetMapping("/facets")
+  public Mono<Facets> facets(@RequestParam(required = false) String status, @RequestParam(required = false) String fulfillment,
+                             @RequestParam(required = false) String paymentStatus, @RequestParam(required = false) String range,
+                             @RequestParam(required = false) LocalDate from, @RequestParam(required = false) LocalDate to,
+                             @RequestParam(required = false) String q, @AuthenticationPrincipal AppPrincipal user) {
+    boolean kitchen = OrderTransitionPolicy.role(user.getAuthorities()) == Role.COCINA;
+    return Tenant.restaurantId().flatMap(r -> {
+      OrderFilter.of(r, kitchen, status, fulfillment, paymentStatus, range, from, to, q, 0, 1); // valida la combinación completa
+      Mono<Map<String, Long>> byStatus = grouped(OrderFilter.of(r, kitchen, null, fulfillment, paymentStatus, range, from, to, q, 0, 1), "o.status");
+      Mono<Map<String, Long>> byFulfillment = grouped(OrderFilter.of(r, kitchen, status, null, paymentStatus, range, from, to, q, 0, 1), "o.fulfillment_mode");
+      Mono<Map<String, Long>> byPayment = kitchen ? Mono.just(Map.of())
+        : grouped(OrderFilter.of(r, false, status, fulfillment, null, range, from, to, q, 0, 1), "o.payment_status");
+      Mono<Long> all = count(OrderFilter.of(r, kitchen, status, fulfillment, paymentStatus, null, null, null, q, 0, 1));
+      Mono<Long> today = count(OrderFilter.of(r, kitchen, status, fulfillment, paymentStatus, "TODAY", null, null, q, 0, 1));
+      Mono<Long> week = count(OrderFilter.of(r, kitchen, status, fulfillment, paymentStatus, "LAST_7_DAYS", null, null, q, 0, 1));
+      Mono<Long> custom = from != null && to != null
+        ? count(OrderFilter.of(r, kitchen, status, fulfillment, paymentStatus, "CUSTOM", from, to, q, 0, 1)) : Mono.just(-1L);
+      Mono<Map<String, Long>> byRange = Mono.zip(all, today, week, custom).map(values -> {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        counts.put("ALL", values.getT1()); counts.put("TODAY", values.getT2()); counts.put("LAST_7_DAYS", values.getT3());
+        if (values.getT4() >= 0) counts.put("CUSTOM", values.getT4());
+        return counts;
+      });
+      return Mono.zip(byStatus, byFulfillment, byPayment, byRange).map(values -> new Facets(values.getT1(), values.getT2(), values.getT3(), values.getT4()));
+    });
+  }
+
+  /** `column` es una constante del código, nunca un valor del cliente. */
+  private Mono<Map<String, Long>> grouped(OrderFilter filter, String column) {
+    return filter.bind(db.sql("SELECT " + column + " k, count(*) n FROM customer_order o WHERE " + filter.where() + " AND " + column + " IS NOT NULL GROUP BY " + column + " ORDER BY " + column))
+      .map((row, metadata) -> Map.entry(row.get("k", String.class), row.get("n", Long.class))).all()
+      .collectMap(Map.Entry::getKey, Map.Entry::getValue, LinkedHashMap::new);
+  }
+
+  private Mono<Long> count(OrderFilter filter) {
+    return filter.bind(db.sql("SELECT count(*) total FROM customer_order o WHERE " + filter.where())).map((row, metadata) -> row.get("total", Long.class)).one();
   }
 
   @GetMapping("/{id}")
