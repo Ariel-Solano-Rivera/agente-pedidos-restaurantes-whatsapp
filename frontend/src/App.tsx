@@ -1,8 +1,10 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { AppShell, View } from './components/AppShell';
+import { ReactNode } from 'react';
+import { AppShell, canSee, View } from './components/AppShell';
 import { CatalogPage } from './features/catalogo/CatalogPage';
 import { CrmPage } from './features/crm/CrmPage';
 import { SettingsPage } from './features/configuracion/SettingsPage';
+import { DashboardPage } from './features/dashboard/DashboardPage';
 import { HomePage } from './features/inicio/HomePage';
 import { MenuPage } from './features/menu/MenuPage';
 import { OrdersPage } from './features/pedidos/OrdersPage';
@@ -22,6 +24,15 @@ export default function App() {
   const brand = useBranding(auth, Boolean(auth && user));
   useEffect(() => { if (auth) api<User>('/me', auth).then(setUser).catch(() => { setAuth(''); localStorage.removeItem('restaurant.auth'); }); }, [auth]);
   if (!auth || !user) return <Login onLogin={(nextAuth, nextUser) => { localStorage.setItem('restaurant.auth', nextAuth); setAuth(nextAuth); setUser(nextUser); }} />;
-  const content = view === 'inicio' ? <HomePage auth={auth} user={user} logoUrl={brand.logoUrl} /> : view === 'catalogo' ? <CatalogPage auth={auth} user={user} /> : view === 'menu' ? <MenuPage auth={auth} user={user} /> : view === 'crm' ? <CrmPage auth={auth} /> : view === 'configuracion' ? <SettingsPage auth={auth} branding={brand.branding} logoUrl={brand.logoUrl} onBrandingChanged={brand.reload} /> : <OrdersPage auth={auth} user={user} />;
-  return <AppShell user={user} logoUrl={brand.logoUrl} view={view} onViewChange={setView} onLogout={() => { localStorage.removeItem('restaurant.auth'); setAuth(''); setUser(null); setView('inicio'); }}>{content}</AppShell>;
+  const current: View = canSee(user, view) ? view : 'inicio';
+  /** Páginas aún no rediseñadas: conservan sus estilos en una zona de tema claro (ver frontend/sdd/app-shell-auth.md). */
+  const legacy = (page: ReactNode) => <div className="legacy-page" data-theme="light">{page}</div>;
+  const content = current === 'inicio' ? <HomePage auth={auth} user={user} onNavigate={setView} />
+    : current === 'dashboard' ? <DashboardPage auth={auth} />
+      : current === 'catalogo' ? legacy(<CatalogPage auth={auth} user={user} />)
+        : current === 'menu' ? legacy(<MenuPage auth={auth} user={user} />)
+          : current === 'crm' ? legacy(<CrmPage auth={auth} />)
+            : current === 'configuracion' ? legacy(<SettingsPage auth={auth} branding={brand.branding} logoUrl={brand.logoUrl} onBrandingChanged={brand.reload} />)
+              : legacy(<OrdersPage auth={auth} user={user} />);
+  return <AppShell user={user} logoUrl={brand.logoUrl} view={current} onViewChange={setView} onLogout={() => { localStorage.removeItem('restaurant.auth'); setAuth(''); setUser(null); setView('inicio'); }}>{content}</AppShell>;
 }

@@ -163,3 +163,17 @@
 .ds-skeleton { display: block; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--surface-sunken) 0%, color-mix(in srgb, var(--surface-sunken) 40%, var(--surface)) 50%, var(--surface-sunken) 100%) 0 0 / 200% 100%; animation: ds-shimmer 1.4s linear infinite; }
 @keyframes ds-shimmer { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .ds-skeleton { animation: none; } }
+
+.ds-empty--compact { padding: var(--space-6) var(--space-4); }
+.ds-empty--compact svg { width: 72px; margin-bottom: 0; }
+.ds-empty--compact h3 { font-size: var(--text-md); }
+.ds-empty--compact p { margin-bottom: 0; }
+
+/* — Encabezado de página: título y fecha a la izquierda, estado o acciones a la derecha — */
+.ds-page-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--space-3) var(--space-6); margin-bottom: var(--space-8); }
+.ds-page-header h1 { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: var(--weight-semibold); letter-spacing: -.025em; line-height: var(--leading-tight); margin: 0; color: var(--text); }
+.ds-page-header p { margin: var(--space-1) 0 0; color: var(--text-muted); }
+.ds-page-header__aside { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.ds-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+

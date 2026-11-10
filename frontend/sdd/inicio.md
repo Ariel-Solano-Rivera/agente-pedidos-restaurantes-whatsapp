@@ -1,42 +1,49 @@
-# Inicio, resumen compartido y dashboard de ADMIN
+# Inicio: resumen breve por rol
 
 ## Propósito y alcance
 
-Muestra a cada usuario autenticado un resumen de su restaurante. ADMIN ve además el dashboard de indicadores del negocio. CAJA ve el cobrado y por cobrar de hoy. COCINA conserva el resumen sin montos. No crea ni modifica tareas.
+Primera pantalla tras iniciar sesión: muestra «lo que pide atención ahora» según el rol y lleva a la página donde se resuelve. Es de solo lectura y no calcula indicadores. El dashboard completo de ADMIN vive en su propia página (ver `dashboard.md`).
 
 ## Fuente y dependencias
 
-- Código: `src/features/inicio/HomePage.tsx`, `src/features/inicio/AdminDashboard.tsx`, `src/shared/api.ts` y la sección «Inicio» de `src/styles.css`.
-- API: `GET /dashboard` (todos) y `GET /dashboard/admin?range=` (ADMIN).
-- Roles: ADMIN (dashboard completo), CAJA (caja de hoy), COCINA (sin montos). El rol solo elige qué bloques pedir; los montos y permisos los decide el backend (`cash` llega `null` a COCINA y `/dashboard/admin` responde 403 a otros roles).
+- Código: `src/features/inicio/HomePage.tsx`, `src/features/inicio/home.css`; componentes `Icon`, `PageHeader`, `EmptyState` y `Skeleton` de `src/design/`.
+- API (sin endpoints nuevos):
+  - `GET /dashboard`: nombre del restaurante, estado de recepción y motivo de pausa, fecha, plato más vendido (`topDish`, histórico), tareas programadas y `cash {collected, receivable}` de hoy (`null` para COCINA).
+  - `GET /orders?status=…&size=1`: se usa solo `total` para contar pedidos por estado (sin rango de fechas).
+  - `GET /crm/conversations?tab=PENDING&size=1` (ADMIN, CAJA): `total` de conversaciones por contestar (el último mensaje es del cliente; lo calcula el backend).
+  - `GET /menu/dishes` (ADMIN): platos con `active = true` y `available = false`; misma regla que «Platos agotados» del dashboard.
+- Roles: ADMIN, CAJA y COCINA. El rol solo elige qué tarjetas pedir; montos y permisos los decide el backend.
 
 ## Comportamiento visible
 
-- Todos: saludo, fecha, estado de recepción, identidad del restaurante y tareas programadas.
-- CAJA y COCINA: plato más vendido histórico. CAJA, además, tarjetas «Cobrado hoy» y «Por cobrar hoy».
-- ADMIN: selector segmentado Hoy / 7 días / 30 días (por defecto Hoy), con una nota que indica contra qué período se compara y la zona horaria.
-  - Tarjetas: cobrado, por cobrar, ventas completadas (con número de pedidos), ticket promedio, tasa de aceptación, tiempos de decisión y preparación, y clientes nuevos (con recurrentes). Cada tarjeta muestra la variación con flecha y texto («▲ $3,50 vs. ayer a esta hora»), sin depender del color.
-  - Ventas no concretadas: rechazados, cancelados y vencidos, con importe, cantidad y valor del período anterior.
-  - Pedidos por hora: columnas SVG de un tono (`#0a5eae`, validado con el script de la skill de visualización), tooltip por hora, foco por teclado, indicación de la hora pico y tabla alternativa en «Ver tabla».
-  - Platos y extras más vendidos y retiro frente a entrega: barras horizontales con etiqueta directa de unidades e importe.
-  - «Ahora mismo»: derivaciones sin contestar y platos agotados (con sus nombres).
-  - Retrocesos y deshacer por día, rol y tipo, en tabla.
-- Animaciones sutiles: las tarjetas aparecen (220 ms) y las barras crecen (320 ms); con `prefers-reduced-motion` no hay movimiento. Al cambiar el rango, el contenido anterior se atenúa mientras carga.
+- Encabezado: saludo según la hora («Buenos días», «Buenas tardes», «Buenas noches»), nombre del restaurante y fecha; insignia «Recepción activa» o «Recepción pausada» (icono y texto) y botón «Actualizado HH:MM» que recarga. Si la recepción está pausada, un aviso muestra el motivo.
+- «Ahora mismo»: tarjetas grandes con icono, cifra, explicación y enlace a la página que resuelve:
+  - ADMIN: Por aceptar (`PENDING_DECISION`) → Pedidos; Por cobrar hoy → Pedidos; Por contestar → CRM; Platos agotados (con hasta dos nombres y «y N más») → Menú.
+  - CAJA: Por aceptar, Cobrado hoy, Por cobrar hoy y Por contestar.
+  - COCINA: Por preparar (`ACCEPTED`), En preparación (`PREPARING`) y Listos (`READY`), con cifras más grandes y sin montos.
+- ADMIN, además: tarjeta «Indicadores del negocio» con botón «Abrir dashboard» y accesos rápidos a Pedidos, CRM, Menú y Configuración.
+- Todos: «Plato más vendido» (nombre y unidades vendidas en pedidos registrados, o «Aún sin ventas») junto a «Próximas tareas del equipo» (hora y título, o «Sin tareas programadas»).
+- Se actualiza sola cada 60 s mientras la pestaña está visible.
+- Ya no se muestra la identidad del restaurante con logo (queda en el menú lateral).
+- Animación: las tarjetas entran con un desplazamiento de 6 px y opacidad (280 ms, escalonadas 40 ms); con `prefers-reduced-motion` no hay movimiento.
+- Responsivo: cuatro tarjetas por fila desde 1240 px y dos por debajo (COCINA: tres desde 768 px), sin tarjetas huérfanas; en móvil se oculta la explicación y por debajo de 380 px hay una por fila.
 
 ## Validaciones y errores
 
-- No acepta `restaurante_id` desde la URL ni el cuerpo; no calcula indicadores: solo formatea los valores del backend.
-- Si una consulta falla, muestra el error de API sin ocultar la navegación.
+- No acepta `restaurante_id` desde la URL ni el cuerpo.
+- Si falla `GET /dashboard` en la primera carga: estado de error con ilustración y «Reintentar». Si falla una recarga: aviso «No se pudo actualizar» y se conservan los últimos datos.
+- Si falla un conteo concreto, su tarjeta muestra «—» y «No se pudo cargar este dato» sin ocultar las demás.
 
 ## Estados de interfaz
 
-- Carga inicial («Calculando indicadores…»), recarga atenuada con `aria-busy`, error en alerta, y vacíos explícitos («Sin pedidos completados en el período», «Sin retrocesos en el período», «Sin datos para comparar»).
+Carga con esqueletos por tarjeta y en tareas (`aria-busy`), error con `EmptyState`, vacío de tareas con `EmptyState` compacto. Cada tarjeta es un botón con nombre accesible completo («Por aceptar: 1. Ver pedidos por aceptar»).
 
 ## Pruebas
 
-- `npm run build` y `npm run lint`; definiciones y permisos cubiertos por `DashboardIntegrationTest` del backend.
-- Pendiente: inspección visual en 1440, 768 y 390 px y tema oscuro (el panel aún no tiene tema oscuro).
+- `npm run lint` y `npm run build`.
+- Revisión visual con Chrome sin interfaz y sesión real: ADMIN a 1440 y 390 px, CAJA a 820 px y COCINA a 1180 px en tema oscuro; sin desbordamiento horizontal.
 
 ## TBD / exclusiones
 
-- Alta, asignación y completado de tareas; exportación; logo por restaurante (T5); tema oscuro.
+- Los enlaces llevan a la página, todavía sin filtro aplicado (p. ej., Pedidos con «Por aceptar»): se agrega al rediseñar Pedidos (etapa 2).
+- Alta, asignación y completado de tareas.

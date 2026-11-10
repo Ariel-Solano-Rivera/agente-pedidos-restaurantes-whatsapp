@@ -13,15 +13,6 @@
   /* — Marca (por defecto; la reemplaza GET /branding) — */
   --brand-primary: #0a3165;
   --brand-secondary: #0a5eae;
-  --brand-primary-hover: color-mix(in srgb, var(--brand-primary) 84%, #000);
-  --brand-primary-soft: color-mix(in srgb, var(--brand-primary) 9%, var(--surface));
-  --brand-primary-line: color-mix(in srgb, var(--brand-primary) 28%, var(--surface));
-  --on-brand: #ffffff;
-  /* Acción principal. Si GET /branding marca el color principal sin AA contra blanco
-     (contrast[].passesAA = false), branding.ts pone data-brand-contrast="low" y se usa el color por defecto. */
-  --action-bg: var(--brand-primary);
-  --action-hover: var(--brand-primary-hover);
-  --on-action: var(--on-brand);
 
   /* — Tipografía — */
   --font-display: "Geist", system-ui, sans-serif;
@@ -58,8 +49,21 @@
   --duration-base: 220ms;
   --duration-slow: 280ms;   /* máximo permitido: 300 ms */
 
-  /* — Tema claro (base) — */
+}
+
+/* Tema claro (base). [data-theme="light"] lo fuerza en una zona (p. ej., páginas aún no rediseñadas). */
+:root, [data-theme="light"] {
   color-scheme: light;
+  --brand-primary-hover: color-mix(in srgb, var(--brand-primary) 84%, #000);
+  --brand-primary-soft: color-mix(in srgb, var(--brand-primary) 9%, var(--surface));
+  --brand-primary-line: color-mix(in srgb, var(--brand-primary) 28%, var(--surface));
+  --on-brand: #ffffff;
+  /* Acción principal. Si GET /branding marca el color principal sin AA contra blanco
+     (contrast[].passesAA = false), branding.ts pone data-brand-contrast="low" y se usa el color por defecto. */
+  --action-bg: var(--brand-primary);
+  --action-hover: var(--brand-primary-hover);
+  --on-action: var(--on-brand);
+
   --bg: #f5f6f8;
   --surface: #ffffff;
   --surface-sunken: #eef0f3;
@@ -136,7 +140,8 @@
 
 /* Color de marca sin contraste AA contra blanco (según el backend): la acción usa el color por defecto
    y la marca queda solo como acento (logo, franja lateral, gráficos). */
-:root[data-brand-contrast="low"]:not([data-theme="dark"]) { --action-bg: #0a3165; --action-hover: #082850; --on-action: #ffffff; }
+:root[data-brand-contrast="low"]:not([data-theme="dark"]),
+:root[data-brand-contrast="low"] [data-theme="light"] { --action-bg: #0a3165; --action-hover: #082850; --on-action: #ffffff; }
 
 /* Tema oscuro: la acción es la marca aclarada (L = 0.80 en OKLCH) con texto oscuro; mantiene el tono de cualquier marca. */
 @supports (color: oklch(from red l c h)) {

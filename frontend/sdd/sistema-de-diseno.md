@@ -4,11 +4,11 @@
 
 Base visual común del rediseño del panel (etapa 0): tokens de color, tipografía, espacios, radios, sombras y movimiento, y los componentes base que reutilizan todas las páginas. No define pantallas ni cambia contratos de API, permisos ni reglas de dominio: el panel sigue mostrando solo lo que devuelve el backend (precios, `allowedTransitions`, avisos de contraste).
 
-Estado: **aprobado** (etapa 0, 2026-11-09). Ninguna página importa todavía `src/design/`; cada página lo adopta al rediseñarse, con su propia aprobación.
+Estado: **aprobado** (etapa 0, 2026-11-09). `main.tsx` importa los tokens y componentes desde la etapa 1; adoptado por la estructura general e Inicio. Cada página lo adopta al rediseñarse, con su propia aprobación.
 
 ## Fuente y dependencias
 
-- Código: `src/design/tokens.css` (tokens, `@font-face`, tema claro y oscuro), `src/design/components.css` (componentes `ds-*`), `muestra-sistema.html` (página de muestra solo para desarrollo; no entra en `vite build`).
+- Código: `src/design/tokens.css` (tokens, `@font-face`, tema claro en `:root` y `[data-theme="light"]`, tema oscuro en `[data-theme="dark"]`), `src/design/components.css` (componentes `ds-*`), `src/design/Icon.tsx` (iconos SVG propios), `src/design/States.tsx` (`EmptyState`, `Skeleton`, `PageHeader`), `muestra-sistema.html` (página de muestra solo para desarrollo; no entra en `vite build`).
 - Fuentes: `public/fonts/geist/` y `public/fonts/geist-mono/`, woff2 autoalojados, subconjunto latín (incluye á é í ó ú ñ ü ¿ ¡), variables por peso (100–900), con su `OFL.txt` (SIL Open Font License 1.1). Sin CDN ni dependencias npm nuevas.
 - Desarrollo: `vite.config.ts` reenvía `/api` a `http://localhost:8080` (o `VITE_API_PROXY`) con `npm run dev`, igual que nginx en Docker Compose.
 - API o estado compartido: `GET /branding` (colores y `contrast[]`) vía `src/shared/branding.ts`.
@@ -34,7 +34,7 @@ Estado: **aprobado** (etapa 0, 2026-11-09). Ninguna página importa todavía `sr
 ### Marca y contraste
 
 - `branding.ts` aplica `--brand-primary` y `--brand-secondary` desde `GET /branding`; sin sesión rige el tema por defecto.
-- El panel **no calcula** el contraste de la marca. Si `contrast[]` del backend indica `passesAA = false` para el color principal contra blanco, el panel pone `data-brand-contrast="low"` en `<html>`: en tema claro la acción usa el color por defecto y la marca queda como acento (logo, franja lateral, gráficos). En tema oscuro la marca aclarada siempre lleva texto oscuro. *(Se implementa en `branding.ts` al rediseñar el shell, etapa 1.)*
+- El panel **no calcula** el contraste de la marca. Si `contrast[]` del backend indica `passesAA = false` para el color principal contra blanco, el panel pone `data-brand-contrast="low"` en `<html>`: en tema claro la acción usa el color por defecto y la marca queda como acento (logo, franja lateral, gráficos). En tema oscuro la marca aclarada siempre lleva texto oscuro. Implementado en `src/shared/branding.ts` (etapa 1).
 - La muestra verifica todos los pares de tokens (21) en ambos temas y con cuatro marcas de ejemplo: el mínimo es 4.82:1 en claro y 5.86:1 en oscuro.
 
 ### Estados: color, icono y texto
@@ -65,15 +65,17 @@ Las etiquetas son las que ya usa el panel. Los iconos son SVG de línea propios 
 | Interruptor | `.ds-switch` (`input[role=switch]`) | Disponibilidad en Menú |
 | Pestañas | `.ds-tabs`, `.ds-tab[aria-selected]` | Con desplazamiento horizontal en móvil |
 | Modal | `<dialog class="ds-modal">` | Confirmación con estado de origen y destino |
-| Estado vacío | `.ds-empty` | Ilustración SVG de línea de un color, título, una línea y botón |
-| Esqueleto | `.ds-skeleton` | Brillo desactivado con movimiento reducido |
+| Estado vacío | `.ds-empty`, `<EmptyState illustration compact>` | Ilustración SVG de línea de un color (`empty`, `error`, `done`), título, una línea y botón; `error` se anuncia como alerta |
+| Encabezado de página | `<PageHeader title subtitle aside>` | Título y fecha a la izquierda; estado y acciones a la derecha |
+| Iconos | `<Icon name size label>` | Decorativos con `aria-hidden` salvo que reciban `label` |
+| Esqueleto | `.ds-skeleton`, `<Skeleton width height>` | Brillo desactivado con movimiento reducido |
 
 Reglas de maquetación: los hijos de grid o flex que contienen tablas o textos largos llevan `min-width: 0`; los `fieldset` de filtros llevan `min-inline-size: 0`. Sin ellas, la página desborda en móvil.
 
 ## Comportamiento visible
 
 - Tipografía: **Geist** para títulos, texto y cifras, y **Geist Mono** solo para el número de pedido `PED-XXXXXXXX`, porque distingue 0/O y 1/l (52 KB en total). Se descartaron Bricolage Grotesque + Inter (más peso, dos familias) e IBM Plex Sans (más ancha).
-- Tema: claro como base. Cada persona elige **Claro, Oscuro o Sistema**; por defecto es Claro para ADMIN y CAJA, y Oscuro para COCINA (paleta inspirada en la referencia `cocina-02`). El shell resuelve «Sistema» con `matchMedia('(prefers-color-scheme: dark)')`, sigue sus cambios y pone `data-theme="dark"` en `<html>`. La preferencia se guarda solo en el navegador (`localStorage`, con `try/catch`); no se envía al backend. *(Se implementa en la etapa 1.)*
+- Tema: claro como base. Cada persona elige **Claro, Oscuro o Sistema**; por defecto es Claro para ADMIN y CAJA, y Oscuro para COCINA (paleta inspirada en la referencia `cocina-02`). El shell resuelve «Sistema» con `matchMedia('(prefers-color-scheme: dark)')`, sigue sus cambios y pone `data-theme="dark"` en `<html>`. La preferencia se guarda solo en el navegador (`localStorage`, con `try/catch`); no se envía al backend. Implementado en `src/shared/theme.ts` (etapa 1).
 - Dispositivos: menú lateral en pantallas grandes y menú desplegable de pantalla completa en móvil (se construye en la etapa 1).
 
 ## Validaciones y errores

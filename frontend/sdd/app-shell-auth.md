@@ -6,7 +6,7 @@ Inicia React, autentica al usuario de demostración mediante HTTP Basic y muestr
 
 ## Fuente y dependencias
 
-- Código: `src/main.tsx`, `src/App.tsx` (`Login`, `App`), `src/components/AppShell.tsx`, `src/shared/api.ts`, `src/shared/Table.tsx`, `src/styles.css` y `public/tesis-logo.png`.
+- Código: `index.html`, `src/main.tsx`, `src/App.tsx` (`Login`, `App`), `src/components/AppShell.tsx`, `src/components/AppShell.css`, `src/shared/theme.ts`, `src/shared/branding.ts`, `src/shared/api.ts`, `src/shared/Table.tsx`, `src/styles.css` y `public/tesis-logo.png`.
 - API: `GET /api/v1/me` y los endpoints definidos por cada pantalla.
 - Roles: todos los roles autenticados.
 
@@ -15,7 +15,16 @@ Inicia React, autentica al usuario de demostración mediante HTTP Basic y muestr
 - Guarda el token Basic codificado en `localStorage` solo para la demostración local.
 - El contrato de sesión usa `email`, `restaurantId` y `roles`; los componentes no asumen un campo `username` inexistente.
 - Verifica la sesión al arrancar, muestra un formulario propio de acceso si falla y permite cerrar sesión. El formulario presenta el logo de la tesis, campos vacíos con ejemplos de usuario/correo y contraseña, estado de envío y errores en la propia página; no usa diálogos emergentes.
-- Muestra el shell en este orden: Inicio, Pedidos, CRM (solo ADMIN y CAJA), Menú, Catálogo y Configuración (solo ADMIN). La barra lateral usa `--brand-primary` y el logo del restaurante si existe (ver `marca.md`); al cerrar sesión se vuelve a Inicio y al tema por defecto. La lista `navigation` admite `roles` solo para ocultar secciones que el backend negaría con 403. En escritorio, el Sidebar queda fijo a todo el alto del viewport y el área de trabajo reserva su ancho; incluye iconos SVG, estado activo, sección principal y perfil. En pantallas angostas se convierte en una barra superior fija y deslizable, sin mostrar una barra de desplazamiento ni desbordar el contenido. Operación y pagos siguen fuera de la navegación; las derivaciones se atienden en CRM.
+- Estructura general (rediseño, etapa 1), con el sistema de diseño (`sistema-de-diseno.md`):
+  - Menú lateral claro u oscuro según el tema, con logo (el del restaurante si existe; ver `marca.md`) y grupos: **Operación** (Inicio, Pedidos, CRM solo ADMIN y CAJA), **Análisis** (Dashboard solo ADMIN), **Carta** (Menú, Catálogo) y **Ajustes** (Configuración solo ADMIN). El elemento activo se resalta con el color de acción y `aria-current="page"`. `roles` solo oculta secciones que el backend negaría con 403; si se pide una vista no permitida, `App.tsx` muestra Inicio.
+  - Pie del menú: preferencia de tema (Claro, Oscuro o Sistema; ver `src/shared/theme.ts`) y tarjeta del usuario con correo, rol en español y botón «Cerrar sesión».
+  - Escritorio (≥ 1100 px): menú lateral fijo de 256 px. Tableta (768–1099 px): barra compacta de 96 px con icono y etiqueta corta; las opciones de tema quedan solo con icono, con nombre accesible y tooltip. Móvil (< 768 px): barra superior con logo, título de la sección y botón «Menú», que abre un menú de pantalla completa (`<dialog>` modal con foco atrapado y Esc) con elementos de 56 px, tema, usuario y «Cerrar».
+  - Enlace «Saltar al contenido»; al cambiar de sección el foco pasa al contenido principal y la vista vuelve arriba.
+  - Tema: `useThemePreference` lee la preferencia por persona en `localStorage` (`restaurant.theme.<correo>`, con `try/catch`); por defecto Oscuro para COCINA y Claro para los demás. «Sistema» sigue `prefers-color-scheme` y sus cambios. Pone `data-theme` en `<html>` y lo quita al cerrar sesión. No se envía al backend.
+  - Marca: `applyBranding` marca `data-brand-contrast="low"` cuando `contrast` de `GET /branding` dice que el color principal no cumple AA; el panel no calcula contraste.
+  - Páginas aún no rediseñadas (Pedidos, CRM, Menú, Catálogo, Configuración y el contenido del Dashboard) se envuelven en `.legacy-page` con `data-theme="light"`: conservan sus colores fijos en una zona clara, también con el tema oscuro. Los estilos globales antiguos de `button`, `input`, `select` y `table` de `styles.css` se limitan con `:where(.legacy-page, .login)` para no alcanzar a los componentes nuevos. Cada etapa retira su página de esta zona.
+- `index.html` declara `lang="es"`, `meta viewport` (antes faltaba y el panel se veía como escritorio reducido en móviles), `color-scheme`, título «Panel del restaurante», icono y precarga de Geist.
+- Orden de estilos en `main.tsx`: `styles.css` (antiguo), `design/tokens.css`, `design/components.css` y luego los de cada página.
 - Centraliza solicitudes JSON, encabezado `Authorization`, carga inicial y presentación de errores de API.
 
 ## Validaciones y errores
@@ -28,7 +37,7 @@ Inicia React, autentica al usuario de demostración mediante HTTP Basic y muestr
 
 - `npm run build` (comprueba tipos de `src/` y de `vite.config.ts` sin emitir archivos) y `npm run lint` (ESLint con reglas de TypeScript y de hooks de React). Las versiones quedan fijadas por `package-lock.json`.
 - Prueba de humo: `scripts/smoke.ps1` desde la raíz comprueba acceso, `GET /me` y la carga del panel en `:5173`; llama a la API directamente en `:8080`, no a través del proxy `/api`.
-- Verificación visual responsiva: formulario, Sidebar fijo y foco visible en 1440 px, 768 px y 390 px; entrada reducida cuando `prefers-reduced-motion` está activo.
+- Verificación visual con Chrome sin interfaz y sesión real: menú lateral a 1440 y 1180 px, barra compacta a 820 px, barra superior y menú de pantalla completa a 390 px, en tema claro y oscuro; sin desbordamiento horizontal. El inicio de sesión se rediseña en la etapa 11.
 
 ## TBD / exclusiones
 

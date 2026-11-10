@@ -9,7 +9,7 @@ Sección «Configuración», pestaña «Marca», solo para ADMIN: editar el colo
 - Código:
   - `src/features/configuracion/SettingsPage.tsx`;
   - `src/shared/branding.ts` (`useBranding`, `applyBranding`);
-  - `src/App.tsx`, `src/components/AppShell.tsx` (entrada «Configuración» y logo en la barra lateral) y `src/features/inicio/HomePage.tsx` (logo);
+  - `src/App.tsx` y `src/components/AppShell.tsx` (entrada «Configuración» y logo en el menú lateral, la barra superior móvil y el menú de pantalla completa);
   - en `src/styles.css`, las variables `:root` y la sección «Configuración → Marca».
 - API o estado compartido: `GET /branding`, `GET /branding/logo`, `PUT /admin/branding`, `POST /admin/branding/logo` y `DELETE /admin/branding/logo`.
 - Roles: todos leen y aplican la marca; solo ADMIN ve «Configuración» (el backend responde 403 a los demás).
@@ -19,7 +19,8 @@ Sección «Configuración», pestaña «Marca», solo para ADMIN: editar el colo
 - **Tema:** `styles.css` define `--brand-primary` (`#0a3165`) y `--brand-secondary` (`#0a5eae`) como tema por defecto, y de ellos deriva `--brand-primary-strong`, `--brand-primary-soft` y `--brand-secondary-strong`.
   - Tras iniciar sesión, `useBranding` lee `GET /branding` y fija las dos variables en `document.documentElement`. Al cerrar sesión se quitan.
   - El principal colorea botones y la barra lateral; el secundario, acciones, acentos, barras y gráficos.
-  - Con logo, la barra lateral e Inicio lo muestran en lugar del logo de la tesis.
+  - Con logo, el menú lateral y la barra superior móvil lo muestran en lugar del logo de la tesis (Inicio ya no muestra el logo desde la etapa 1 del rediseño).
+  - Si `contrast` indica que el color principal no cumple AA contra blanco, `applyBranding` pone `data-brand-contrast="low"` y la acción usa el color por defecto (ver `sistema-de-diseno.md`).
 - **Pestaña «Marca»:**
   - cada color tiene selector visual y campo hexadecimal, con validación de formato al escribir;
   - una vista previa muestra un botón principal, una acción secundaria y un texto;

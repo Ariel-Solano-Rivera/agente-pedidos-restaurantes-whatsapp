@@ -8,7 +8,7 @@ Guarda y entrega la marca del restaurante del usuario autenticado: color princip
 
 - Código: `administracion/BrandingController.java` (API) y `administracion/BrandingPolicy.java` (formato de color, contraste y tipo real de imagen).
 - Tablas o migraciones: `restaurant_branding` (V13), `audit_log`.
-- Consumidores: `frontend/src/shared/branding.ts`, `features/configuracion/SettingsPage.tsx`, `components/AppShell.tsx` y `features/inicio/HomePage.tsx`.
+- Consumidores: `frontend/src/shared/branding.ts`, `features/configuracion/SettingsPage.tsx`, y `components/AppShell.tsx`.
 
 ## Contratos y permisos
 

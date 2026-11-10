@@ -6,13 +6,20 @@ export type Branding = { primaryColor: string; secondaryColor: string; hasLogo: 
 
 const VARIABLES = { primaryColor: '--brand-primary', secondaryColor: '--brand-secondary' } as const;
 
-/** Aplica la marca del restaurante del usuario con variables CSS; sin sesión vuelve al tema por defecto de styles.css. */
-export function applyBranding(branding?: Pick<Branding, 'primaryColor' | 'secondaryColor'>) {
-  const style = document.documentElement.style;
+/**
+ * Aplica la marca del restaurante del usuario con variables CSS; sin sesión vuelve al tema por defecto.
+ * El panel no calcula contraste: si `contrast` del backend indica que el color principal no cumple AA,
+ * marca `data-brand-contrast="low"` y los tokens usan el color de acción por defecto (src/design/tokens.css).
+ */
+export function applyBranding(branding?: Pick<Branding, 'primaryColor' | 'secondaryColor'> & Partial<Pick<Branding, 'contrast'>>) {
+  const root = document.documentElement; const style = root.style;
   for (const [key, variable] of Object.entries(VARIABLES)) {
     const value = branding?.[key as keyof typeof VARIABLES];
     if (value) style.setProperty(variable, value); else style.removeProperty(variable);
   }
+  const primary = branding?.primaryColor?.toLowerCase();
+  const lowContrast = Boolean(primary && branding?.contrast?.some(check => check.color.toLowerCase() === primary && !check.passesAA));
+  if (lowContrast) root.dataset.brandContrast = 'low'; else delete root.dataset.brandContrast;
 }
 
 export function useBranding(auth: string, enabled: boolean) {

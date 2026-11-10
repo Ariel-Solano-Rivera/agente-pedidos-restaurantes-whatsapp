@@ -1,25 +1,106 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
+import { Icon, IconName } from '../design/Icon';
 import { User } from '../shared/api';
+import { ThemePreference, useThemePreference } from '../shared/theme';
+import './AppShell.css';
 
-export type View = 'inicio' | 'catalogo' | 'menu' | 'pedidos' | 'crm' | 'configuracion';
-type IconName = 'home' | 'catalog' | 'menu' | 'orders' | 'crm' | 'settings' | 'user' | 'logout';
+export type View = 'inicio' | 'dashboard' | 'pedidos' | 'crm' | 'menu' | 'catalogo' | 'configuracion';
+type NavItem = { id: View; label: string; icon: IconName; roles?: string[] };
+
 /** `roles` solo oculta secciones que el backend negaría con 403; la autorización sigue en el backend. */
-const navigation: Array<{ id: View; label: string; icon: IconName; roles?: string[] }> = [{ id: 'inicio', label: 'Inicio', icon: 'home' }, { id: 'pedidos', label: 'Pedidos', icon: 'orders' }, { id: 'crm', label: 'CRM', icon: 'crm', roles: ['ROLE_ADMIN', 'ROLE_CAJA'] }, { id: 'menu', label: 'Menú', icon: 'menu' }, { id: 'catalogo', label: 'Catálogo', icon: 'catalog' }, { id: 'configuracion', label: 'Configuración', icon: 'settings', roles: ['ROLE_ADMIN'] }];
+const groups: Array<{ label: string; items: NavItem[] }> = [
+  { label: 'Operación', items: [{ id: 'inicio', label: 'Inicio', icon: 'home' }, { id: 'pedidos', label: 'Pedidos', icon: 'receipt' }, { id: 'crm', label: 'CRM', icon: 'chat', roles: ['ROLE_ADMIN', 'ROLE_CAJA'] }] },
+  { label: 'Análisis', items: [{ id: 'dashboard', label: 'Dashboard', icon: 'chart', roles: ['ROLE_ADMIN'] }] },
+  { label: 'Carta', items: [{ id: 'menu', label: 'Menú', icon: 'book' }, { id: 'catalogo', label: 'Catálogo', icon: 'tag' }] },
+  { label: 'Ajustes', items: [{ id: 'configuracion', label: 'Configuración', icon: 'settings', roles: ['ROLE_ADMIN'] }] },
+];
+const roleLabels: Record<string, string> = { ROLE_ADMIN: 'Administración', ROLE_CAJA: 'Caja', ROLE_COCINA: 'Cocina' };
+const themes: Array<{ id: ThemePreference; label: string; icon: IconName }> = [{ id: 'light', label: 'Claro', icon: 'sun' }, { id: 'dark', label: 'Oscuro', icon: 'moon' }, { id: 'system', label: 'Sistema', icon: 'monitor' }];
 
-function SidebarIcon({ name }: { name: IconName }) {
-  const paths = {
-    home: <><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10Z" /></>,
-    catalog: <><path d="M4 5h16v4H4zM4 11h16v4H4zM4 17h16v2H4z" /></>,
-    menu: <><path d="M4 4h16v16H4z" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
-    orders: <><path d="M6 3h12v18H6z" /><path d="M9 3v3h6V3M9 11h6M9 15h4" /></>,
-    settings: <><circle cx="12" cy="12" r="3" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" /></>,
-    crm: <><path d="M4 5h16v11H9l-5 4V5Z" /><path d="M8 9h8M8 12h5" /></>,
-    user: <><circle cx="12" cy="8" r="3.25" /><path d="M5.5 21c.6-3.4 3-5.25 6.5-5.25s5.9 1.85 6.5 5.25" /></>,
-    logout: <><path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10" /></>
-  };
-  return <svg className="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">{paths[name]}</svg>;
+export const viewLabel = (view: View) => groups.flatMap(group => group.items).find(item => item.id === view)?.label ?? '';
+export const canSee = (user: User, view: View) => {
+  const item = groups.flatMap(group => group.items).find(entry => entry.id === view);
+  return Boolean(item && (!item.roles || item.roles.some(role => user.roles.includes(role))));
+};
+
+function visibleGroups(user: User) {
+  return groups.map(group => ({ ...group, items: group.items.filter(item => canSee(user, item.id)) })).filter(group => group.items.length);
+}
+
+function Navigation({ user, view, onSelect, variant }: { user: User; view: View; onSelect: (view: View) => void; variant: 'side' | 'sheet' }) {
+  return <nav className={`shell-nav shell-nav--${variant}`} aria-label="Secciones principales">
+    {visibleGroups(user).map(group => <div className="shell-nav__group" key={group.label}>
+      <p className="shell-nav__label">{group.label}</p>
+      <ul>{group.items.map(item => <li key={item.id}>
+        <button type="button" className="shell-nav__item" aria-current={view === item.id ? 'page' : undefined} onClick={() => onSelect(item.id)}>
+          <Icon name={item.icon} size={variant === 'sheet' ? 24 : 20} /><span>{item.label}</span>
+        </button>
+      </li>)}</ul>
+    </div>)}
+  </nav>;
+}
+
+function ThemeControl({ preference, onChange }: { preference: ThemePreference; onChange: (next: ThemePreference) => void }) {
+  return <fieldset className="shell-theme">
+    <legend className="shell-nav__label">Tema</legend>
+    <div className="shell-theme__options">{themes.map(theme => <button key={theme.id} type="button" title={`Tema ${theme.label.toLowerCase()}`} aria-pressed={preference === theme.id} onClick={() => onChange(theme.id)}>
+      <Icon name={theme.icon} size={16} /><span>{theme.label}</span>
+    </button>)}</div>
+  </fieldset>;
+}
+
+function UserCard({ user, onLogout }: { user: User; onLogout: () => void }) {
+  const role = user.roles.map(item => roleLabels[item] ?? item.replace('ROLE_', '')).join(' · ');
+  return <div className="shell-user">
+    <span className="shell-user__avatar" aria-hidden="true">{user.email.slice(0, 1).toUpperCase()}</span>
+    <div className="shell-user__text"><strong title={user.email}>{user.email}</strong><small>{role}</small></div>
+    <button type="button" className="shell-icon-button" onClick={onLogout} aria-label="Cerrar sesión" title="Cerrar sesión"><Icon name="logout" /></button>
+  </div>;
 }
 
 export function AppShell({ user, logoUrl, view, onViewChange, onLogout, children }: { user: User; logoUrl?: string; view: View; onViewChange: (view: View) => void; onLogout: () => void; children: ReactNode }) {
-  return <div className="dashboard-shell"><aside className="sidebar"><div className="sidebar-brand"><img src={logoUrl || '/tesis-logo.png'} alt="" /><span>Restaurant Admin</span></div><nav className="sidebar-nav" aria-label="Secciones principales"><p className="sidebar-section-label">Panel principal</p>{navigation.filter(item => !item.roles || item.roles.some(role => user.roles.includes(role))).map(item => <button key={item.id} className={view === item.id ? 'nav-item active' : 'nav-item'} aria-current={view === item.id ? 'page' : undefined} onClick={() => onViewChange(item.id)}><SidebarIcon name={item.icon} /><span>{item.label}</span></button>)}</nav><div className="sidebar-user"><div className="sidebar-user-heading"><span className="sidebar-avatar"><SidebarIcon name="user" /></span><div><strong>{user.email}</strong><small>{user.roles.map(role => role.replace('ROLE_', '')).join(' · ')}</small></div></div><button className="logout" onClick={onLogout}><SidebarIcon name="logout" /><span>Cerrar sesión</span></button></div></aside><main className="workspace">{children}</main></div>;
+  const { preference, setPreference } = useThemePreference(user);
+  const sheet = useRef<HTMLDialogElement>(null);
+  const main = useRef<HTMLElement>(null);
+  const logo = logoUrl || '/tesis-logo.png';
+
+  function select(next: View) {
+    sheet.current?.close();
+    onViewChange(next);
+  }
+  // Al cambiar de sección, el foco va al contenido para lectores de pantalla y teclado.
+  useEffect(() => { main.current?.focus({ preventScroll: true }); window.scrollTo({ top: 0 }); }, [view]);
+
+  return <div className="shell ds-root">
+    <a className="shell-skip" href="#contenido">Saltar al contenido</a>
+
+    <aside className="shell-side" aria-label="Navegación">
+      <div className="shell-brand"><img src={logo} alt="" /><span>Panel del<br />restaurante</span></div>
+      <Navigation user={user} view={view} onSelect={select} variant="side" />
+      <div className="shell-side__footer">
+        <ThemeControl preference={preference} onChange={setPreference} />
+        <UserCard user={user} onLogout={onLogout} />
+      </div>
+    </aside>
+
+    <header className="shell-topbar">
+      <img src={logo} alt="" />
+      <span className="shell-topbar__title">{viewLabel(view)}</span>
+      <button type="button" className="ds-btn ds-btn--secondary" onClick={() => sheet.current?.showModal()} aria-haspopup="dialog"><Icon name="menu" />Menú</button>
+    </header>
+
+    <dialog ref={sheet} className="shell-sheet" aria-label="Menú">
+      <div className="shell-sheet__head">
+        <div className="shell-brand"><img src={logo} alt="" /><span>Panel del restaurante</span></div>
+        <button type="button" className="ds-btn ds-btn--secondary" onClick={() => sheet.current?.close()}><Icon name="close" />Cerrar</button>
+      </div>
+      <Navigation user={user} view={view} onSelect={select} variant="sheet" />
+      <div className="shell-sheet__footer">
+        <ThemeControl preference={preference} onChange={setPreference} />
+        <UserCard user={user} onLogout={onLogout} />
+      </div>
+    </dialog>
+
+    <main id="contenido" ref={main} tabIndex={-1} className="shell-main">{children}</main>
+  </div>;
 }
