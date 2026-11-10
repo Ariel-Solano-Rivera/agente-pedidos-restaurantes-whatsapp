@@ -80,6 +80,9 @@
   --shadow-lg: 0 12px 32px rgb(16 24 40 / .16);
   --danger: #b42318; --danger-soft: #fdecea; --on-danger: #ffffff;
   --success: #0f6b3b;
+  /* Datos (una serie, magnitud): validado con la skill dataviz contra --surface (contraste ≥ 3:1, banda de luminosidad). */
+  --data-1: #2f6fed;
+  --data-track: var(--surface-sunken);
 
   /* — Estados del pedido: texto/icono (fg), fondo (bg) y borde (line) — */
   --st-pending-fg: #8a4700;   --st-pending-bg: #fff3df;   --st-pending-line: #f3c983;
@@ -124,6 +127,7 @@
   --on-action: #0d121c;
   --danger: #ff8a7f; --danger-soft: #3a1d1f; --on-danger: #1a0b0b;
   --success: #6fdc9d;
+  --data-1: #5b8cf5;
 
   --st-pending-fg: #ffc46b;   --st-pending-bg: #33260f;   --st-pending-line: #6b4d14;
   --st-accepted-fg: #9cbcff;  --st-accepted-bg: #17264a;  --st-accepted-line: #2f4b8c;

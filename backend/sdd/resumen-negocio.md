@@ -19,7 +19,7 @@ No modifica pedidos, pagos, disponibilidad ni tareas. No calcula ganancia: el si
   - `menu/MenuReportingService.soldOutDishes` (`dish`, `sellable_variant`, `availability`),
   - `intervencion/HandoffReportingService.openCount` (`human_handoff`).
 - Tablas propias: `restaurant` (incluida `timezone`), `operation_settings`, `dashboard_task`.
-- Consumidores: `frontend/src/features/inicio/HomePage.tsx` (`GET /dashboard`) y `frontend/src/features/dashboard/AdminDashboard.tsx` (`GET /dashboard/admin`).
+- Consumidores: `frontend/src/features/inicio/HomePage.tsx` (`GET /dashboard`) y `frontend/src/features/dashboard/DashboardPage.tsx` (`GET /dashboard/admin`).
 
 ## Contratos y permisos
 

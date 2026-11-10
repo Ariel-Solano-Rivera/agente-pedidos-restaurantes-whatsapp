@@ -28,6 +28,7 @@ Estado: **aprobado** (etapa 0, 2026-11-09). `main.tsx` importa los tokens y comp
 | Espacios | `--space-1…14` | Base de 4 px: 4, 8, 12, 16, 20, 24, 32, 40, 56 |
 | Radios | `--radius-sm/md/lg/xl/pill` | 6, 10, 14, 20 y 999 px |
 | Sombras | `--shadow-sm/md/lg` | Suaves en claro; más densas en oscuro |
+| Datos | `--data-1`, `--data-track` | Una serie (magnitud): `#2f6fed` en claro y `#5b8cf5` en oscuro, validados con la skill dataviz contra `--surface` (luminosidad, croma y contraste ≥ 3:1); pista en `--surface-sunken` |
 | Táctil | `--hit`, `--hit-kitchen` | 44 px en el panel; 56 px en Cocina |
 | Movimiento | `--duration-fast/base/slow`, `--ease-out` | 150, 220 y 280 ms; con `prefers-reduced-motion` pasan a 0 |
 

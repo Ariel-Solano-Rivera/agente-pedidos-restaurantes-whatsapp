@@ -33,7 +33,7 @@ export default function App() {
   /** Páginas aún no rediseñadas: conservan sus estilos en una zona de tema claro (ver frontend/sdd/app-shell-auth.md). */
   const legacy = (page: ReactNode) => <div className="legacy-page" data-theme="light">{page}</div>;
   const content = current === 'inicio' ? <HomePage auth={auth} user={user} onNavigate={navigate} />
-    : current === 'dashboard' ? <DashboardPage auth={auth} />
+    : current === 'dashboard' ? <DashboardPage auth={auth} onNavigate={view => navigate(view)} />
     : current === 'cocina' ? <KitchenBoard auth={auth} user={user} />
       : current === 'catalogo' ? legacy(<CatalogPage auth={auth} user={user} />)
         : current === 'menu' ? legacy(<MenuPage auth={auth} user={user} />)
