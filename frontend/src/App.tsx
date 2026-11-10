@@ -1,5 +1,4 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { ReactNode } from 'react';
 import { AppShell, canSee, View } from './components/AppShell';
 import { CatalogPage } from './features/catalogo/CatalogPage';
 import { CrmPage } from './features/crm/CrmPage';
@@ -35,8 +34,6 @@ export default function App() {
   useEffect(() => { if (auth) api<User>('/me', auth).then(setUser).catch(() => { setAuth(''); localStorage.removeItem('restaurant.auth'); }); }, [auth]);
   if (!auth || !user) return <Login onLogin={(nextAuth, nextUser) => { localStorage.setItem('restaurant.auth', nextAuth); setAuth(nextAuth); setUser(nextUser); }} />;
   const current: View = canSee(user, view) ? view : 'inicio';
-  /** Páginas aún no rediseñadas: conservan sus estilos en una zona de tema claro (ver frontend/sdd/app-shell-auth.md). */
-  const legacy = (page: ReactNode) => <div className="legacy-page" data-theme="light">{page}</div>;
   const content = current === 'inicio' ? <HomePage auth={auth} user={user} onNavigate={navigate} />
     : current === 'dashboard' ? <DashboardPage auth={auth} onNavigate={view => navigate(view)} />
     : current === 'cocina' ? <KitchenBoard auth={auth} user={user} />
@@ -46,7 +43,7 @@ export default function App() {
           : current === 'crm' ? <CrmPage key={crmConversation ?? 'crm'} auth={auth} initialConversation={crmConversation} onOpenOrder={code => navigate('pedidos', { q: code })} />
           : current === 'derivaciones' ? <HandoffsPage auth={auth} user={user} onOpenConversation={id => navigate('crm', undefined, id)} />
           : current === 'pagos' ? <PaymentsPage auth={auth} onOpenOrder={code => navigate('pedidos', { q: code })} />
-            : current === 'configuracion' ? legacy(<SettingsPage auth={auth} branding={brand.branding} logoUrl={brand.logoUrl} onBrandingChanged={brand.reload} />)
+            : current === 'configuracion' ? <SettingsPage auth={auth} branding={brand.branding} logoUrl={brand.logoUrl} onBrandingChanged={brand.reload} />
               : <OrdersPage key={JSON.stringify(ordersPreset ?? {})} auth={auth} user={user} preset={ordersPreset} />;
   return <AppShell user={user} logoUrl={brand.logoUrl} view={current} onViewChange={next => navigate(next)} onLogout={() => { localStorage.removeItem('restaurant.auth'); setAuth(''); setUser(null); navigate('inicio'); }}>{content}</AppShell>;
 }

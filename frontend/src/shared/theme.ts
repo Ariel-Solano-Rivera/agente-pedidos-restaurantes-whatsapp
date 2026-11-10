@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from './api';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
+/** Una sola preferencia para el menú lateral y Configuración → Apariencia; la provee AppShell. */
+export const ThemeContext = createContext<{ preference: ThemePreference; setPreference: (next: ThemePreference) => void } | null>(null);
+export const useTheme = () => { const value = useContext(ThemeContext); if (!value) throw new Error('useTheme debe usarse dentro de AppShell'); return value; };
 const PREFERENCES: ThemePreference[] = ['light', 'dark', 'system'];
 const storageKey = (email: string) => `restaurant.theme.${email.toLowerCase()}`;
 

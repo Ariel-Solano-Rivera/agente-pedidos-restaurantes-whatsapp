@@ -47,6 +47,7 @@ const paths = {
   eye: <><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.7" /></>,
   eyeOff: <><path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c6.1 0 9.5 6 9.5 6a17 17 0 0 1-2.9 3.6M6.6 6.6C3.9 8.4 2.5 12 2.5 12s3.4 6 9.5 6c1.6 0 3-.4 4.2-1" /><path d="M9.9 9.9a2.7 2.7 0 0 0 3.8 3.8" /></>,
   plus: <path d="M12 5v14M5 12h14" />,
+  image: <><rect x="3.5" y="4.5" width="17" height="15" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="m20.5 16-4.5-4.5L6 19.5" /></>,
   utensilsOff: <><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-1.7 0-3 2.2-3 5v5h3v8" /><path d="m3 3 18 18" /></>,
 } satisfies Record<string, ReactNode>;
 

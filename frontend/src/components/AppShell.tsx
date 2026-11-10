@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef } from 'react';
 import { Icon, IconName } from '../design/Icon';
 import { User } from '../shared/api';
-import { ThemePreference, useThemePreference } from '../shared/theme';
+import { ThemeContext, ThemePreference, useThemePreference } from '../shared/theme';
 import './AppShell.css';
 
 export type View = 'inicio' | 'dashboard' | 'pedidos' | 'cocina' | 'operacion' | 'crm' | 'derivaciones' | 'pagos' | 'menu' | 'catalogo' | 'configuracion';
@@ -71,7 +71,7 @@ export function AppShell({ user, logoUrl, view, onViewChange, onLogout, children
   // Al cambiar de sección, el foco va al contenido para lectores de pantalla y teclado.
   useEffect(() => { main.current?.focus({ preventScroll: true }); window.scrollTo({ top: 0 }); }, [view]);
 
-  return <div className="shell ds-root">
+  return <ThemeContext.Provider value={{ preference, setPreference }}><div className="shell ds-root">
     <a className="shell-skip" href="#contenido">Saltar al contenido</a>
 
     <aside className="shell-side" aria-label="Navegación">
@@ -102,5 +102,5 @@ export function AppShell({ user, logoUrl, view, onViewChange, onLogout, children
     </dialog>
 
     <main id="contenido" ref={main} tabIndex={-1} className="shell-main">{children}</main>
-  </div>;
+  </div></ThemeContext.Provider>;
 }

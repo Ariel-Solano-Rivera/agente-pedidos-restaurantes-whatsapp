@@ -106,8 +106,6 @@ body { margin: 0; min-width: 320px; }
 .order-queue-item.active { color: #14395f; border-color: #a8c7e5; background: #e8f3ff; box-shadow: 0 8px 18px #0a316514; }
 .delivery-details { display: grid; gap: 4px; margin-top: 13px; padding: 13px 15px; color: #2c5278; border-radius: 10px; background: #eef6fd; font-size: .9rem; line-height: 1.45; }
 .delivery-details strong { color: #164572; }
-.order-action { min-height: 34px; padding: 7px 10px; color: #fff; border-radius: 8px; background: var(--brand-secondary); box-shadow: none; font-size: .78rem; }
-.order-action:hover { background: var(--brand-secondary-strong); box-shadow: none; }
 .order-action.destructive { background: #a83a2b; }
 .order-action.destructive:hover { background: #8b2b20; }
 @media (prefers-reduced-motion: reduce) { .login-brand, .login-panel { transition: opacity 150ms ease; transition-delay: 0ms; } .menu-dialog[open] { animation: none; } button { transition: none; } }
@@ -121,38 +119,11 @@ body { margin: 0; min-width: 320px; }
 .order-action.backward:hover { background: #eaf2fb; }
 .transition-path .destructive { color: #a83a2b; font-weight: 800; }
 .menu-form textarea { width: 100%; padding: 10px 11px; color: #14395f; border: 1px solid #b7cbe0; border-radius: 8px; font: inherit; resize: vertical; }
-.warning { margin: 0; padding: 10px; color: #7a2a1f; border-radius: 8px; background: #fde9e5; }
-.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
 
 .dish-state.sold-out { color: #fff; background: #a83a2b; }
 
-.segmented { display: inline-flex; padding: 3px; border: 1px solid #b7cbe0; border-radius: 10px; background: #fff; }
-.segmented button { color: #244b78; background: transparent; padding: 7px 14px; }
 .segmented button.active, .segmented button[aria-pressed="true"] { color: #fff; background: var(--brand-primary); }
 
-/* Configuración → Marca (T5). */
-.settings-tabs { margin-bottom: 16px; }
-.brand-settings { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 16px; align-items: start; }
-.brand-form, .brand-logo { border: 1px solid #c7d6e6; border-radius: 14px; background: #fff; }
-.brand-form h2, .brand-logo h2 { margin: 0; color: #123862; font-size: 1.1rem; }
 .hint { margin: 0; color: #4a6585; font-size: .85rem; }
-.color-field { display: grid; gap: 6px; color: #244b78; font-size: .9rem; font-weight: 720; }
-.color-field > div { display: flex; gap: 8px; }
-.color-field input[type="color"] { width: 48px; min-width: 48px; height: 43px; padding: 2px; border: 1px solid #b7cbe0; border-radius: 8px; background: #fff; }
-.color-field input:not([type]) { flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; }
-.brand-preview { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px; border: 1px dashed #b7cbe0; border-radius: 10px; background: #fff; }
-.brand-preview .preview-primary, .brand-preview .preview-secondary { padding: 8px 12px; color: #fff; border-radius: 8px; font-weight: 700; }
-.brand-preview .preview-primary { background: var(--preview-primary); }
-.brand-preview .preview-secondary { background: var(--preview-secondary); }
-.brand-preview .preview-text { color: var(--preview-secondary); font-weight: 760; }
-.contrast-report h3 { margin: 0 0 8px; color: #123862; font-size: .95rem; }
-.contrast-report ul { display: grid; gap: 8px; margin: 0 0 8px; padding: 0; list-style: none; }
-.contrast-report li { display: flex; gap: 10px; padding: 10px; border-radius: 8px; }
-.contrast-report li > span { font-size: 1.1rem; }
-.contrast-report li div { display: grid; gap: 2px; }
-.contrast-report li small { color: #4a6585; }
 .contrast-report li.ok { color: #1f5e3b; background: #e9f6ee; }
 .contrast-report li.warn { color: #7a2a1f; background: #fde9e5; }
-.brand-logo-preview { display: grid; place-items: center; min-height: 140px; padding: 12px; border-radius: 10px; background: #f4f8fc; color: #4a6585; text-align: center; }
-.brand-logo-preview img { max-width: 100%; max-height: 160px; border-radius: 10px; object-fit: contain; }
-@media (max-width: 900px) { .brand-settings { grid-template-columns: 1fr; } }

@@ -92,7 +92,3 @@ html { background: var(--bg); }
   .shell-topbar__title { flex: 1; font-family: var(--font-display); font-weight: var(--weight-semibold); }
   .shell-main { padding: var(--space-6) var(--space-4) var(--space-10); }
 }
-
-/* Páginas aún no rediseñadas: conservan sus colores fijos en una zona de tema claro. */
-.legacy-page { color: #14213d; }
-:root[data-theme="dark"] .legacy-page { padding: clamp(var(--space-4), 3vw, var(--space-8)); border-radius: var(--radius-xl); background: #f4f7fb; }
