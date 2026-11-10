@@ -41,6 +41,7 @@ const paths = {
   refresh: <><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8" /><path d="M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16" /><path d="M20 20v-4h-4" /></>,
   calendar: <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>,
   user: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20.5c.7-3.6 3.3-5.5 7-5.5s6.3 1.9 7 5.5" /></>,
+  grip: <><circle cx="9" cy="6" r="1.3" /><circle cx="15" cy="6" r="1.3" /><circle cx="9" cy="12" r="1.3" /><circle cx="15" cy="12" r="1.3" /><circle cx="9" cy="18" r="1.3" /><circle cx="15" cy="18" r="1.3" /></>,
   utensilsOff: <><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-1.7 0-3 2.2-3 5v5h3v8" /><path d="m3 3 18 18" /></>,
 } satisfies Record<string, ReactNode>;
 

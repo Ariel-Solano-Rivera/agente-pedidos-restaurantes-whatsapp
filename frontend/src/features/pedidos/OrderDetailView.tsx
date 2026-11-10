@@ -4,6 +4,7 @@ import { EmptyState, Skeleton } from '../../design/States';
 import { orderStatuses, PaymentBadge, StatusBadge, statusLabel } from '../../design/StatusBadge';
 import { api } from '../../shared/api';
 import { actionLabel, dateTime, HistoryEntry, methodLabels, money, OrderDetail, OrderUnit, Payment, reasonLabels, roleLabels, since, Transition } from './orderTypes';
+import { Countdown } from './Countdown';
 import './order-detail.css';
 
 /** Flujo principal de AGENTS.md, solo para mostrar los próximos pasos en gris; las acciones salen de `allowedTransitions`. */
@@ -52,15 +53,6 @@ function Unit({ unit, index, kitchen }: { unit: OrderUnit; index: number; kitche
       {!kitchen && unit.unitPrice !== null && Boolean(unit.extrasTotal) && <p className="od-unit__breakdown ds-num">Base {money(unit.unitPrice)} + extras {money(unit.extrasTotal)}</p>}
     </div>
   </li>;
-}
-
-/** Tiempo que queda para deshacer; al llegar a cero avisa para recargar (el backend decide igualmente). */
-function Countdown({ until, onExpire }: { until: string; onExpire: () => void }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
-  const seconds = Math.max(0, Math.round((new Date(until).getTime() - now) / 1000));
-  useEffect(() => { if (seconds === 0) onExpire(); }, [seconds, onExpire]);
-  return <span className="ds-num">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span>;
 }
 
 export function OrderDetailView({ auth, orderId, kitchen, busy, notice, onBack, onAction, onUndo, refreshKey }: {

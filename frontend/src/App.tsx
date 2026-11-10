@@ -4,6 +4,7 @@ import { AppShell, canSee, View } from './components/AppShell';
 import { CatalogPage } from './features/catalogo/CatalogPage';
 import { CrmPage } from './features/crm/CrmPage';
 import { SettingsPage } from './features/configuracion/SettingsPage';
+import { KitchenBoard } from './features/cocina/KitchenBoard';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { HomePage } from './features/inicio/HomePage';
 import { MenuPage } from './features/menu/MenuPage';
@@ -33,6 +34,7 @@ export default function App() {
   const legacy = (page: ReactNode) => <div className="legacy-page" data-theme="light">{page}</div>;
   const content = current === 'inicio' ? <HomePage auth={auth} user={user} onNavigate={navigate} />
     : current === 'dashboard' ? <DashboardPage auth={auth} />
+    : current === 'cocina' ? <KitchenBoard auth={auth} user={user} />
       : current === 'catalogo' ? legacy(<CatalogPage auth={auth} user={user} />)
         : current === 'menu' ? legacy(<MenuPage auth={auth} user={user} />)
           : current === 'crm' ? legacy(<CrmPage auth={auth} />)

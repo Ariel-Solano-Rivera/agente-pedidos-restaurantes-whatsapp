@@ -32,9 +32,9 @@ async function loadTiles(role: Role, auth: string, summary: Summary): Promise<Ti
   if (role === 'COCINA') {
     const [accepted, preparing, ready] = (await Promise.allSettled([count('ACCEPTED'), count('PREPARING'), count('READY')])).map(settled);
     return [
-      { key: 'accepted', label: 'Por preparar', value: accepted === null ? null : String(accepted), hint: accepted ? 'Pedidos aceptados que esperan en cocina.' : 'No hay pedidos esperando.', icon: 'check', tone: 'accepted', target: 'pedidos', action: 'Ver pedidos por preparar', short: 'Ver pedidos', preset: { status: 'ACCEPTED' } },
-      { key: 'preparing', label: 'En preparación', value: preparing === null ? null : String(preparing), hint: preparing ? 'Pedidos que se están preparando ahora.' : 'Nada en preparación.', icon: 'flame', tone: 'preparing', target: 'pedidos', action: 'Ver pedidos en preparación', short: 'Ver pedidos', preset: { status: 'PREPARING' } },
-      { key: 'ready', label: 'Listos', value: ready === null ? null : String(ready), hint: ready ? 'Esperan retiro o entrega.' : 'No hay pedidos listos.', icon: 'bell', tone: 'ready', target: 'pedidos', action: 'Ver pedidos listos', short: 'Ver pedidos', preset: { status: 'READY' } },
+      { key: 'accepted', label: 'Por preparar', value: accepted === null ? null : String(accepted), hint: accepted ? 'Pedidos aceptados que esperan en cocina.' : 'No hay pedidos esperando.', icon: 'check', tone: 'accepted', target: 'cocina', action: 'Abrir el tablero de cocina', short: 'Abrir tablero' },
+      { key: 'preparing', label: 'En preparación', value: preparing === null ? null : String(preparing), hint: preparing ? 'Pedidos que se están preparando ahora.' : 'Nada en preparación.', icon: 'flame', tone: 'preparing', target: 'cocina', action: 'Abrir el tablero de cocina', short: 'Abrir tablero' },
+      { key: 'ready', label: 'Listos', value: ready === null ? null : String(ready), hint: ready ? 'Esperan retiro o entrega.' : 'No hay pedidos listos.', icon: 'bell', tone: 'ready', target: 'cocina', action: 'Abrir el tablero de cocina', short: 'Abrir tablero' },
     ];
   }
   const [pendingResult, conversationsResult, dishesResult] = await Promise.allSettled([

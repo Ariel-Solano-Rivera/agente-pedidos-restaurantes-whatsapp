@@ -4,12 +4,12 @@ import { User } from '../shared/api';
 import { ThemePreference, useThemePreference } from '../shared/theme';
 import './AppShell.css';
 
-export type View = 'inicio' | 'dashboard' | 'pedidos' | 'crm' | 'menu' | 'catalogo' | 'configuracion';
+export type View = 'inicio' | 'dashboard' | 'pedidos' | 'cocina' | 'crm' | 'menu' | 'catalogo' | 'configuracion';
 type NavItem = { id: View; label: string; icon: IconName; roles?: string[] };
 
 /** `roles` solo oculta secciones que el backend negaría con 403; la autorización sigue en el backend. */
 const groups: Array<{ label: string; items: NavItem[] }> = [
-  { label: 'Operación', items: [{ id: 'inicio', label: 'Inicio', icon: 'home' }, { id: 'pedidos', label: 'Pedidos', icon: 'receipt' }, { id: 'crm', label: 'CRM', icon: 'chat', roles: ['ROLE_ADMIN', 'ROLE_CAJA'] }] },
+  { label: 'Operación', items: [{ id: 'inicio', label: 'Inicio', icon: 'home' }, { id: 'pedidos', label: 'Pedidos', icon: 'receipt' }, { id: 'cocina', label: 'Cocina', icon: 'flame' }, { id: 'crm', label: 'CRM', icon: 'chat', roles: ['ROLE_ADMIN', 'ROLE_CAJA'] }] },
   { label: 'Análisis', items: [{ id: 'dashboard', label: 'Dashboard', icon: 'chart', roles: ['ROLE_ADMIN'] }] },
   { label: 'Carta', items: [{ id: 'menu', label: 'Menú', icon: 'book' }, { id: 'catalogo', label: 'Catálogo', icon: 'tag' }] },
   { label: 'Ajustes', items: [{ id: 'configuracion', label: 'Configuración', icon: 'settings', roles: ['ROLE_ADMIN'] }] },

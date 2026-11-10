@@ -121,6 +121,32 @@ public class OrderController {
     return filter.bind(db.sql("SELECT count(*) total FROM customer_order o WHERE " + filter.where())).map((row, metadata) -> row.get("total", Long.class)).one();
   }
 
+  /** Tarjeta del tablero de cocina: sin importes para ningún rol. `statusSince` es el último cambio de estado (o la recepción). */
+  public record BoardCard(UUID id, String publicCode, String status, String fulfillmentType, String customerName, OffsetDateTime pickupTime, String deliveryZone,
+                          OffsetDateTime createdAt, OffsetDateTime statusSince, List<Unit> units, List<Transition> allowedTransitions, Undo undo) {}
+  public record Board(List<BoardCard> cards, OffsetDateTime generatedAt) {}
+  private record BoardBase(UUID id, String status, String mode, String customer, OffsetDateTime pickupTime, String zone, OffsetDateTime created, OffsetDateTime since) {}
+  static final int BOARD_LIMIT = 200;
+
+  /** Pedidos activos de cocina (aceptados, en preparación y listos) con sus unidades, en una sola llamada. */
+  @GetMapping("/board")
+  public Mono<Board> board(@AuthenticationPrincipal AppPrincipal user) {
+    Role role = OrderTransitionPolicy.role(user.getAuthorities());
+    return Tenant.restaurantId().flatMap(restaurantId -> db.sql("SELECT o.id,o.status,o.fulfillment_mode,o.customer_name,o.pickup_time,z.name delivery_zone,o.created_at,"
+        + "COALESCE((SELECT max(h.created_at) FROM order_status_history h WHERE h.restaurante_id=o.restaurante_id AND h.order_id=o.id), o.created_at) status_since "
+        + "FROM customer_order o LEFT JOIN delivery_zone z ON z.id=o.delivery_zone_id AND z.restaurante_id=o.restaurante_id "
+        + "WHERE o.restaurante_id=:r AND o.status IN ('ACCEPTED','PREPARING','READY') ORDER BY status_since, o.id LIMIT " + BOARD_LIMIT)
+      .bind("r", restaurantId)
+      .map((row, metadata) -> new BoardBase(row.get("id", UUID.class), row.get("status", String.class), row.get("fulfillment_mode", String.class), row.get("customer_name", String.class),
+        row.get("pickup_time", OffsetDateTime.class), row.get("delivery_zone", String.class), row.get("created_at", OffsetDateTime.class), row.get("status_since", OffsetDateTime.class)))
+      .all()
+      .flatMapSequential(base -> Mono.zip(units(restaurantId, base.id, true).collectList(), history(restaurantId, base.id).collectList()).map(values ->
+        new BoardCard(base.id, code(base.id), base.status, base.mode, base.customer, base.pickupTime, base.zone, base.created, base.since, values.getT1(),
+          OrderTransitionPolicy.allowed(base.status, role), role == Role.COCINA ? undoFor(values.getT2(), base.status, user.id()) : null)), 4)
+      .collectList()
+      .map(cards -> new Board(cards, OffsetDateTime.now())));
+  }
+
   @GetMapping("/{id}")
   public Mono<Detail> detail(@PathVariable UUID id, @AuthenticationPrincipal AppPrincipal user) {
     Role role = OrderTransitionPolicy.role(user.getAuthorities());

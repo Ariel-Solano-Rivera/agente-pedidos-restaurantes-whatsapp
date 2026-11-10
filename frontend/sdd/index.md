@@ -11,6 +11,7 @@
 | Menú y opciones | `src/features/menu/MenuPage.tsx` | [menu.md](menu.md) | CRUD de platos; búsqueda y filtros por categoría, disponibilidad y visibilidad en el cliente; etiqueta «Agotado» |
 | Pedidos (lista) | `src/features/pedidos/OrdersPage.tsx`, `orders.css`, `TransitionDialog.tsx`, `orderTypes.ts` | [pedidos.md](pedidos.md) | Rediseñado (etapa 2): filtros como botones con contador del backend, búsqueda, tarjetas con acciones de `allowedTransitions`, confirmación con motivo, paginación |
 | Detalle del pedido | `src/features/pedidos/OrderDetailView.tsx`, `order-detail.css` | [detalle-pedido.md](detalle-pedido.md) | Rediseñado (etapa 3): unidades con modificaciones, totales, cliente, pago con verificador, decisión, línea de tiempo con retrocesos y deshacer, acciones por rol |
+| Cocina (tablero) | `src/features/cocina/KitchenBoard.tsx`, `kitchen.css` | [cocina.md](cocina.md) | Rediseñado (etapa 4): tres columnas, arrastrar y soltar con Pointer Events (dedo, mouse) y teclado, actualización optimista con reversión, deshacer con cuenta regresiva, sin importes |
 | Pagos y derivaciones | — | [pagos-derivaciones.md](pagos-derivaciones.md) | Pantalla de pagos no implementada; derivaciones en CRM |
 | Configuración: marca | `src/features/configuracion/SettingsPage.tsx`, `src/shared/branding.ts` | [marca.md](marca.md) | Pestaña Marca (ADMIN); tema aplicado con variables CSS para todos; logo en barra lateral e Inicio |
 | CRM | `src/features/crm/CrmPage.tsx` | [crm.md](crm.md) | Pestañas, búsqueda, hilo, tomar/liberar control, respuesta y ficha del cliente |

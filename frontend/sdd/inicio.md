@@ -21,7 +21,7 @@ Primera pantalla tras iniciar sesión: muestra «lo que pide atención ahora» s
   - ADMIN: Por aceptar (`PENDING_DECISION`) → Pedidos; Por cobrar hoy → Pedidos; Por contestar → CRM; Platos agotados (con hasta dos nombres y «y N más») → Menú.
   - CAJA: Por aceptar, Cobrado hoy, Por cobrar hoy y Por contestar.
   - COCINA: Por preparar (`ACCEPTED`), En preparación (`PREPARING`) y Listos (`READY`), con cifras más grandes y sin montos.
-- Las tarjetas abren Pedidos con el filtro aplicado: Por aceptar → estado «Por aceptar»; Por preparar, En preparación y Listos → su estado; Cobrado hoy → hoy con pago confirmado; Por cobrar hoy → hoy (la lista no filtra exactamente «sin pago confirmado»). Elegir Pedidos en el menú abre la lista sin filtros.
+- Las tarjetas abren la página que resuelve: Por aceptar → Pedidos con estado «Por aceptar»; Por preparar, En preparación y Listos (COCINA) → tablero de Cocina; Cobrado hoy → hoy con pago confirmado; Por cobrar hoy → hoy (la lista no filtra exactamente «sin pago confirmado»). Elegir Pedidos en el menú abre la lista sin filtros.
 - ADMIN, además: tarjeta «Indicadores del negocio» con botón «Abrir dashboard» y accesos rápidos a Pedidos, CRM, Menú y Configuración.
 - Todos: «Plato más vendido» (nombre y unidades vendidas en pedidos registrados, o «Aún sin ventas») junto a «Próximas tareas del equipo» (hora y título, o «Sin tareas programadas»).
 - Se actualiza sola cada 60 s mientras la pestaña está visible.

@@ -53,6 +53,6 @@ Lista de pedidos sintéticos con filtros, búsqueda y paginación resueltos en e
 
 ## TBD / exclusiones
 
-- Tablero de cocina con arrastrar y soltar (etapa 4).
+- El tablero de cocina con arrastrar y soltar vive en `cocina.md`.
 - Actualización automática de la lista; número correlativo por restaurante (TBD en el backend).
 - Creación de pedidos, reserva efectiva y vencimiento.

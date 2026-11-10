@@ -149,4 +149,26 @@ class OrdersIntegrationTest extends IntegrationTest {
     assertThat(sum(facet(get(OTHER_ADMIN, "/api/v1/orders/facets"), "status"))).isEqualTo(total(OTHER_ADMIN, ""));
     as(ADMIN).get().uri("/api/v1/orders/facets?status=NOPE").exchange().expectStatus().isBadRequest();
   }
+
+  @Test
+  void boardListsActiveOrdersWithUnitsWithoutAmountsAndOwnUndo() {
+    Map<String, Object> board = get(COCINA, "/api/v1/orders/board");
+    List<Map<String, Object>> cards = list(board, "cards");
+    assertThat(cards).isNotEmpty().allSatisfy(card -> {
+      assertThat(card.get("status")).isIn("ACCEPTED", "PREPARING", "READY");
+      assertThat(list(card, "units")).isNotEmpty().allSatisfy(unit -> assertThat(unit.get("lineTotal")).isNull());
+      assertThat(card.get("statusSince")).isNotNull();
+    });
+    assertThat(cards.stream().filter(card -> "READY".equals(card.get("status")))).allSatisfy(card -> assertThat(list(card, "allowedTransitions")).isEmpty());
+
+    Map<String, Object> accepted = cards.stream().filter(card -> "ACCEPTED".equals(card.get("status"))).findFirst().orElseThrow();
+    String id = (String) accepted.get("id");
+    transition(COCINA, UUID.fromString(id), key(), Map.of("targetStatus", "PREPARING")).expectStatus().isOk();
+    Map<String, Object> moved = list(get(COCINA, "/api/v1/orders/board"), "cards").stream().filter(card -> id.equals(card.get("id"))).findFirst().orElseThrow();
+    assertThat(moved.get("status")).isEqualTo("PREPARING");
+    assertThat(moved.get("undo")).isNotNull();
+    assertThat(list(get(CAJA, "/api/v1/orders/board"), "cards").stream().filter(card -> id.equals(card.get("id"))).findFirst().orElseThrow().get("undo")).isNull();
+
+    assertThat(list(get(OTHER_ADMIN, "/api/v1/orders/board"), "cards")).noneSatisfy(card -> assertThat(card.get("id")).isEqualTo(id));
+  }
 }
