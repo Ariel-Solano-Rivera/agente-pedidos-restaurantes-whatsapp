@@ -191,40 +191,18 @@ body { margin: 0; min-width: 320px; }
 .option-chips button svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
 .option-chips button:hover { color: #6e1717; background: #ffecec; }
 .order-queue-item.active { color: #14395f; border-color: #a8c7e5; background: #e8f3ff; box-shadow: 0 8px 18px #0a316514; }
-.order-ticket { overflow: hidden; border: 1px solid #bdcee0; border-radius: 16px; background: #fff; box-shadow: 0 16px 32px #102a4314; }
-.ticket-customer, .ticket-units, .ticket-summary { padding: 23px 27px; }
-.ticket-customer { display: grid; gap: 5px; border-bottom: 1px solid #dfe8f1; color: #34597e; }
-.ticket-customer h3, .ticket-units h3 { margin: 0 0 6px; color: #6c86a1; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
-.ticket-customer > strong { color: #173e69; font-size: 1.08rem; }
-.ticket-customer > span { font-size: .92rem; }
 .delivery-details { display: grid; gap: 4px; margin-top: 13px; padding: 13px 15px; color: #2c5278; border-radius: 10px; background: #eef6fd; font-size: .9rem; line-height: 1.45; }
 .delivery-details strong { color: #164572; }
-.ticket-units { display: grid; gap: 0; }
-.ticket-units h3 + .ticket-unit { border-top: 0; }
-.ticket-summary { padding-top: 4px; }
-.ticket-summary dl { display: grid; gap: 8px; margin: 0; padding: 16px 0 0; border-top: 1px solid #cbd9e7; }
-.ticket-summary dl div { display: flex; justify-content: space-between; gap: 20px; color: #52708d; }
-.ticket-summary dd { margin: 0; font-variant-numeric: tabular-nums; }
-.ticket-summary .ticket-total { padding-top: 10px; color: #123862; font-size: 1.14rem; font-weight: 780; }
-.order-card-unit { display: grid; gap: 5px; padding: 12px 0; border-top: 1px solid #e2ebf3; }
-.order-card-unit-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; color: #173e69; }
-.order-card-unit-heading > div { display: grid; gap: 2px; }
-.order-card-unit-heading span, .order-card-unit p { color: #567491; font-size: .8rem; }
-.order-card-unit-heading b { flex: 0 0 auto; font-size: .86rem; font-variant-numeric: tabular-nums; }
-.order-card-unit p { margin: 0; line-height: 1.4; }
-.order-card-unit p span { color: #244f7c; font-weight: 730; }
 .order-action { min-height: 34px; padding: 7px 10px; color: #fff; border-radius: 8px; background: var(--brand-secondary); box-shadow: none; font-size: .78rem; }
 .order-action:hover { background: var(--brand-secondary-strong); box-shadow: none; }
 .order-action.destructive { background: #a83a2b; }
 .order-action.destructive:hover { background: #8b2b20; }
-.order-dialog { overflow-y: auto; }
-.order-dialog .order-ticket { border: 0; border-radius: 0; box-shadow: none; }
 @media (prefers-reduced-motion: reduce) { .login-brand, .login-panel { transition: opacity 150ms ease; transition-delay: 0ms; } .menu-dialog[open] { animation: none; } button { transition: none; } }
 @media (max-width: 980px) { .catalog-section { max-width: none; } }
 @media (max-width: 780px) { .login { grid-template-columns: 1fr; background: #fff; } .login-brand { min-height: unset; padding: 30px 24px 24px; align-items: flex-start; text-align: left; gap: 14px; } .login-brand img { width: 104px; } .login-brand p { font-size: .98rem; } .login-panel { padding: 36px 24px 42px; } .login-heading { margin-bottom: 27px; } }
-@media (max-width: 540px) { .page-heading { display: block; margin-bottom: 24px; } .login-panel { padding: 32px 20px 38px; } .login-brand { padding: 25px 20px 20px; } .login form { gap: 17px; } .login-demo { margin-top: 22px; } .menu-actions { display: grid; grid-template-columns: 1fr; margin-top: 16px; } .menu-actions button { width: 100%; } .form-grid, .dish-options { grid-template-columns: 1fr; } .add-option-row, .add-option-row:has(.price-input), .catalog-add, .catalog-edit { grid-template-columns: 1fr; } .catalog-actions { align-self: flex-start; } .ticket-header, .ticket-customer, .ticket-units, .ticket-summary, .ticket-footer { padding-left: 20px; padding-right: 20px; } }
+@media (max-width: 540px) { .page-heading { display: block; margin-bottom: 24px; } .login-panel { padding: 32px 20px 38px; } .login-brand { padding: 25px 20px 20px; } .login form { gap: 17px; } .login-demo { margin-top: 22px; } .menu-actions { display: grid; grid-template-columns: 1fr; margin-top: 16px; } .menu-actions button { width: 100%; } .form-grid, .dish-options { grid-template-columns: 1fr; } .add-option-row, .add-option-row:has(.price-input), .catalog-add, .catalog-edit { grid-template-columns: 1fr; } .catalog-actions { align-self: flex-start; } }
 
-/* Pedidos: filtros, número destacado, confirmación de transición e historial (T1). */
+/* Botón secundario y barra de filtros antiguos que aún usan Menú y Catálogo. */
 :where(.legacy-page, .login) button.secondary { color: var(--brand-primary); background: #eaf2fb; border: 1px solid #b7cbe0; }
 :where(.legacy-page, .login) button.secondary:hover { background: #d9e7f6; }
 .order-filters, .filter-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 0 0 12px; padding: 14px; border: 1px solid #c7d6e6; border-radius: 14px; background: #fff; }
@@ -232,27 +210,15 @@ body { margin: 0; min-width: 320px; }
 .order-filters input, .order-filters select, .filter-bar input, .filter-bar select { min-height: 40px; padding: 8px 10px; color: #14395f; border: 1px solid #b7cbe0; border-radius: 8px; background: #fff; }
 .order-filters .filter-search, .filter-bar .filter-search { flex: 1 1 240px; }
 .orders-count { margin: 0 0 12px; color: #4a6585; font-size: .9rem; }
-.order-code { margin: 0; color: var(--brand-secondary); font-size: 1.35rem; font-weight: 850; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
 .order-action.backward { color: var(--brand-primary); background: #fff; border: 1px solid var(--brand-secondary); }
 .order-action.backward:hover { background: #eaf2fb; }
 .transition-path .destructive { color: #a83a2b; font-weight: 800; }
 .menu-form textarea { width: 100%; padding: 10px 11px; color: #14395f; border: 1px solid #b7cbe0; border-radius: 8px; font: inherit; resize: vertical; }
 .warning { margin: 0; padding: 10px; color: #7a2a1f; border-radius: 8px; background: #fde9e5; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
-.order-dialog .order-ticket { display: grid; gap: 16px; margin: 18px 22px 22px; padding: 18px; }
-.order-dialog .order-ticket section { display: grid; gap: 6px; }
-.order-dialog .order-ticket h3 { margin: 0; color: #123862; font-size: 1rem; }
-.ticket-meta { color: #4a6585; font-size: .88rem; }
-.order-history { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.order-history li { display: grid; gap: 3px; padding: 10px 12px; border-left: 4px solid var(--brand-secondary); border-radius: 6px; background: #f4f8fc; }
-.order-history li.history-retroceso { border-left-color: #c07a12; background: #fff7e8; }
-.order-history li.history-deshacer { border-left-color: #6b4fbb; background: #f4f0fd; }
-.order-history div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.order-history small { color: #4a6585; }
-.history-badge { padding: 2px 8px; color: #fff; border-radius: 999px; background: var(--brand-secondary); font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
 .history-badge.retroceso { background: #9a5d00; }
 .history-badge.deshacer { background: #5a3fa8; }
-@media (max-width: 640px) { .order-filters label, .filter-bar label { flex: 1 1 140px; } .order-code { font-size: 1.2rem; } }
+@media (max-width: 640px) { .order-filters label, .filter-bar label { flex: 1 1 140px; } }
 
 /* Menú: plato agotado (T2). */
 .dish-state.sold-out { color: #fff; background: #a83a2b; }

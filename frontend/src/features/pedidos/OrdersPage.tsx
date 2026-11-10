@@ -4,8 +4,8 @@ import { Icon } from '../../design/Icon';
 import { EmptyState, PageHeader, Skeleton } from '../../design/States';
 import { orderStatuses, paymentStatuses, PaymentBadge, StatusBadge, statusLabel } from '../../design/StatusBadge';
 import { api, User } from '../../shared/api';
-import { LegacyOrderDetailDialog, OrderDetail } from './LegacyOrderDetail';
-import { actionLabel, clock, emptyFilters, Facets, Filters, money, OrderPage, OrderSummary, shortDate, since, Transition } from './orderTypes';
+import { OrderDetailView } from './OrderDetailView';
+import { actionLabel, clock, emptyFilters, Facets, Filters, money, OrderDetail, OrderPage, OrderRef, OrderSummary, shortDate, since, Transition } from './orderTypes';
 import { PendingAction, TransitionDialog } from './TransitionDialog';
 import './orders.css';
 
@@ -90,7 +90,9 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
   const [filters, setFilters] = useState<Filters>({ ...emptyFilters, ...preset }); const [search, setSearch] = useState(preset?.q ?? ''); const [page, setPage] = useState(0);
   const [data, setData] = useState<OrderPage>(); const [facets, setFacets] = useState<Facets>(); const [facetsLoading, setFacetsLoading] = useState(true);
   const [loadError, setLoadError] = useState(''); const [loading, setLoading] = useState(true);
-  const [undos, setUndos] = useState<Record<string, OrderDetail['undo']>>({}); const [selected, setSelected] = useState<OrderDetail>();
+  const [undos, setUndos] = useState<Record<string, OrderDetail['undo']>>({});
+  /** Pedido abierto en detalle; la lista conserva filtros, página y posición al volver. */
+  const [detailId, setDetailId] = useState<string>(); const [refreshKey, setRefreshKey] = useState(0); const listScroll = useRef(0);
   const [pending, setPending] = useState<PendingAction>(); const [busy, setBusy] = useState(''); const [actionError, setActionError] = useState('');
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string }>(); const [rangeOpen, setRangeOpen] = useState(false); const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -120,25 +122,30 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
   function update(changes: Partial<Filters>) { setFilters(current => ({ ...current, ...changes })); setPage(0); }
   function clearAll() { setFilters(emptyFilters); setSearch(''); setPage(0); }
 
-  async function run(order: OrderSummary, path: string, body?: object) {
+  async function run(order: OrderRef, path: string, body?: object) {
     setBusy(order.id); setActionError('');
     try {
       const result = await api<{ status: string; changeType: string }>(path, auth, { method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: body ? JSON.stringify(body) : undefined });
-      setPending(undefined); setNotice({ tone: 'ok', text: `${order.publicCode} quedó en «${statusLabel(result.status)}».` });
+      setPending(undefined);
+      const target = `«${statusLabel(result.status)}»`;
+      setNotice({ tone: 'ok', text: result.changeType === 'DESHACER' ? `Cambio deshecho: ${order.publicCode} volvió a ${target}.`
+        : result.changeType === 'RETROCESO' ? `${order.publicCode} volvió a ${target}.` : `${order.publicCode} pasó a ${target}.` });
+      setRefreshKey(key => key + 1);
       await Promise.all([load(), loadFacets()]);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'No se pudo actualizar el pedido.';
       if (pending) setActionError(message); else setNotice({ tone: 'error', text: `${order.publicCode}: ${message}` });
     } finally { setBusy(''); }
   }
-  function act(order: OrderSummary, transition: Transition) {
+  function act(order: OrderRef, transition: Transition) {
     // COCINA avanza con un toque y sin motivo; el resto confirma (y retroceder pide motivo).
     if (kitchen) { void run(order, `/orders/${order.id}/transitions`, { targetStatus: transition.targetStatus }); return; }
     setActionError(''); setPending({ order, transition });
   }
-  async function open(order: OrderSummary) {
-    try { setSelected(await api<OrderDetail>(`/orders/${order.id}`, auth)); }
-    catch (caught) { setNotice({ tone: 'error', text: caught instanceof Error ? caught.message : 'No se pudo abrir el pedido.' }); }
+  function open(order: OrderSummary) { listScroll.current = window.scrollY; setNotice(undefined); setDetailId(order.id); }
+  function closeDetail() {
+    setDetailId(undefined); setNotice(undefined);
+    requestAnimationFrame(() => window.scrollTo({ top: listScroll.current }));
   }
 
   const sum = (group?: Record<string, number>) => group ? Object.values(group).reduce((total, value) => total + value, 0) : undefined;
@@ -148,6 +155,17 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
   const first = data && data.total ? page * PAGE_SIZE + 1 : 0; const last = data ? Math.min(data.total, (page + 1) * PAGE_SIZE) : 0;
   const today = new Intl.DateTimeFormat('es-EC', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+
+  const dialogs = <>
+    <TransitionDialog pending={pending} busy={Boolean(busy)} error={actionError} onCancel={() => setPending(undefined)}
+      onConfirm={(reasonCode, reason) => pending && void run(pending.order, `/orders/${pending.order.id}/transitions`, { targetStatus: pending.transition.targetStatus, reasonCode, reason })} />
+  </>;
+
+  if (detailId) return <>
+    <OrderDetailView auth={auth} orderId={detailId} kitchen={kitchen} busy={Boolean(busy)} notice={notice} refreshKey={refreshKey} onBack={closeDetail}
+      onAction={(order, transition) => act(order, transition)} onUndo={order => void run(order, `/orders/${order.id}/undo`)} />
+    {dialogs}
+  </>;
 
   return <section className="orders">
     <PageHeader title="Pedidos" subtitle={kitchen ? 'Pedidos aceptados para preparar. Un toque avanza el estado y puedes deshacer tu último cambio por unos minutos.' : 'Revisa las solicitudes y cambia su estado. Solo ves los cambios que tu rol puede hacer.'}
@@ -190,7 +208,7 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
           action={activeCount ? <button type="button" className="ds-btn ds-btn--primary" onClick={clearAll}>Limpiar filtros</button> : undefined} /></div>
           : <div className={`orders-grid ${loading ? 'is-refreshing' : ''}`} aria-busy={loading}>
             {data.items.map(order => <OrderCard key={order.id} order={order} kitchen={kitchen} busy={busy === order.id} undo={undos[order.id]}
-              onOpen={() => void open(order)} onAction={transition => act(order, transition)} onUndo={() => void run(order, `/orders/${order.id}/undo`)} />)}
+              onOpen={() => open(order)} onAction={transition => act(order, transition)} onUndo={() => void run(order, `/orders/${order.id}/undo`)} />)}
           </div>}
 
     {data && data.total > PAGE_SIZE && <nav className="orders-pagination" aria-label="Páginas de pedidos">
@@ -202,9 +220,7 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
       </div>
     </nav>}
 
-    <TransitionDialog pending={pending} busy={Boolean(busy)} error={actionError} onCancel={() => setPending(undefined)}
-      onConfirm={(reasonCode, reason) => pending && void run(pending.order, `/orders/${pending.order.id}/transitions`, { targetStatus: pending.transition.targetStatus, reasonCode, reason })} />
+    {dialogs}
     <DateRangeDialog open={rangeOpen} initial={{ from: filters.from, to: filters.to }} onClose={() => setRangeOpen(false)} onApply={(from, to) => { setRangeOpen(false); update({ range: 'CUSTOM', from, to }); }} />
-    <LegacyOrderDetailDialog order={selected} onClose={() => setSelected(undefined)} />
   </section>;
 }

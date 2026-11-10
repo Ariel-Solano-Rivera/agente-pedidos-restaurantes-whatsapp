@@ -7,11 +7,12 @@ Expone pagos sintéticos existentes para ADMIN y CAJA. La confirmación manual e
 ## Fuente y dependencias
 
 - Código: `pagos/PaymentController.java`.
-- Tablas: `payment`, `customer_order`.
+- Tablas: `payment`, `customer_order` y `app_user` (solo el correo del verificador).
+- Consumidores: `frontend/src/features/pedidos/OrderDetailView.tsx` (`?orderId=`).
 
 ## Contratos y permisos
 
-- `GET /payments`: ADMIN o CAJA; devuelve pedido, medio, importe, estado, referencia y fecha de verificación.
+- `GET /payments?orderId`: ADMIN o CAJA; devuelve `id`, `orderId`, `orderCode`, medio, importe, estado, referencia, `verifiedBy` (correo de quien verificó) y `verifiedAt`. `orderId` (opcional) limita la lista a ese pedido; un pedido de otro restaurante devuelve una lista vacía.
 
 ## Validaciones y efectos de estado
 
@@ -21,6 +22,7 @@ Expone pagos sintéticos existentes para ADMIN y CAJA. La confirmación manual e
 ## Pruebas
 
 - `scripts/smoke.ps1` comprueba que COCINA recibe 403.
+- `PaymentsIntegrationTest` (Testcontainers): filtro por pedido, verificador y fecha en un pago confirmado, lista vacía para otro restaurante y 403 para COCINA.
 
 ## TBD / exclusiones
 

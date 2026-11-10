@@ -2,11 +2,11 @@
 
 ## Propósito y alcance
 
-Lista de pedidos sintéticos con filtros, búsqueda y paginación resueltos en el backend. Permite ejecutar solo los cambios de estado que el backend devuelve en `allowedTransitions`. No permite capturar pedidos manualmente. Rediseñada en la etapa 2 con el sistema de diseño. El detalle conserva el diseño de T1 hasta la etapa 3, y el tablero de cocina llega en la etapa 4.
+Lista de pedidos sintéticos con filtros, búsqueda y paginación resueltos en el backend. Permite ejecutar solo los cambios de estado que el backend devuelve en `allowedTransitions`. No permite capturar pedidos manualmente. Rediseñada en la etapa 2 con el sistema de diseño. El detalle se documenta en `detalle-pedido.md` (etapa 3), y el tablero de cocina llega en la etapa 4.
 
 ## Fuente y dependencias
 
-- Código: `src/features/pedidos/OrdersPage.tsx` (página, tarjetas y rango personalizado), `TransitionDialog.tsx` (confirmación y motivo), `orderTypes.ts` (contrato, textos de acción y formatos), `LegacyOrderDetail.tsx` (detalle de T1 en zona clara), `orders.css`; componentes `FilterGroup`, `StatusBadge`, `PaymentBadge`, `Icon`, `PageHeader`, `EmptyState` y `Skeleton` de `src/design/`.
+- Código: `src/features/pedidos/OrdersPage.tsx` (página, tarjetas y rango personalizado), `TransitionDialog.tsx` (confirmación y motivo), `orderTypes.ts` (contrato, textos de acción y formatos), `OrderDetailView.tsx` (detalle; ver `detalle-pedido.md`), `orders.css`; componentes `FilterGroup`, `StatusBadge`, `PaymentBadge`, `Icon`, `PageHeader`, `EmptyState` y `Skeleton` de `src/design/`.
 - API: `GET /orders` (paginada), `GET /orders/facets` (conteos por opción), `GET /orders/{id}`, `POST /orders/{id}/transitions` y `POST /orders/{id}/undo`.
 - Roles: ADMIN y CAJA avanzan, rechazan, cancelan y retroceden con confirmación; COCINA avanza con un toque y puede deshacer su último cambio. El rol solo elige textos y si hay confirmación: las acciones visibles salen de `allowedTransitions` y `undo`.
 - Entrada desde Inicio: `App.tsx` pasa un `preset` de filtros (p. ej., estado «Por aceptar»). Elegir Pedidos en el menú abre la lista sin filtros.
@@ -22,12 +22,12 @@ Lista de pedidos sintéticos con filtros, búsqueda y paginación resueltos en e
   - Pago (oculto para COCINA): Pendiente, Por verificar, Confirmado, Rechazado y No requerido.
 - Bajo los filtros: «N pedidos con los filtros elegidos» y «Limpiar filtros» cuando hay algún filtro o búsqueda. Cambiar un filtro vuelve a la página 1. En móvil los filtros se pliegan tras el botón «Filtros», que muestra cuántos hay activos.
 - Tarjetas en cuadrícula (mínimo 320 px). Cada una muestra el número `PED-XXXXXXXX` destacado en Geist Mono, el tiempo desde la recepción y la hora, la insignia de estado, el cliente, el teléfono, la modalidad con icono, el resumen de unidades y, salvo para COCINA, la insignia de pago y el total. Un filete superior repite el color de los estados activos.
-- Acciones de `allowedTransitions`: las de avance son botones principales («Aceptar», «Pasar a En preparación», «Pasar a Listo», «Marcar completado»); los retrocesos son secundarios con flecha («Volver a Aceptado»); «Rechazar» y «Cancelar pedido» llevan borde y texto rojos. «Ver detalle» abre el detalle.
+- Acciones de `allowedTransitions`: las de avance son botones principales («Aceptar», «Pasar a En preparación», «Pasar a Listo», «Marcar completado»); los retrocesos son secundarios con flecha («Volver a Aceptado»); «Rechazar» y «Cancelar pedido» llevan borde y texto rojos. «Ver detalle» abre el detalle en la misma página, y al volver se conservan los filtros, la página y la posición.
 - ADMIN y CAJA confirman cada acción en un diálogo con origen → destino (insignias) y el cliente:
   - Retroceder exige un motivo de la lista (Se avanzó por error, El cliente cambió el pedido, Falta un producto, Otro motivo), presentado como opciones de 44 px. El detalle es obligatorio solo con «Otro motivo», y el diálogo recuerda que retroceder no libera la reserva ni cambia el pago.
   - Las acciones destructivas muestran un aviso rojo.
 - COCINA: avanza con un toque, sin diálogo ni motivo, con botones de 56 px. Si el detalle trae `undo`, aparece «Deshacer (volver a ‹estado›)»; si la ventana venció, se muestra el mensaje del backend.
-- Después de una acción: aviso «PED-… quedó en «‹estado›»» (6 s) y recarga de la lista y de los contadores.
+- Después de una acción: aviso «PED-… pasó a «‹estado›»», «volvió a…» o «Cambio deshecho: …» (6 s) y recarga de la lista y de los contadores.
 - Paginación de 12 pedidos: «Mostrando 1–12 de N», «Anterior», «Página X de Y» y «Siguiente».
 - Animación: las tarjetas entran con opacidad y 4 px (280 ms) y la cuadrícula se atenúa al recargar; sin movimiento con `prefers-reduced-motion`.
 
@@ -53,6 +53,6 @@ Lista de pedidos sintéticos con filtros, búsqueda y paginación resueltos en e
 
 ## TBD / exclusiones
 
-- Detalle del pedido rediseñado (etapa 3) y tablero de cocina con arrastrar y soltar (etapa 4).
+- Tablero de cocina con arrastrar y soltar (etapa 4).
 - Actualización automática de la lista; número correlativo por restaurante (TBD en el backend).
 - Creación de pedidos, reserva efectiva y vencimiento.

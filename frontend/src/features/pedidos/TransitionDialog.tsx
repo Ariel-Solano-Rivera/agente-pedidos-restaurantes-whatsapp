@@ -1,10 +1,9 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Icon } from '../../design/Icon';
 import { StatusBadge } from '../../design/StatusBadge';
-import { reasonLabels } from './LegacyOrderDetail';
-import { actionLabel, OrderSummary, Transition } from './orderTypes';
+import { actionLabel, OrderRef, reasonLabels, Transition } from './orderTypes';
 
-export type PendingAction = { order: OrderSummary; transition: Transition };
+export type PendingAction = { order: OrderRef; transition: Transition };
 
 /**
  * Confirma un cambio de estado mostrando origen y destino. Retroceder exige un motivo de la lista
