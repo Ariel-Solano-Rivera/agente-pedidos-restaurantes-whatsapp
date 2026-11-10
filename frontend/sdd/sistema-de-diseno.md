@@ -66,6 +66,7 @@ Las etiquetas son las que ya usa el panel. Los iconos son SVG de línea propios 
 | Interruptor | `.ds-switch` (`input[role=switch]`) | Disponibilidad en Menú |
 | Pestañas | `.ds-tabs`, `.ds-tab[aria-selected]` | Con desplazamiento horizontal en móvil |
 | Modal | `<dialog class="ds-modal">` | Confirmación con estado de origen y destino |
+| Formulario en diálogo | `<dialog class="ds-modal ds-form-dialog">` (`src/design/forms.css`) | Da estilo con tokens a `menu-form`, `form-grid`, `form-field`, `search-select`, `chips-editor`, `option-chips` y `photo-picker`; lo adoptan Menú y, en sus etapas, Catálogo y Configuración |
 | Estado vacío | `.ds-empty`, `<EmptyState illustration compact>` | Ilustración SVG de línea de un color (`empty`, `error`, `done`), título, una línea y botón; `error` se anuncia como alerta |
 | Encabezado de página | `<PageHeader title subtitle aside>` | Título y fecha a la izquierda; estado y acciones a la derecha |
 | Iconos | `<Icon name size label>` | Decorativos con `aria-hidden` salvo que reciban `label` |

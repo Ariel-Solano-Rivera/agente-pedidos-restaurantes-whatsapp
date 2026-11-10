@@ -1,0 +1,62 @@
+/* Menú: tabla con interruptor de disponibilidad (rediseño, etapa 7). Usa solo tokens. */
+.mn { display: grid; }
+.mn .ds-page-header { margin-bottom: var(--space-5); }
+.mn-search { margin-bottom: var(--space-4); }
+.mn-search .ds-input { min-height: 48px; }
+.mn-filters { display: grid; gap: var(--space-5); padding: var(--space-5); margin-bottom: var(--space-4); }
+.mn-filters__row { display: flex; flex-wrap: wrap; gap: var(--space-5) var(--space-10); }
+.mn-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: var(--hit); margin-bottom: var(--space-3); }
+.mn-summary p { margin: 0; color: var(--text-muted); }
+.mn-summary b { color: var(--text); }
+.mn-loading { display: grid; gap: var(--space-2); }
+
+.mn-table td { padding-block: var(--space-3); }
+.mn-table tbody tr[aria-busy="true"] { opacity: .6; }
+.mn-table tbody tr[data-inactive="true"] .mn-dish__text b { color: var(--text-muted); }
+.mn-dish { display: flex; align-items: center; gap: var(--space-3); min-width: 220px; }
+.mn-thumb { width: 52px; height: 52px; flex: none; overflow: hidden; border-radius: var(--radius-md); background: var(--surface-sunken); border: 1px solid var(--border); }
+.mn-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mn-thumb .dish-photo-placeholder > * { display: none; }
+.mn-thumb .dish-photo-placeholder { width: 100%; height: 100%; background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--border) 60%, transparent) 6px 7px); }
+.mn-dish__text { display: grid; gap: 2px; min-width: 0; }
+.mn-dish__text b { font-weight: var(--weight-semibold); font-size: var(--text-md); }
+.mn-dish__text span { max-width: 38ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: var(--text-sm); }
+.mn-from { font-size: var(--text-xs); color: var(--text-subtle); }
+.mn-sub { display: block; font-size: var(--text-xs); color: var(--text-subtle); }
+.mn-opts { font-size: var(--text-sm); color: var(--text-muted); white-space: nowrap; }
+
+.mn-switch { gap: var(--space-3); white-space: nowrap; }
+.mn-state { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--st-ready-fg); }
+.mn-state[data-available="false"] { color: var(--st-rejected-fg); }
+.mn-switch input:not(:checked) { background: var(--border-strong); }
+.mn-visible { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--text-muted); white-space: nowrap; }
+.mn-visible[data-active="false"] { color: var(--text-subtle); }
+
+.mn-actions { white-space: nowrap; text-align: right; }
+.mn-actions > * { vertical-align: middle; }
+.mn-icon-btn { display: inline-grid; place-items: center; width: var(--hit); height: var(--hit); padding: 0; border: 1px solid transparent; border-radius: var(--radius-md); color: var(--text-muted); background: transparent; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.mn-icon-btn:hover:not(:disabled) { color: var(--text); background: var(--surface-sunken); }
+.mn-icon-btn:disabled { opacity: .5; cursor: not-allowed; }
+.mn-icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.mn-icon-btn--danger:hover:not(:disabled) { color: var(--danger); background: var(--danger-soft); }
+
+/* Tableta: se ocultan columnas secundarias. Móvil: cada fila es una tarjeta con etiquetas. */
+@media (max-width: 1099px) { .mn-table th:nth-child(4), .mn-table td:nth-child(4) { display: none; } }
+@media (max-width: 899px) { .mn-table th:nth-child(2), .mn-table td:nth-child(2) { display: none; } }
+@media (max-width: 680px) {
+  .mn-table-wrap { border: 0; background: transparent; overflow: visible; }
+  .mn-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .mn-table, .mn-table tbody, .mn-table tr, .mn-table td { display: block; }
+  .mn-table tbody { display: grid; gap: var(--space-3); }
+  .mn-table tr { padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-sm); }
+  .mn-table tbody tr:hover { background: var(--surface); }
+  .mn-table td { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border: 0; text-align: left; }
+  .mn-table td::before { content: attr(data-label); font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: .06em; text-transform: uppercase; color: var(--text-subtle); }
+  .mn-table td:first-child::before, .mn-table td.mn-actions::before { display: none; }
+  .mn-table td:first-child { padding-top: 0; }
+  .mn-table td.mn-actions { justify-content: flex-end; border-top: 1px solid var(--border); margin-top: var(--space-2); padding-top: var(--space-3); }
+  .mn-table td:nth-child(2), .mn-table td:nth-child(4) { display: none; }
+  .mn-dish { min-width: 0; }
+  .mn-dish__text span { max-width: none; white-space: normal; }
+  .mn-table .is-num { text-align: right; }
+}

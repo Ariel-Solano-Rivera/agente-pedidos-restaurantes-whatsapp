@@ -1,0 +1,55 @@
+/*
+ * Kit de formularios en diálogo (`<dialog class="ds-modal ds-form-dialog">`), rediseño etapa 7.
+ * Da estilo con tokens a las clases de formulario existentes (menu-form, form-grid, form-field, search-select,
+ * chips-editor, option-chips, photo-picker) y prevalece sobre su versión antigua de styles.css, que aún usan
+ * Catálogo y Configuración hasta sus etapas.
+ */
+.ds-form-dialog { width: min(760px, calc(100vw - 32px)); max-height: calc(100svh - 48px); overflow: auto; text-align: left; white-space: normal; /* puede vivir dentro de una celda alineada a la derecha */ }
+.ds-form-dialog .dialog-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-4) var(--space-6); background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+.ds-form-dialog .dialog-header h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--weight-semibold); color: var(--text); letter-spacing: -.02em; }
+.ds-form-dialog .menu-form { display: grid; gap: var(--space-5); padding: var(--space-6); }
+.ds-form-dialog .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.ds-form-dialog .menu-form label, .ds-form-dialog .form-field { display: grid; gap: 6px; min-width: 0; font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--text); }
+.ds-form-dialog .menu-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .ds-form-dialog .menu-form select, .ds-form-dialog .menu-form textarea {
+  width: 100%; min-height: var(--hit); padding: var(--space-2) var(--space-3); font: inherit; font-weight: var(--weight-regular); color: var(--text);
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: none;
+}
+.ds-form-dialog .menu-form textarea { min-height: 96px; resize: vertical; line-height: var(--leading-normal); }
+.ds-form-dialog .menu-form :is(input, select, textarea):focus { outline: none; border-color: var(--action-bg); box-shadow: 0 0 0 3px var(--brand-primary-soft); }
+.ds-form-dialog .menu-form :is(input, select, textarea)[aria-invalid="true"] { border-color: var(--danger); }
+.ds-form-dialog .error { display: flex; gap: 6px; align-items: center; margin: 0; padding: var(--space-3); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--st-rejected-fg); background: var(--st-rejected-bg); }
+
+/* Selector con búsqueda */
+.ds-form-dialog .search-select { position: relative; min-width: 0; }
+.ds-form-dialog .search-select-chevron { position: absolute; top: 50%; right: 12px; translate: 0 -50%; color: var(--text-subtle); pointer-events: none; }
+.ds-form-dialog .search-select-options { position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; padding: var(--space-1); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: var(--shadow-md); }
+.ds-form-dialog .search-select-options button { display: block; width: 100%; min-height: var(--hit); padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); font: inherit; font-size: var(--text-sm); text-align: left; color: var(--text); background: transparent; cursor: pointer; }
+.ds-form-dialog .search-select-options button:hover, .ds-form-dialog .search-select-options button.active { background: var(--surface-sunken); }
+.ds-form-dialog .search-select-options p { margin: 0; padding: var(--space-3); font-size: var(--text-sm); color: var(--text-muted); }
+
+/* Editor de opciones (extras e ingredientes retirables) */
+.ds-form-dialog .chips-editor { margin: 0; padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); min-inline-size: 0; }
+.ds-form-dialog .chips-editor legend { padding: 0 var(--space-1); font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--text); }
+.ds-form-dialog .chips-editor p { margin: 0 0 var(--space-3); font-size: var(--text-sm); color: var(--text-muted); }
+.ds-form-dialog .add-option-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
+.ds-form-dialog .add-option-row:has(.price-input) { grid-template-columns: minmax(0, 1fr) 110px auto; }
+.ds-form-dialog .option-chips { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; }
+.ds-form-dialog .option-chips li { display: inline-flex; align-items: center; gap: var(--space-2); padding: 4px 4px 4px var(--space-3); border-radius: var(--radius-pill); font-size: var(--text-sm); color: var(--text); background: var(--surface-sunken); border: 1px solid var(--border); }
+.ds-form-dialog .option-chips button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; color: var(--danger); background: transparent; cursor: pointer; }
+.ds-form-dialog .option-chips button:hover { background: var(--danger-soft); }
+.ds-form-dialog .option-chips button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Foto */
+.ds-form-dialog .photo-picker { display: grid; min-height: 150px; place-items: center; overflow: hidden; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); color: var(--text-muted) !important; background: var(--surface-sunken); cursor: pointer; }
+.ds-form-dialog .photo-picker:hover { border-color: var(--action-bg); }
+.ds-form-dialog .photo-picker > span { display: grid; gap: 4px; padding: var(--space-6); text-align: center; }
+.ds-form-dialog .photo-picker small { color: var(--text-subtle); font-weight: var(--weight-regular); }
+.ds-form-dialog .photo-picker img { display: block; width: 100%; max-height: 230px; object-fit: cover; }
+.ds-form-dialog .photo-picker input { display: none; }
+
+.ds-form-dialog .menu-form > button[type="submit"] { justify-self: end; }
+@media (max-width: 640px) {
+  .ds-form-dialog .form-grid, .ds-form-dialog .add-option-row, .ds-form-dialog .add-option-row:has(.price-input) { grid-template-columns: minmax(0, 1fr); }
+  .ds-form-dialog .menu-form { padding: var(--space-4); }
+  .ds-form-dialog .menu-form > button[type="submit"] { justify-self: stretch; }
+}

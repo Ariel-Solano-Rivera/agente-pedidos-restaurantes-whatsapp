@@ -42,6 +42,11 @@ const paths = {
   calendar: <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>,
   user: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20.5c.7-3.6 3.3-5.5 7-5.5s6.3 1.9 7 5.5" /></>,
   grip: <><circle cx="9" cy="6" r="1.3" /><circle cx="15" cy="6" r="1.3" /><circle cx="9" cy="12" r="1.3" /><circle cx="15" cy="12" r="1.3" /><circle cx="9" cy="18" r="1.3" /><circle cx="15" cy="18" r="1.3" /></>,
+  edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L9 17l-4 1 1-4Z" /></>,
+  trash: <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7" />,
+  eye: <><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.7" /></>,
+  eyeOff: <><path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c6.1 0 9.5 6 9.5 6a17 17 0 0 1-2.9 3.6M6.6 6.6C3.9 8.4 2.5 12 2.5 12s3.4 6 9.5 6c1.6 0 3-.4 4.2-1" /><path d="M9.9 9.9a2.7 2.7 0 0 0 3.8 3.8" /></>,
+  plus: <path d="M12 5v14M5 12h14" />,
   utensilsOff: <><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-1.7 0-3 2.2-3 5v5h3v8" /><path d="m3 3 18 18" /></>,
 } satisfies Record<string, ReactNode>;
 

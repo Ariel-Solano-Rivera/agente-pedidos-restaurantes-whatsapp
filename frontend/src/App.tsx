@@ -36,7 +36,7 @@ export default function App() {
     : current === 'dashboard' ? <DashboardPage auth={auth} onNavigate={view => navigate(view)} />
     : current === 'cocina' ? <KitchenBoard auth={auth} user={user} />
       : current === 'catalogo' ? legacy(<CatalogPage auth={auth} user={user} />)
-        : current === 'menu' ? legacy(<MenuPage auth={auth} user={user} />)
+        : current === 'menu' ? <MenuPage auth={auth} user={user} />
           : current === 'crm' ? <CrmPage auth={auth} onOpenOrder={code => navigate('pedidos', { q: code })} />
             : current === 'configuracion' ? legacy(<SettingsPage auth={auth} branding={brand.branding} logoUrl={brand.logoUrl} onBrandingChanged={brand.reload} />)
               : <OrdersPage key={JSON.stringify(ordersPreset ?? {})} auth={auth} user={user} preset={ordersPreset} />;
