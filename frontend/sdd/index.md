@@ -14,6 +14,6 @@
 | Cocina (tablero) | `src/features/cocina/KitchenBoard.tsx`, `kitchen.css` | [cocina.md](cocina.md) | Rediseñado (etapa 4): tres columnas, arrastrar y soltar con Pointer Events (dedo, mouse) y teclado, actualización optimista con reversión, deshacer con cuenta regresiva, sin importes |
 | Pagos y derivaciones | — | [pagos-derivaciones.md](pagos-derivaciones.md) | Pantalla de pagos no implementada; derivaciones en CRM |
 | Configuración: marca | `src/features/configuracion/SettingsPage.tsx`, `src/shared/branding.ts` | [marca.md](marca.md) | Pestaña Marca (ADMIN); tema aplicado con variables CSS para todos; logo en barra lateral e Inicio |
-| CRM | `src/features/crm/CrmPage.tsx` | [crm.md](crm.md) | Pestañas, búsqueda, hilo, tomar/liberar control, respuesta y ficha del cliente |
+| CRM | `src/features/crm/CrmPage.tsx`, `crm.css` | [crm.md](crm.md) | Rediseñado (etapa 6): tres columnas (lista con pestañas y contadores, hilo agrupado por día, ficha con pedidos enlazados), tomar y liberar control con confirmación, respuesta solo con control, un panel a la vez en móvil |
 
 `App.tsx` compone autenticación, shell y las secciones vigentes; cada pantalla vive en `src/features/` y los elementos compartidos en `src/components/` o `src/shared/`.

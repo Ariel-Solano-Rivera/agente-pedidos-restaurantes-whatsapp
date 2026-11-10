@@ -37,7 +37,7 @@ export default function App() {
     : current === 'cocina' ? <KitchenBoard auth={auth} user={user} />
       : current === 'catalogo' ? legacy(<CatalogPage auth={auth} user={user} />)
         : current === 'menu' ? legacy(<MenuPage auth={auth} user={user} />)
-          : current === 'crm' ? legacy(<CrmPage auth={auth} />)
+          : current === 'crm' ? <CrmPage auth={auth} onOpenOrder={code => navigate('pedidos', { q: code })} />
             : current === 'configuracion' ? legacy(<SettingsPage auth={auth} branding={brand.branding} logoUrl={brand.logoUrl} onBrandingChanged={brand.reload} />)
               : <OrdersPage key={JSON.stringify(ordersPreset ?? {})} auth={auth} user={user} preset={ordersPreset} />;
   return <AppShell user={user} logoUrl={brand.logoUrl} view={current} onViewChange={next => navigate(next)} onLogout={() => { localStorage.removeItem('restaurant.auth'); setAuth(''); setUser(null); navigate('inicio'); }}>{content}</AppShell>;
