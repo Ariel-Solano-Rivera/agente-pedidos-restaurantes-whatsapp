@@ -24,7 +24,9 @@ public class SecurityConfig {
         .pathMatchers("/api/**").authenticated()
         .anyExchange().denyAll())
       .exceptionHandling(errors -> errors.authenticationEntryPoint((exchange, error) -> writeError(exchange, HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Usuario o contraseña incorrectos.")))
-      .httpBasic(basic -> {}).build();
+      // Credenciales incorrectas: el mismo 401 JSON, sin `WWW-Authenticate`, para que el navegador no abra su diálogo nativo sobre el formulario.
+      .httpBasic(basic -> basic.authenticationEntryPoint((exchange, error) -> writeError(exchange, HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Usuario o contraseña incorrectos.")))
+      .build();
   }
   private Mono<Void> writeError(ServerWebExchange exchange, HttpStatus status, String code, String message) {
     var response = exchange.getResponse();

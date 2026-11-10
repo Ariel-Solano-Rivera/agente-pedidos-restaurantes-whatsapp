@@ -4,7 +4,7 @@
 
 Base visual común del rediseño del panel (etapa 0): tokens de color, tipografía, espacios, radios, sombras y movimiento, y los componentes base que reutilizan todas las páginas. No define pantallas ni cambia contratos de API, permisos ni reglas de dominio: el panel sigue mostrando solo lo que devuelve el backend (precios, `allowedTransitions`, avisos de contraste).
 
-Estado: **aprobado** (etapa 0, 2026-11-09). `main.tsx` importa los tokens y componentes desde la etapa 1; adoptado por la estructura general e Inicio. Cada página lo adopta al rediseñarse, con su propia aprobación.
+Estado: **aprobado** (etapa 0, 2026-11-09) y adoptado por todo el panel (etapas 1 a 11). `main.tsx` importa solo `tokens.css` y `components.css` (que incluye la base del documento); `styles.css` se retiró en la etapa 11.
 
 ## Fuente y dependencias
 

@@ -46,6 +46,7 @@
 .ds-form-dialog .photo-picker small { color: var(--text-subtle); font-weight: var(--weight-regular); }
 .ds-form-dialog .photo-picker img { display: block; width: 100%; max-height: 230px; object-fit: cover; }
 .ds-form-dialog .photo-picker input { display: none; }
+.ds-form-dialog .dish-edit-photo { min-height: 96px; }
 
 .ds-form-dialog .menu-form > button[type="submit"] { justify-self: end; }
 @media (max-width: 640px) {

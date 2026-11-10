@@ -4,7 +4,7 @@ Base: `/api/v1`. Autenticación HTTP Basic de demostración; no usar fuera del e
 
 | Operación | Actor | Entrada / salida | Errores |
 |---|---|---|---|
-| `GET /me` | cualquier rol | usuario, restaurante y permisos | 401 |
+| `GET /me` | cualquier rol | usuario, restaurante y permisos | 401 `UNAUTHORIZED` en JSON, sin `WWW-Authenticate` (sin credenciales o con credenciales incorrectas) |
 | `GET /dashboard` | ADMIN, CAJA, COCINA | resumen aislado: restaurante, estado de recepción, fecha, plato más vendido, máximo tres tareas programadas y `cash {collected, receivable}` de hoy (`null` para COCINA) | 401 |
 | `GET /dashboard/admin?range=TODAY\|LAST_7_DAYS\|LAST_30_DAYS` | ADMIN | indicadores con `{current, previous}` frente al período anterior de igual duración, ventas no concretadas por causa, pedidos por hora, platos y extras top, retiro/entrega, derivaciones abiertas, platos agotados y retrocesos por día y rol; definiciones en `backend/sdd/resumen-negocio.md` | 400 `RANGE_INVALID`, 401, 403 |
 | `GET /menu/categories`, `GET /menu/catalog/presentations`, `GET /menu/catalog/ingredients`, `GET /menu/dishes`, `GET /menu/dishes/{id}` | cualquier rol | menú y catálogos del restaurante actual; cada plato incluye `active` (visibilidad) y `available` (calculado por el backend: alguna variante activa, no agotada y con unidades libres si `tracked`); cada variante incluye `tracked` | 401, 404 |

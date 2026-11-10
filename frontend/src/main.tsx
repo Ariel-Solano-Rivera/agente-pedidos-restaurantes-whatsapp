@@ -1,7 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-// Orden: estilos antiguos (páginas aún no rediseñadas), luego el sistema de diseño; los de cada página llegan con App.
-import './styles.css';
+// Sistema de diseño primero; los estilos de cada página llegan con App.
 import './design/tokens.css';
 import './design/components.css';
 import App from './App';

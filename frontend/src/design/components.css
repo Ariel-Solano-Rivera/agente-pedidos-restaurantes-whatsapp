@@ -3,6 +3,10 @@
  * Documentado en frontend/sdd/sistema-de-diseno.md.
  */
 
+/* Base del documento (antes en styles.css, retirado en la etapa 11). */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; font-family: var(--font-text); color: var(--text); background: var(--bg); }
+
 .ds-root {
   font-family: var(--font-text);
   font-size: var(--text-md);
