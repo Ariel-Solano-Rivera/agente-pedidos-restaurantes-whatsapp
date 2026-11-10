@@ -13,7 +13,7 @@ Bandeja de conversaciones con clientes para ADMIN y CAJA en tres columnas: lista
   - `POST /crm/conversations/{id}/messages` con `Idempotency-Key`.
   - `POST /handoffs/{id}/claim` y `POST /handoffs/{id}/release`.
 - Roles: ADMIN y CAJA; la entrada no aparece para COCINA y el backend responde 403.
-- Navegación: un pedido de la ficha abre Pedidos con la búsqueda `PED-…` aplicada (`App.tsx` pasa `{ q }` como filtro inicial).
+- Navegación: un pedido de la ficha abre Pedidos con la búsqueda `PED-…` aplicada (`App.tsx` pasa `{ q }` como filtro inicial). Derivaciones abre el CRM con `initialConversation`: la pestaña «Todas» y esa conversación seleccionada.
 
 ## Comportamiento visible
 
@@ -32,8 +32,8 @@ Bandeja de conversaciones con clientes para ADMIN y CAJA en tres columnas: lista
 - **Ficha del cliente:** avatar, nombre, teléfono, cliente desde, pedidos, completados y ventas completadas. Los pedidos recientes muestran número, total, insignia de estado y fecha, y abren el pedido en Pedidos.
 - Avisos de éxito o error con icono (6 s). Recarga automática de la lista y del hilo cada 20 s mientras la pestaña está visible.
 - Responsivo:
-  - desde 1280 px, tres columnas a la altura de la ventana;
-  - entre 900 y 1279 px, lista e hilo, y el botón «Ficha» cambia el hilo por la ficha;
+  - desde 1440 px, tres columnas a la altura de la ventana;
+  - entre 900 y 1439 px, lista e hilo, y el botón «Ficha» cambia el hilo por la ficha (con el menú lateral, a 1280 px el hilo quedaba demasiado angosto);
   - por debajo de 900 px, un panel a la vez («Conversaciones» para volver y «Ficha» para el cliente).
 
 ## Validaciones y errores

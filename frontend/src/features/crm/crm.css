@@ -81,8 +81,8 @@
 .crm-order__code { font-family: var(--font-code); }
 .crm-order__bottom > span:last-child { font-size: var(--text-xs); color: var(--text-subtle); }
 
-/* Tableta horizontal: lista + hilo; la ficha reemplaza al hilo con el botón «Ficha». */
-@media (max-width: 1279px) {
+/* Por debajo de 1440 px (escritorio con menú lateral y tableta): lista + hilo; la ficha reemplaza al hilo con el botón «Ficha». */
+@media (max-width: 1439px) {
   .crm-layout, .crm-layout[data-selected="false"] { grid-template-columns: 300px minmax(0, 1fr); }
   .crm-customer-toggle { display: inline-flex; }
   .crm-layout[data-pane="customer"] .crm-thread { display: none; }

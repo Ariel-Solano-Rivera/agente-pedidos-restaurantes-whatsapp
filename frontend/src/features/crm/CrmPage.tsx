@@ -163,10 +163,11 @@ function Thread({ auth, id, onChanged, onBack, onShowCustomer, onOpenOrder, pane
   </>;
 }
 
-export function CrmPage({ auth, onOpenOrder }: { auth: string; onOpenOrder: (code: string) => void }) {
-  const [tab, setTab] = useState('PENDING'); const [search, setSearch] = useState(''); const [q, setQ] = useState('');
+export function CrmPage({ auth, onOpenOrder, initialConversation }: { auth: string; onOpenOrder: (code: string) => void; initialConversation?: string }) {
+  // Abierta desde Derivaciones: «Todas» para que la conversación elegida aparezca en la lista.
+  const [tab, setTab] = useState(initialConversation ? 'ALL' : 'PENDING'); const [search, setSearch] = useState(''); const [q, setQ] = useState('');
   const [data, setData] = useState<Page>(); const [counts, setCounts] = useState<Record<string, number>>({}); const [error, setError] = useState('');
-  const [selected, setSelected] = useState<string>(); const [pane, setPane] = useState<Pane>('list');
+  const [selected, setSelected] = useState<string | undefined>(initialConversation); const [pane, setPane] = useState<Pane>(initialConversation ? 'thread' : 'list');
   useEffect(() => { const timer = setTimeout(() => setQ(search.trim()), 300); return () => clearTimeout(timer); }, [search]);
 
   const load = useCallback(async () => {
