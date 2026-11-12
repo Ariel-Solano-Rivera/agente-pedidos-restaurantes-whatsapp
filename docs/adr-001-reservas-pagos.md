@@ -1,6 +1,6 @@
 # ADR-001 — Propuesta de reservas y estados de pago
 
-**Estado: transiciones manuales de pedidos validadas por el usuario el 2026-11-07; reserva y pago continúan pendientes de validación.**
+**Estado: transiciones manuales de pedidos validadas por el usuario el 2026-11-07; estados de pago y confirmación manual validados el 2026-11-11 (`POST /payments/{id}/confirm`, ADMIN y CAJA, desde `PENDING` o `PENDING_VERIFICATION` a `CONFIRMED`, auditado e idempotente, sin efecto sobre el estado del pedido); la reserva y el rechazo de pagos continúan pendientes.**
 
 ## Propuesta
 
@@ -17,7 +17,7 @@ El informe exige separar confirmación, aceptación y pago, y liberar reservas p
 ## Preguntas para validar
 
 - ¿Se aprueba reserva al confirmar cliente durante 15 minutos configurables, o debe reservarse recién al aceptar el restaurante?
-- ¿Son adecuados los cinco estados de pago propuestos y la regla de efectivo pendiente?
+- Validado (2026-11-11): los cinco estados de pago y la confirmación manual por ADMIN o CAJA. Pendiente: rechazo de pago y política por medio de pago antes de bloquear o permitir una transición.
 - ¿La cancelación previa a `PREPARING` debe ser automática o requiere aprobación de CAJA?
 - Validado: endpoint idempotente único y las cuatro transiciones operativas para ADMIN/CAJA.
 - Validado (2026-11-08, AGENTS.md): retrocesos `PREPARING→ACCEPTED` y `READY→PREPARING` solo para ADMIN/CAJA con motivo codificado; COCINA avanza `ACCEPTED→PREPARING→READY` y deshace su propio último avance en una ventana configurable. Retroceder y deshacer no tocan reservas ni pagos.

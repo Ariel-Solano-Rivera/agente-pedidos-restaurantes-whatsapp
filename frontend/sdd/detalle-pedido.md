@@ -20,7 +20,7 @@ Vista completa de un pedido dentro de Pedidos: unidades separadas con sus modifi
 - Deshacer (COCINA): si el backend devuelve `undo`, aparece «Deshacer (volver a ‹estado›) · m:ss» con cuenta regresiva hasta `expiresAt`. Al llegar a cero se recarga el pedido y el botón desaparece; el backend sigue siendo quien decide.
 - Pedido: una fila por unidad, numerada, con plato, variante y modificaciones como etiquetas (extra en verde con su recargo, «Sin …» en rojo e instrucciones). Sin modificaciones muestra «Sin modificaciones». Para ADMIN y CAJA: importe por unidad, desglose «Base + extras», subtotal, tarifa de entrega con zona y total.
 - Cliente y entrega: nombre, teléfono y modalidad. En entrega: dirección, referencia y zona. En retiro: hora acordada.
-- Pago (ADMIN y CAJA): insignia del estado y, por cada pago, medio, importe, comprobante o referencia y «Verificado por ‹correo› · fecha» o «Sin verificar». Recuerda que un comprobante o una declaración del cliente no confirma el pago. No hay acciones de pago (ADR-001).
+- Pago (ADMIN y CAJA): insignia del estado y, por cada pago, medio, importe, comprobante o referencia y «Verificado por ‹correo› · fecha» o «Sin verificar». Recuerda que un comprobante o una declaración del cliente no confirma el pago. Si el pago está Pendiente o Por verificar, ADMIN y CAJA ven «Confirmar pago» (bloque B), que abre el mismo diálogo «Confirmar cobro» de la lista y llama a `POST /payments/{id}/confirm`.
 - Confirmación y decisión: cuándo confirmó el cliente y si el restaurante aceptó o rechazó, quién y cuándo (o «Pendiente de decisión»).
 - Línea de tiempo vertical en orden cronológico:
   - pasos hechos con punto de color e icono del estado;
@@ -51,6 +51,6 @@ Carga con esqueletos, error con `EmptyState` y «Reintentar», avisos de éxito 
 
 ## TBD / exclusiones
 
-- Confirmar o rechazar pagos y subir comprobantes (ADR-001).
+- Rechazar pagos y subir comprobantes (ADR-001).
 - Editar el pedido, reasignar la zona o reimprimir la comanda.
 - Identificar a la persona si cocina comparte una cuenta (PIN por persona, TBD en AGENTS.md).

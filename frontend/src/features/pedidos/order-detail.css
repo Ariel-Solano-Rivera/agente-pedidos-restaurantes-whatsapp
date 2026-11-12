@@ -48,6 +48,7 @@
 .od-facts dt { font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: .04em; text-transform: uppercase; color: var(--text-subtle); }
 .od-facts dd { margin: 0; font-size: var(--text-sm); overflow-wrap: anywhere; }
 .od-payment { padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-sunken); }
+.od-payment__action { grid-column: 1 / -1; }
 .od-muted, .od-hint { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
 .od-hint { font-size: var(--text-xs); }
 

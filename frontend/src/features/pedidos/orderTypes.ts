@@ -2,7 +2,7 @@ import { statusLabel } from '../../design/StatusBadge';
 
 /** Contrato de `GET /orders`, `GET /orders/facets` y `allowedTransitions` (docs/contratos-api.md). */
 export type Transition = { targetStatus: string; direction: 'FORWARD' | 'BACKWARD'; requiresReason: boolean; destructive: boolean };
-export type OrderSummary = { id: string; publicCode: string; status: string; paymentStatus: string | null; fulfillmentType: 'PICKUP' | 'DELIVERY'; customerName: string; phone: string; items: string; total: number | null; createdAt: string; allowedTransitions: Transition[] };
+export type OrderSummary = { id: string; publicCode: string; status: string; paymentStatus: string | null; paymentId: string | null; fulfillmentType: 'PICKUP' | 'DELIVERY'; customerName: string; phone: string; items: string; total: number | null; createdAt: string; allowedTransitions: Transition[] };
 export type OrderPage = { items: OrderSummary[]; page: number; size: number; total: number };
 export type Facets = { status: Record<string, number>; fulfillment: Record<string, number>; paymentStatus: Record<string, number>; range: Record<string, number> };
 type OrderOption = { type: 'EXTRA' | 'REMOVED_INGREDIENT' | 'INSTRUCTION'; name: string; amount: number | null };
@@ -24,6 +24,11 @@ export const roleLabels: Record<string, string> = { ADMIN: 'Administración', CA
 export const methodLabels: Record<string, string> = { CASH: 'Efectivo', TRANSFER: 'Transferencia', CARD: 'Tarjeta' };
 
 export type Filters = { status: string; fulfillment: string; paymentStatus: string; range: string; from: string; to: string; q: string };
+/** Orden de la lista (`sort` de `GET /orders`): el backend ordena por fecha de recepción con desempate por id. */
+export type OrderSort = 'CREATED_DESC' | 'CREATED_ASC';
+export const sortOptions: Array<{ value: OrderSort; label: string }> = [{ value: 'CREATED_DESC', label: 'Más recientes primero' }, { value: 'CREATED_ASC', label: 'Más antiguos primero' }];
+/** Estados de pago que el personal puede confirmar manualmente (`POST /payments/{id}/confirm`). */
+export const CONFIRMABLE_PAYMENT = ['PENDING', 'PENDING_VERIFICATION'];
 export const emptyFilters: Filters = { status: '', fulfillment: '', paymentStatus: '', range: '', from: '', to: '', q: '' };
 
 /** Texto del botón según la transición que devuelve el backend; el panel no decide cuáles existen. */
@@ -34,6 +39,19 @@ export function actionLabel(from: string, transition: Transition) {
   if (target === 'CANCELLED') return 'Cancelar pedido';
   if (target === 'COMPLETED') return 'Marcar completado';
   return `${transition.direction === 'BACKWARD' ? 'Volver a' : 'Pasar a'} ${statusLabel(target)}`;
+}
+
+/** Una sola palabra para el botón principal de la tarjeta (segunda ronda, bloque B); el diálogo usa `actionLabel`. */
+export function shortLabel(transition: Transition) {
+  switch (transition.targetStatus) {
+    case 'ACCEPTED': return transition.direction === 'BACKWARD' ? 'Volver a Aceptado' : 'Aceptar';
+    case 'PREPARING': return transition.direction === 'BACKWARD' ? 'Volver a En preparación' : 'Preparar';
+    case 'READY': return 'Listo';
+    case 'COMPLETED': return 'Completar';
+    case 'REJECTED': return 'Rechazar';
+    case 'CANCELLED': return 'Cancelar pedido';
+    default: return statusLabel(transition.targetStatus);
+  }
 }
 
 export const money = (value: number | null | undefined) => value == null ? '' : new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(value);

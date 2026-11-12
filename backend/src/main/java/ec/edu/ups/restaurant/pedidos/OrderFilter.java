@@ -14,7 +14,10 @@ import org.springframework.r2dbc.core.DatabaseClient;
  * Filtros validados de la lista de pedidos. Todo valor del cliente se enlaza como parámetro;
  * el restaurante siempre es el del usuario autenticado y los rangos usan la zona horaria del restaurante.
  */
-public record OrderFilter(String where, Map<String, Object> binds, int page, int size) {
+public record OrderFilter(String where, Map<String, Object> binds, int page, int size, String orderBy) {
+  /** Orden estable: la fecha de recepción y, como desempate, el identificador. */
+  public static final String CREATED_DESC = "CREATED_DESC";
+  public static final String CREATED_ASC = "CREATED_ASC";
   public static final int MAX_SIZE = 100;
   public static final int MAX_RANGE_DAYS = 366;
   private static final String TZ = "(SELECT timezone FROM restaurant WHERE id=:r)";
@@ -22,6 +25,16 @@ public record OrderFilter(String where, Map<String, Object> binds, int page, int
 
   public static OrderFilter of(UUID restaurantId, boolean kitchen, String status, String fulfillment, String paymentStatus, String range,
                                LocalDate from, LocalDate to, String q, int page, int size) {
+    return of(restaurantId, kitchen, status, fulfillment, paymentStatus, range, from, to, q, null, page, size);
+  }
+
+  public static OrderFilter of(UUID restaurantId, boolean kitchen, String status, String fulfillment, String paymentStatus, String range,
+                               LocalDate from, LocalDate to, String q, String sort, int page, int size) {
+    String orderBy = switch (present(sort) ? sort.trim().toUpperCase() : CREATED_DESC) {
+      case CREATED_DESC -> "o.created_at DESC, o.id";
+      case CREATED_ASC -> "o.created_at ASC, o.id";
+      default -> throw invalid("Orden no reconocido: usa CREATED_DESC o CREATED_ASC");
+    };
     if (page < 0) throw invalid("La página no puede ser negativa");
     if (size < 1 || size > MAX_SIZE) throw invalid("El tamaño de página debe estar entre 1 y " + MAX_SIZE);
     var where = new StringBuilder("o.restaurante_id=:r");
@@ -76,7 +89,7 @@ public record OrderFilter(String where, Map<String, Object> binds, int page, int
       where.append(")");
       binds.put("q", like);
     }
-    return new OrderFilter(where.toString(), Map.copyOf(binds), page, size);
+    return new OrderFilter(where.toString(), Map.copyOf(binds), page, size, orderBy);
   }
 
   public DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec spec) {

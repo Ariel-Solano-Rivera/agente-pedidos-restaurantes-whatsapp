@@ -62,6 +62,8 @@ Las etiquetas son las que ya usa el panel. Los iconos son SVG de línea propios 
 | Tabla | `.ds-table-wrap`, `.ds-table`, `.is-num` | Encabezado en mayúsculas pequeñas; montos alineados a la derecha con cifras tabulares; desplazamiento horizontal propio |
 | Insignia de estado | `.ds-badge[data-status]`, `[data-payment]`; `<StatusBadge>`, `<PaymentBadge>` (`src/design/StatusBadge.tsx`, con etiquetas e iconos) | Siempre icono más texto |
 | Botones de filtro | `.ds-filter-group` (`fieldset`), `.ds-chip[aria-pressed]`, `.ds-chip__count`; `<FilterGroup>` (`src/design/FilterGroup.tsx`) | Selección única con relleno de acción y check; contador por opción; la opción `''` es «Todos» |
+| Menú desplegable | `.ds-dropdown`, `__btn`, `__list[role=listbox]`, `__option[aria-selected]`, `__count`; `<Dropdown>` (`src/design/Dropdown.tsx`, segunda ronda B) | Selección única: botón «Etiqueta: valor» con `aria-haspopup="listbox"` y `aria-expanded`; flechas, Inicio/Fin, Enter, Esc, clic fuera; opciones de 44 px con contador opcional; `align="end"` alinea la lista a la derecha |
+| Menú de acciones | `.ds-menu`, `__list[role=menu]`, `__item[role=menuitem]`, `--danger`; `<ActionMenu>` (`src/design/ActionMenu.tsx`) | Botón «⋯» de 44 px (56 px con `size`) con `aria-label`, `aria-haspopup="menu"` y `aria-expanded`; elementos con icono, los peligrosos en rojo; teclado y foco de vuelta al botón |
 | Campos | `.ds-field`, `.ds-input`, `.ds-search`, `.ds-field__error` | Error con icono y texto, `aria-invalid` y `aria-describedby` |
 | Interruptor | `.ds-switch` (`input[role=switch]`) | Disponibilidad en Menú |
 | Pestañas | `.ds-tabs`, `.ds-tab[aria-selected]` | Con desplazamiento horizontal en móvil |

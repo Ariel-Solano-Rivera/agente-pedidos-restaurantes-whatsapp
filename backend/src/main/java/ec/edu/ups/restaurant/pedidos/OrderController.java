@@ -43,7 +43,8 @@ public class OrderController {
   }
 
   public record Page<T>(List<T> items, int page, int size, long total) {}
-  public record Summary(UUID id, String publicCode, String status, String paymentStatus, String fulfillmentType, String customerName, String phone, String items, BigDecimal total, OffsetDateTime createdAt, List<Transition> allowedTransitions) {}
+  /** `paymentId` es el pago pendiente de confirmar del pedido (null si no hay o para COCINA); lo usa «Cobrado» en la tarjeta. */
+  public record Summary(UUID id, String publicCode, String status, String paymentStatus, UUID paymentId, String fulfillmentType, String customerName, String phone, String items, BigDecimal total, OffsetDateTime createdAt, List<Transition> allowedTransitions) {}
   public record Option(String type, String name, BigDecimal amount) {}
   public record Unit(UUID id, String dish, String variant, int quantity, BigDecimal unitPrice, BigDecimal extrasTotal, BigDecimal lineTotal, List<Option> options) {}
   public record HistoryEntry(String previousStatus, String newStatus, String changeType, String reasonCode, String reason, String actorEmail, String actorRole, OffsetDateTime createdAt) {}
@@ -56,23 +57,24 @@ public class OrderController {
   public Mono<Page<Summary>> list(@RequestParam(required = false) String status, @RequestParam(required = false) String fulfillment,
                                   @RequestParam(required = false) String paymentStatus, @RequestParam(required = false) String range,
                                   @RequestParam(required = false) LocalDate from, @RequestParam(required = false) LocalDate to,
-                                  @RequestParam(required = false) String q, @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(required = false) String q, @RequestParam(required = false) String sort, @RequestParam(defaultValue = "0") int page,
                                   @RequestParam(defaultValue = "20") int size, @AuthenticationPrincipal AppPrincipal user) {
     Role role = OrderTransitionPolicy.role(user.getAuthorities());
     return Tenant.restaurantId().flatMap(restaurantId -> {
-      OrderFilter filter = OrderFilter.of(restaurantId, role == Role.COCINA, status, fulfillment, paymentStatus, range, from, to, q, page, size);
+      OrderFilter filter = OrderFilter.of(restaurantId, role == Role.COCINA, status, fulfillment, paymentStatus, range, from, to, q, sort, page, size);
       Mono<Long> total = filter.bind(db.sql("SELECT count(*) total FROM customer_order o WHERE " + filter.where()))
         .map((row, metadata) -> row.get("total", Long.class)).one();
       Mono<List<Summary>> items = filter.bind(db.sql("SELECT o.id,o.status,o.payment_status,o.fulfillment_mode,o.customer_name,o.customer_phone,o.total,o.created_at,"
+          + "(SELECT p.id FROM payment p WHERE p.order_id=o.id AND p.restaurante_id=o.restaurante_id AND p.status IN ('PENDING','PENDING_VERIFICATION') ORDER BY p.id LIMIT 1) payment_id,"
           + "COALESCE(string_agg(CONCAT('1× ',u.dish_name_snapshot), ' · ' ORDER BY u.unit_number),'Sin unidades') items FROM customer_order o "
           + "LEFT JOIN order_unit u ON u.order_id=o.id AND u.restaurante_id=o.restaurante_id WHERE " + filter.where()
-          + " GROUP BY o.id ORDER BY o.created_at DESC, o.id LIMIT :limit OFFSET :offset"))
+          + " GROUP BY o.id ORDER BY " + filter.orderBy() + " LIMIT :limit OFFSET :offset"))
         .bind("limit", filter.size()).bind("offset", (long) filter.page() * filter.size())
         .map((row, metadata) -> {
           String current = row.get("status", String.class);
           boolean kitchen = role == Role.COCINA;
           return new Summary(row.get("id", UUID.class), code(row.get("id", UUID.class)), current, kitchen ? null : row.get("payment_status", String.class),
-            row.get("fulfillment_mode", String.class), row.get("customer_name", String.class), row.get("customer_phone", String.class),
+            kitchen ? null : row.get("payment_id", UUID.class), row.get("fulfillment_mode", String.class), row.get("customer_name", String.class), row.get("customer_phone", String.class),
             row.get("items", String.class), kitchen ? null : row.get("total", BigDecimal.class), row.get("created_at", OffsetDateTime.class),
             OrderTransitionPolicy.allowed(current, role));
         }).all().collectList();

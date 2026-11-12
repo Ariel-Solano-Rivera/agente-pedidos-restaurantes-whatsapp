@@ -3,7 +3,7 @@ import { Icon, IconName } from '../../design/Icon';
 import { EmptyState, Skeleton } from '../../design/States';
 import { orderStatuses, PaymentBadge, StatusBadge, statusLabel } from '../../design/StatusBadge';
 import { api } from '../../shared/api';
-import { actionLabel, dateTime, HistoryEntry, methodLabels, money, OrderDetail, OrderUnit, Payment, reasonLabels, roleLabels, since, Transition } from './orderTypes';
+import { actionLabel, CONFIRMABLE_PAYMENT, dateTime, HistoryEntry, methodLabels, money, OrderDetail, OrderUnit, Payment, reasonLabels, roleLabels, since, Transition } from './orderTypes';
 import { Countdown } from './Countdown';
 import './order-detail.css';
 
@@ -55,9 +55,9 @@ function Unit({ unit, index, kitchen }: { unit: OrderUnit; index: number; kitche
   </li>;
 }
 
-export function OrderDetailView({ auth, orderId, kitchen, busy, notice, onBack, onAction, onUndo, refreshKey }: {
+export function OrderDetailView({ auth, orderId, kitchen, busy, notice, onBack, onAction, onUndo, onConfirmPayment, refreshKey }: {
   auth: string; orderId: string; kitchen: boolean; busy: boolean; notice?: { tone: 'ok' | 'error'; text: string }; refreshKey: number;
-  onBack: () => void; onAction: (order: OrderDetail, transition: Transition) => void; onUndo: (order: OrderDetail) => void;
+  onBack: () => void; onAction: (order: OrderDetail, transition: Transition) => void; onUndo: (order: OrderDetail) => void; onConfirmPayment?: (order: OrderDetail, paymentId: string, amount: number | null) => void;
 }) {
   const [order, setOrder] = useState<OrderDetail>(); const [payments, setPayments] = useState<Payment[] | null>(null); const [error, setError] = useState('');
   const load = useCallback(async () => {
@@ -152,6 +152,7 @@ export function OrderDetailView({ auth, orderId, kitchen, busy, notice, onBack, 
                 <div><dt>Importe</dt><dd className="ds-num">{money(payment.amount)}</dd></div>
                 <div><dt>Comprobante o referencia</dt><dd>{payment.reference || 'Sin referencia'}</dd></div>
                 <div><dt>Verificado por</dt><dd>{payment.verifiedBy ? `${payment.verifiedBy} · ${dateTime(payment.verifiedAt)}` : 'Sin verificar'}</dd></div>
+                {onConfirmPayment && CONFIRMABLE_PAYMENT.includes(payment.status) && <div className="od-payment__action"><button type="button" className="ds-btn ds-btn--primary" disabled={busy} onClick={() => onConfirmPayment(order, payment.id, payment.amount)}><Icon name="coins" size={18} />Confirmar pago</button></div>}
               </dl>)}
           <p className="od-hint">Un comprobante o una declaración del cliente no confirma el pago: lo confirma el personal.</p>
         </section>}

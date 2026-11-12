@@ -123,6 +123,25 @@ class OrdersIntegrationTest extends IntegrationTest {
   @SuppressWarnings("unchecked")
   private static Map<String, Number> facet(Map<String, Object> body, String group) { return (Map<String, Number>) body.get(group); }
   private static long sum(Map<String, Number> counts) { return counts.values().stream().mapToLong(Number::longValue).sum(); }
+  @Test
+  void sortsByCreationDateInBothDirectionsWithAStableOrder() {
+    List<Map<String, Object>> newestFirst = list(get(ADMIN, "/api/v1/orders?size=100"), "items");
+    List<Map<String, Object>> defaultSort = list(get(ADMIN, "/api/v1/orders?size=100&sort=CREATED_DESC"), "items");
+    List<Map<String, Object>> oldestFirst = list(get(ADMIN, "/api/v1/orders?size=100&sort=created_asc"), "items");
+    assertThat(newestFirst).hasSizeGreaterThan(2).isEqualTo(defaultSort);
+    assertThat(oldestFirst).extracting(item -> item.get("id")).containsExactlyElementsOf(newestFirst.stream().map(item -> item.get("id")).toList().reversed());
+    for (int i = 1; i < oldestFirst.size(); i++) assertThat((String) oldestFirst.get(i).get("createdAt")).isGreaterThanOrEqualTo((String) oldestFirst.get(i - 1).get("createdAt"));
+    // Paginación estable: las páginas consecutivas no repiten ni saltan pedidos.
+    List<Object> paged = new java.util.ArrayList<>();
+    for (int page = 0; page < 3; page++) paged.addAll(list(get(ADMIN, "/api/v1/orders?size=4&page=" + page + "&sort=CREATED_ASC"), "items").stream().map(item -> item.get("id")).toList());
+    assertThat(paged).doesNotHaveDuplicates().containsExactlyElementsOf(oldestFirst.stream().map(item -> item.get("id")).limit(12).toList());
+    as(ADMIN).get().uri("/api/v1/orders?sort=TOTAL_DESC").exchange().expectStatus().isBadRequest().expectBody().jsonPath("$.code").isEqualTo("FILTER_INVALID");
+    // La tarjeta solo recibe `paymentId` cuando el pago está pendiente de confirmar, y nunca para COCINA.
+    assertThat(newestFirst).anySatisfy(item -> { assertThat(item.get("paymentStatus")).isIn("PENDING", "PENDING_VERIFICATION"); assertThat(item.get("paymentId")).isNotNull(); });
+    assertThat(newestFirst).filteredOn(item -> "CONFIRMED".equals(item.get("paymentStatus"))).allSatisfy(item -> assertThat(item.get("paymentId")).isNull());
+    assertThat(list(get(COCINA, "/api/v1/orders?size=100"), "items")).allSatisfy(item -> assertThat(item.get("paymentId")).isNull());
+  }
+
   private long total(String email, String query) { return ((Number) get(email, "/api/v1/orders?size=1" + query).get("total")).longValue(); }
 
   @Test

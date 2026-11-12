@@ -17,6 +17,7 @@ const paths = {
   monitor: <><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8.5 20h7M12 16v4" /></>,
   sliders: <><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" /><circle cx="15" cy="6" r="2" /><circle cx="9" cy="12" r="2" /><circle cx="17" cy="18" r="2" /></>,
   chevronDown: <path d="M6 9l6 6 6-6" />,
+  more: <><circle cx="5" cy="12" r="1.6" fill="currentColor" /><circle cx="12" cy="12" r="1.6" fill="currentColor" /><circle cx="19" cy="12" r="1.6" fill="currentColor" /></>,
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
   check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
   flame: <path d="M12 21c3.9 0 6.5-2.6 6.5-6.2 0-3.9-3-6.4-4.4-9.8-1.6 1.8-2.2 3.7-2.1 5.6-1.2-.8-2-2-2.3-3.4C7.3 9.2 5.5 11.8 5.5 14.8 5.5 18.4 8.1 21 12 21Z" />,
