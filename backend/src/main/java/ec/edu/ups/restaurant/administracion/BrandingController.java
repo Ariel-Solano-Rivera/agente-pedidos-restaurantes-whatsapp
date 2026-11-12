@@ -2,6 +2,7 @@ package ec.edu.ups.restaurant.administracion;
 
 import ec.edu.ups.restaurant.administracion.BrandingPolicy.ContrastCheck;
 import ec.edu.ups.restaurant.common.ApiException;
+import ec.edu.ups.restaurant.common.ImageService;
 import ec.edu.ups.restaurant.security.AppPrincipal;
 import ec.edu.ups.restaurant.security.Tenant;
 import java.time.OffsetDateTime;
@@ -33,10 +34,12 @@ public class BrandingController {
 
   private final DatabaseClient db;
   private final TransactionalOperator tx;
+  private final ImageService images;
 
-  public BrandingController(DatabaseClient db, TransactionalOperator tx) {
+  public BrandingController(DatabaseClient db, TransactionalOperator tx, ImageService images) {
     this.db = db;
     this.tx = tx;
+    this.images = images;
   }
 
   public record Branding(String primaryColor, String secondaryColor, boolean hasLogo, OffsetDateTime updatedAt, List<ContrastCheck> contrast) {}
@@ -70,6 +73,7 @@ public class BrandingController {
 
   @PostMapping(value = "/admin/branding/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasRole('ADMIN')")
+  /** Logo (bloque D): mismo servicio que las fotos de platos; se valida por firma, se convierte a WebP fuera de WebFlux y se guarda solo WebP. */
   public Mono<Branding> uploadLogo(@RequestPart("file") FilePart file, @AuthenticationPrincipal AppPrincipal user) {
     return Tenant.restaurantId().flatMap(r -> DataBufferUtils.join(file.content(), BrandingPolicy.MAX_LOGO_BYTES)
       .onErrorMap(DataBufferLimitException.class, error -> new ApiException(HttpStatus.PAYLOAD_TOO_LARGE, "LOGO_TOO_LARGE", "El logo supera 2 MB"))
@@ -82,13 +86,13 @@ public class BrandingController {
       .switchIfEmpty(Mono.error(new ApiException(HttpStatus.BAD_REQUEST, "LOGO_EMPTY", "El archivo está vacío")))
       .flatMap(data -> {
         if (data.length == 0) return Mono.error(new ApiException(HttpStatus.BAD_REQUEST, "LOGO_EMPTY", "El archivo está vacío"));
-        String type = BrandingPolicy.detectImageType(data);
-        return tx.transactional(db.sql("INSERT INTO restaurant_branding(restaurante_id,primary_color,secondary_color,logo_content_type,logo_data,updated_by,updated_at) "
+        BrandingPolicy.detectImageType(data);
+        return images.toWebp(data, "LOGO").flatMap(converted -> tx.transactional(db.sql("INSERT INTO restaurant_branding(restaurante_id,primary_color,secondary_color,logo_content_type,logo_data,updated_by,updated_at) "
             + "VALUES(:r,:p,:s,:t,:d,:u,now()) ON CONFLICT (restaurante_id) DO UPDATE SET logo_content_type=EXCLUDED.logo_content_type, logo_data=EXCLUDED.logo_data, "
             + "updated_by=EXCLUDED.updated_by, updated_at=now()")
-          .bind("r", r).bind("p", DEFAULT_PRIMARY).bind("s", DEFAULT_SECONDARY).bind("t", type).bind("d", data).bind("u", user.id()).fetch().rowsUpdated()
+          .bind("r", r).bind("p", DEFAULT_PRIMARY).bind("s", DEFAULT_SECONDARY).bind("t", ImageService.WEBP).bind("d", converted.data()).bind("u", user.id()).fetch().rowsUpdated()
           .then(audit(r, user, "BRANDING_LOGO_UPDATE"))
-          .then(current(r)));
+          .then(current(r))));
       }));
   }
 

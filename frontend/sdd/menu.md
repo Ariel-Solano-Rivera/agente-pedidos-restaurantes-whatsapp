@@ -2,11 +2,11 @@
 
 ## Propósito y alcance
 
-Tabla de los platos del restaurante con búsqueda, filtros como botones, interruptor de disponibilidad y acciones por fila. ADMIN crea, edita, oculta o muestra y elimina platos; ADMIN y CAJA marcan un plato como agotado o disponible; COCINA consulta. El backend decide si cada plato está disponible (`available`). Rediseñado en la etapa 7 con el sistema de diseño.
+Tabla de los platos del restaurante con búsqueda, filtros como menús desplegables (segunda ronda, bloque D), interruptor de disponibilidad y acciones por fila. ADMIN crea, edita, oculta o muestra y elimina platos; ADMIN y CAJA marcan un plato como agotado o disponible; COCINA consulta. El backend decide si cada plato está disponible (`available`). Rediseñado en la etapa 7 con el sistema de diseño.
 
 ## Fuente y dependencias
 
-- Código: `src/features/menu/MenuPage.tsx` (tabla, filtros, interruptor y confirmación de borrado), `DishForms.tsx` (formularios de crear y editar con la lógica de T1/T2, imagen y selectores) y `menu.css`; kit de formularios `src/design/forms.css` (`ds-form-dialog`); componentes `FilterGroup`, `Icon`, `PageHeader`, `EmptyState` y `Skeleton`.
+- Código: `src/features/menu/MenuPage.tsx` (tabla, filtros, interruptor y confirmación de borrado), `DishForms.tsx` (formularios de crear y editar con la lógica de T1/T2, imagen y selectores) y `menu.css`; kit de formularios `src/design/forms.css` (`ds-form-dialog`); componentes `Dropdown`, `Icon`, `PageHeader`, `EmptyState` y `Skeleton`.
 - API:
   - lectura: `GET /menu/dishes`, `GET /menu/categories`, `GET /menu/catalog/presentations`, `GET /menu/catalog/ingredients` y `GET /menu/dishes/{id}/image`;
   - ADMIN: `POST /admin/dishes`, `PUT /admin/dishes/{id}`, `PATCH /admin/dishes/{id}/active`, `DELETE /admin/dishes/{id}` y `POST /admin/dishes/{id}/image`;
@@ -16,7 +16,7 @@ Tabla de los platos del restaurante con búsqueda, filtros como botones, interru
 ## Comportamiento visible
 
 - Encabezado con «Agregar plato» (ADMIN). Búsqueda por nombre, descripción o ingrediente (incluye extras y retirables), sin distinguir tildes.
-- Filtros como botones con contador, calculados sobre el menú cargado aplicando los demás filtros: **Categoría** (Todas y cada categoría), **Disponibilidad** (Todas, Disponible, Agotado) y **Visibilidad** (Todos, Visibles, Ocultos). Debajo, «N de M platos» y «Limpiar filtros».
+- Filtros como menús desplegables accesibles (`Dropdown`, bloque D) con contador por opción, calculados sobre el menú cargado aplicando los demás filtros: **Categoría** (Todas y cada categoría), **Disponibilidad** (Todas, Disponible, Agotado) y **Visibilidad** (Todos, Visibles, Ocultos). Debajo, «N de M platos» y «Limpiar filtros».
 - Tabla:
   - **Plato:** miniatura (foto o patrón si no tiene), nombre y descripción en una línea.
   - **Categoría.**
@@ -27,7 +27,7 @@ Tabla de los platos del restaurante con búsqueda, filtros como botones, interru
   - **Acciones (ADMIN):** editar, ocultar o mostrar, y eliminar, como botones de icono de 44 px con nombre accesible.
 - Interruptor: apagarlo marca el plato como agotado (todas sus variantes); encenderlo quita la marca. Si el plato sigue sin unidades libres, el aviso dice que ajuste la cantidad en Operación. El cambio queda auditado.
 - Eliminar pide confirmación en un `<dialog>` que explica qué se borra y que los pedidos anteriores conservan su copia.
-- Formularios de crear y editar: diálogo `ds-modal ds-form-dialog` con categoría, nombre, descripción, presentación, precio, ingredientes retirables, extras con recargo y foto (PNG, JPEG o WebP hasta 2 MB, con vista previa).
+- Formularios de crear y editar: diálogo `ds-modal ds-form-dialog` con categoría, nombre, descripción, presentación, precio, ingredientes retirables, extras con recargo y foto (PNG, JPEG o WebP hasta 2 MB, con vista previa; el pie indica «se guarda como WebP»: el servidor convierte y guarda solo WebP, bloque D).
 - Avisos de éxito o error con icono (6 s).
 - Responsivo:
   - por debajo de 1100 px se oculta la columna Opciones, y por debajo de 900 px también Categoría;
@@ -35,7 +35,8 @@ Tabla de los platos del restaurante con búsqueda, filtros como botones, interru
 
 ## Validaciones y errores
 
-- El panel no calcula precios ni disponibilidad: muestra `available` y los precios del backend. Los formularios validan campos obligatorios y formato de imagen como ayuda; el backend repite la validación.
+- El panel no calcula precios ni disponibilidad: muestra `available` y los precios del backend. Los formularios validan campos obligatorios y formato de imagen como ayuda; el backend repite la validación por contenido (`IMAGE_INVALID_TYPE`, `IMAGE_TOO_LARGE`, `IMAGE_EMPTY`).
+- Extras: en el catálogo hay un solo elemento (por ejemplo «Camarón»); la palabra «extra» no forma parte del nombre y solo la añade la vista de preparación y el detalle según el uso en el pedido (V14 unificó los nombres «X extra»).
 - Errores de carga: `EmptyState` con «Reintentar». Error de una acción: aviso rojo con el mensaje del backend.
 
 ## Estados de interfaz

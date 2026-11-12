@@ -49,7 +49,9 @@ class BrandingIntegrationTest extends IntegrationTest {
 
     Map<String, Object> saved = upload(ADMIN, PNG, "logo.jpg", MediaType.IMAGE_JPEG).expectStatus().isOk().expectBody(JSON).returnResult().getResponseBody();
     assertThat(saved.get("hasLogo")).isEqualTo(true);
-    as(CAJA).get().uri("/api/v1/branding/logo").exchange().expectStatus().isOk().expectHeader().contentType(MediaType.IMAGE_PNG);
+    // Bloque D: se acepta PNG o JPEG, pero se guarda y sirve siempre como WebP.
+    byte[] logo = as(CAJA).get().uri("/api/v1/branding/logo").exchange().expectStatus().isOk().expectHeader().contentType(MediaType.parseMediaType("image/webp")).expectBody(byte[].class).returnResult().getResponseBody();
+    assertThat(new String(logo, 0, 4, StandardCharsets.US_ASCII)).isEqualTo("RIFF");
     as(OTHER_ADMIN).get().uri("/api/v1/branding/logo").exchange().expectStatus().isNotFound();
 
     as(ADMIN).delete().uri("/api/v1/admin/branding/logo").exchange().expectStatus().isOk().expectBody().jsonPath("$.hasLogo").isEqualTo(false);

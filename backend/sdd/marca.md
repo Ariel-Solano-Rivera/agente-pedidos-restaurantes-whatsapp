@@ -6,7 +6,7 @@ Guarda y entrega la marca del restaurante del usuario autenticado: color princip
 
 ## Fuente y dependencias
 
-- Código: `administracion/BrandingController.java` (API) y `administracion/BrandingPolicy.java` (formato de color, contraste y tipo real de imagen).
+- Código: `administracion/BrandingController.java` (API), `administracion/BrandingPolicy.java` (formato de color, contraste y tipo real de imagen) y `common/ImageService.java` (conversión a WebP, compartida con las fotos de platos).
 - Tablas o migraciones: `restaurant_branding` (V13), `audit_log`.
 - Consumidores: `frontend/src/shared/branding.ts`, `features/configuracion/SettingsPage.tsx`, y `components/AppShell.tsx`.
 
@@ -15,7 +15,7 @@ Guarda y entrega la marca del restaurante del usuario autenticado: color princip
 - `GET /branding` (todos los roles) devuelve `{primaryColor, secondaryColor, hasLogo, updatedAt, contrast[]}`. Si el restaurante no tiene fila, responde con el tema por defecto `#0A3165` / `#0A5EAE`.
 - `GET /branding/logo` (todos los roles) devuelve el binario con su tipo detectado y `Cache-Control: no-cache`; sin logo, 404 `LOGO_NOT_FOUND`.
 - `PUT /admin/branding` (ADMIN), cuerpo `{primaryColor, secondaryColor}`: guarda los colores y devuelve la marca con el contraste recalculado.
-- `POST /admin/branding/logo` (ADMIN), `multipart/form-data` con `file`: guarda o reemplaza el logo.
+- `POST /admin/branding/logo` (ADMIN), `multipart/form-data` con `file`: guarda o reemplaza el logo, siempre convertido a WebP (bloque D).
 - `DELETE /admin/branding/logo` (ADMIN): quita el logo.
 - CAJA y COCINA reciben 403 `FORBIDDEN` en las rutas `/admin/branding*`.
 
@@ -29,6 +29,7 @@ Guarda y entrega la marca del restaurante del usuario autenticado: color princip
 - Logo:
   - se lee de forma reactiva con un límite de 2 MB (si lo supera, 413 `LOGO_TOO_LARGE`);
   - el tipo se detecta por la firma de los primeros bytes (PNG `89 50 4E 47 0D 0A 1A 0A`, JPEG `FF D8 FF`, WebP `RIFF….WEBP`), ignorando la extensión y el tipo declarado; si no coincide, 400 `LOGO_INVALID_TYPE`; un archivo vacío da 400 `LOGO_EMPTY`;
+  - se convierte a WebP (lado máximo 1600 px, calidad 0,82, transparencia conservada) en `Schedulers.boundedElastic()` y se guarda con `logo_content_type = image/webp`; un logo guardado antes del bloque D conserva su formato hasta que se reemplace;
   - se guarda en `BYTEA` mediante R2DBC, sin E/S bloqueante.
 - Cada cambio actualiza `updated_by` y `updated_at`.
 
@@ -41,7 +42,7 @@ Guarda y entrega la marca del restaurante del usuario autenticado: color princip
 ## Pruebas
 
 - `BrandingPolicyTest`: formato y normalización, contraste (21:1 para negro sobre blanco, límite de `#767676`) y detección de PNG, JPEG y WebP frente a SVG o GIF renombrados.
-- `BrandingIntegrationTest` (Testcontainers): lectura para todos los roles, 403 para CAJA, color inválido, normalización y avisos, auditoría, SVG renombrado como `.png` rechazado, 413 por tamaño, PNG declarado como JPEG guardado como `image/png`, borrado y aislamiento con Sierra Verde.
+- `BrandingIntegrationTest` (Testcontainers): lectura para todos los roles, 403 para CAJA, color inválido, normalización y avisos, auditoría, SVG renombrado como `.png` rechazado, 413 por tamaño, PNG declarado como JPEG guardado y servido como `image/webp` (firma `RIFF`), borrado y aislamiento con Sierra Verde. `ImageServiceTest`: PNG, JPEG y WebP de entrada, reducción a 1600 px con proporción y transparencia, y rechazo de SVG o PNG truncado con el prefijo del llamador.
 
 ## TBD / exclusiones
 

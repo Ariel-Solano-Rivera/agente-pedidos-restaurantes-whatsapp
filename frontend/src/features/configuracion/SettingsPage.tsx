@@ -102,7 +102,7 @@ function BrandTab({ auth, branding, logoUrl, onChanged, say }: { auth: string; b
 
     <section className="st-section" aria-labelledby="st-logo">
       <h2 id="st-logo" className="ds-eyebrow">Logo</h2>
-      <Row title="Logo o foto del local" hint="Aparece en el menú lateral y en la barra superior del móvil. PNG, JPEG o WebP de hasta 2 MB; el servidor valida el contenido real del archivo.">
+      <Row title="Logo o foto del local" hint="Aparece en el menú lateral y en la barra superior del móvil. PNG, JPEG o WebP de hasta 2 MB; el servidor valida el contenido real del archivo y lo guarda como WebP.">
         <div className="st-logo">
           <span className="st-logo__preview">{logoUrl ? <img src={logoUrl} alt="Logo actual del restaurante" /> : <span className="st-logo__empty"><Icon name="image" size={28} />Sin logo</span>}</span>
           <div className="st-logo__actions">

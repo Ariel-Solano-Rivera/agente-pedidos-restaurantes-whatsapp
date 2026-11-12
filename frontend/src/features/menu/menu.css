@@ -3,8 +3,9 @@
 .mn .ds-page-header { margin-bottom: var(--space-5); }
 .mn-search { margin-bottom: var(--space-4); }
 .mn-search .ds-input { min-height: 48px; }
-.mn-filters { display: grid; gap: var(--space-5); padding: var(--space-5); margin-bottom: var(--space-4); }
-.mn-filters__row { display: flex; flex-wrap: wrap; gap: var(--space-5) var(--space-10); }
+/* Filtros como menús desplegables (segunda ronda, bloque D). */
+.mn-filters { display: flex; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-4) var(--space-5); margin-bottom: var(--space-4); }
+@media (max-width: 767px) { .mn-filters .ds-dropdown, .mn-filters .ds-dropdown__btn { width: 100%; justify-content: space-between; } }
 .mn-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: var(--hit); margin-bottom: var(--space-3); }
 .mn-summary p { margin: 0; color: var(--text-muted); }
 .mn-summary b { color: var(--text); }

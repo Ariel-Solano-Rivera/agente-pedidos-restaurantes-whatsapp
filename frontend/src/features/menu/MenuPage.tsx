@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FilterGroup } from '../../design/FilterGroup';
+import { Dropdown } from '../../design/Dropdown';
 import { Icon } from '../../design/Icon';
 import { EmptyState, PageHeader, Skeleton } from '../../design/States';
 import { api, User, useLoad } from '../../shared/api';
@@ -87,15 +87,14 @@ export function MenuPage({ auth, user }: { auth: string; user: User }) {
     <label className="ds-search mn-search"><span className="ds-sr-only">Buscar platos</span><Icon name="search" />
       <input className="ds-input" type="search" value={filters.q} onChange={event => set('q', event.target.value)} placeholder="Nombre, descripción o ingrediente" maxLength={80} /></label>
 
-    <div className="ds-card mn-filters">
-      <FilterGroup legend="Categoría" value={filters.categoryId} onChange={value => set('categoryId', value)}
+    {/* Filtros como menús desplegables accesibles (segunda ronda, bloque D); los contadores se calculan en el cliente sobre el menú completo. */}
+    <div className="ds-card mn-filters" role="group" aria-label="Filtros del menú">
+      <Dropdown label="Categoría" value={filters.categoryId} onChange={value => set('categoryId', value)}
         options={[{ value: '', label: 'Todas', count: countBy('categoryId', () => true) }, ...(categories.data ?? []).map(category => ({ value: category.id, label: category.name, count: countBy('categoryId', dish => dish.categoryId === category.id) }))]} />
-      <div className="mn-filters__row">
-        <FilterGroup legend="Disponibilidad" value={filters.availability} onChange={value => set('availability', value as MenuFilters['availability'])}
-          options={[{ value: '', label: 'Todas', count: countBy('availability', () => true) }, { value: 'AVAILABLE', label: 'Disponible', count: countBy('availability', dish => dish.available) }, { value: 'SOLD_OUT', label: 'Agotado', count: countBy('availability', dish => !dish.available) }]} />
-        <FilterGroup legend="Visibilidad" value={filters.visibility} onChange={value => set('visibility', value as MenuFilters['visibility'])}
-          options={[{ value: '', label: 'Todos', count: countBy('visibility', () => true) }, { value: 'ACTIVE', label: 'Visibles', count: countBy('visibility', dish => dish.active) }, { value: 'INACTIVE', label: 'Ocultos', count: countBy('visibility', dish => !dish.active) }]} />
-      </div>
+      <Dropdown label="Disponibilidad" value={filters.availability} onChange={value => set('availability', value as MenuFilters['availability'])}
+        options={[{ value: '', label: 'Todas', count: countBy('availability', () => true) }, { value: 'AVAILABLE', label: 'Disponible', count: countBy('availability', dish => dish.available) }, { value: 'SOLD_OUT', label: 'Agotado', count: countBy('availability', dish => !dish.available) }]} />
+      <Dropdown label="Visibilidad" value={filters.visibility} onChange={value => set('visibility', value as MenuFilters['visibility'])}
+        options={[{ value: '', label: 'Todos', count: countBy('visibility', () => true) }, { value: 'ACTIVE', label: 'Visibles', count: countBy('visibility', dish => dish.active) }, { value: 'INACTIVE', label: 'Ocultos', count: countBy('visibility', dish => !dish.active) }]} />
     </div>
 
     <div className="mn-summary">

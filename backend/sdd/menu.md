@@ -24,7 +24,8 @@ Consulta categorías y platos del restaurante, y permite a ADMIN crear un plato 
 - Editar cambia categoría, nombre, descripción, la presentación y precio de la primera variante por orden alfabético de nombre (al renombrarla puede cambiar cuál es la primera), y reemplaza extras y retirables en una transacción. Cada opción se valida contra el catálogo activo del restaurante y copia su nombre; listas vacías los quitan. Una imagen opcional usa la carga existente. Activar/desactivar solo cambia `dish.active`.
 - Eliminar borra imagen, opciones, disponibilidad y variantes dentro de una transacción; se rechaza con 409 cuando alguna variante registra movimientos de disponibilidad, preservando la trazabilidad.
 - Las opciones opcionales vacías se interpretan como listas vacías.
-- La imagen se valida como JPEG, PNG o WebP de hasta 2 MB; se guarda con la clave del restaurante y plato, y un nuevo envío reemplaza la previa.
+- La imagen (bloque D) se lee con un límite de 2 MB (413 `IMAGE_TOO_LARGE`), se valida por su firma real como PNG, JPEG o WebP ignorando el tipo declarado (400 `IMAGE_INVALID_TYPE`; vacío 400 `IMAGE_EMPTY`), se convierte con `common/ImageService` (lado máximo 1600 px, WebP con calidad 0,82, transparencia conservada) en `Schedulers.boundedElastic()` y se guarda siempre como `image/webp` con la clave del restaurante y plato; un nuevo envío reemplaza la previa. Las imágenes guardadas antes del bloque D se mantienen en su formato hasta que se vuelvan a subir.
+- Nombres de extras: V14 renombra en `catalog_ingredient` y `extra_option` los elementos «X extra» a «X» cuando no existe ya «X» (sin tocar `order_unit_option.name_snapshot`); la palabra «extra» la calcula el panel. Si coexistieran «X» y «X extra», se dejan y queda como TBD.
 
 ## Pruebas
 
