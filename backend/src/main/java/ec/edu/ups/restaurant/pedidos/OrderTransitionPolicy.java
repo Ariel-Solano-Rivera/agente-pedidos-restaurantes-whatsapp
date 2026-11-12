@@ -17,10 +17,9 @@ public final class OrderTransitionPolicy {
 
   public record Transition(String targetStatus, Direction direction, boolean requiresReason, boolean destructive) {}
 
-  /** Tipo de cambio persistido en order_status_history.change_type. */
+  /** Tipo de cambio persistido en order_status_history.change_type. `DESHACER` ya no se genera (segunda ronda, bloque C) pero sigue en filas históricas. */
   public static final String AVANCE = "AVANCE";
   public static final String RETROCESO = "RETROCESO";
-  public static final String DESHACER = "DESHACER";
 
   public static final Set<String> STATUSES = Set.of("PENDING_DECISION", "ACCEPTED", "REJECTED", "PREPARING", "READY", "COMPLETED", "CANCELLED", "EXPIRED");
   /** Estados que COCINA puede consultar. */
@@ -31,7 +30,10 @@ public final class OrderTransitionPolicy {
     "ACCEPTED", List.of("PREPARING", "CANCELLED"),
     "PREPARING", List.of("READY"),
     "READY", List.of("COMPLETED"));
-  /** TBD (ADR-001): ACCEPTED → PENDING_DECISION no se permite porque afecta la reserva. */
+  /**
+   * TBD (ADR-001): ACCEPTED → PENDING_DECISION no se permite porque afecta la reserva. Desde la segunda ronda (bloque C) los
+   * tres roles retroceden un paso con motivo; COCINA puede elegir OTRO sin texto porque no tiene tiempo de escribir.
+   */
   private static final Map<String, String> BACKWARD = Map.of("PREPARING", "ACCEPTED", "READY", "PREPARING");
   private static final Set<String> KITCHEN_FORWARD = Set.of("ACCEPTED>PREPARING", "PREPARING>READY");
   private static final Set<String> DESTRUCTIVE = Set.of("REJECTED", "CANCELLED");
@@ -48,7 +50,7 @@ public final class OrderTransitionPolicy {
       }
     }
     String back = BACKWARD.get(current);
-    if (back != null && role != Role.COCINA) result.add(new Transition(back, Direction.BACKWARD, true, false));
+    if (back != null) result.add(new Transition(back, Direction.BACKWARD, true, false));
     return List.copyOf(result);
   }
 
@@ -59,7 +61,7 @@ public final class OrderTransitionPolicy {
     if (transition.direction() == Direction.FORWARD) return AVANCE;
     ReasonCode code = parseReason(reasonCode);
     if (code == null) throw new ApiException(HttpStatus.BAD_REQUEST, "REASON_REQUIRED", "Elige el motivo del retroceso");
-    if (code == ReasonCode.OTRO && (reason == null || reason.isBlank())) throw new ApiException(HttpStatus.BAD_REQUEST, "REASON_TEXT_REQUIRED", "Describe el motivo cuando eliges «Otro»");
+    if (code == ReasonCode.OTRO && role != Role.COCINA && (reason == null || reason.isBlank())) throw new ApiException(HttpStatus.BAD_REQUEST, "REASON_TEXT_REQUIRED", "Describe el motivo cuando eliges «Otro»");
     if (reason != null && reason.trim().length() > MAX_REASON) throw new ApiException(HttpStatus.BAD_REQUEST, "REASON_TOO_LONG", "El motivo admite hasta 300 caracteres");
     return RETROCESO;
   }

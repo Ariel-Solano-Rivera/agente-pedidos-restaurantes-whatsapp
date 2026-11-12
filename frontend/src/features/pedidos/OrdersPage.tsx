@@ -7,7 +7,7 @@ import { EmptyState, PageHeader, Skeleton } from '../../design/States';
 import { orderStatuses, paymentStatuses, PaymentBadge, StatusBadge, statusLabel } from '../../design/StatusBadge';
 import { api, User } from '../../shared/api';
 import { OrderDetailView } from './OrderDetailView';
-import { clock, CONFIRMABLE_PAYMENT, emptyFilters, Facets, Filters, money, OrderDetail, OrderPage, OrderRef, OrderSort, OrderSummary, shortDate, shortLabel, since, sortOptions, Transition } from './orderTypes';
+import { clock, CONFIRMABLE_PAYMENT, emptyFilters, Facets, Filters, money, OrderPage, OrderRef, OrderSort, OrderSummary, shortDate, shortLabel, since, sortOptions, Transition } from './orderTypes';
 import { PaymentConfirmDialog, PendingPayment } from './PaymentConfirmDialog';
 import { PendingAction, TransitionDialog } from './TransitionDialog';
 import './orders.css';
@@ -51,8 +51,8 @@ function DateRangeDialog({ open, initial, onClose, onApply }: { open: boolean; i
   </dialog>;
 }
 
-function OrderCard({ order, kitchen, busy, undo, onOpen, onAction, onUndo, onConfirmPayment }: {
-  order: OrderSummary; kitchen: boolean; busy: boolean; undo?: OrderDetail['undo']; onOpen: () => void; onAction: (transition: Transition) => void; onUndo: () => void; onConfirmPayment: () => void;
+function OrderCard({ order, kitchen, busy, onOpen, onAction, onConfirmPayment }: {
+  order: OrderSummary; kitchen: boolean; busy: boolean; onOpen: () => void; onAction: (transition: Transition) => void; onConfirmPayment: () => void;
 }) {
   const delivery = order.fulfillmentType === 'DELIVERY';
   const forward = order.allowedTransitions.filter(item => item.direction === 'FORWARD' && !item.destructive);
@@ -82,10 +82,9 @@ function OrderCard({ order, kitchen, busy, undo, onOpen, onAction, onUndo, onCon
         {shortLabel(transition)}
       </button>)}
       {canConfirmPayment && <button type="button" className="ds-btn ds-btn--secondary order-tile__paid" disabled={busy} onClick={onConfirmPayment} title="Confirmar el pago recibido"><Icon name="coins" size={18} />Cobrado</button>}
-      {kitchen && undo && <button type="button" className="ds-btn ds-btn--secondary" disabled={busy} onClick={onUndo}><Icon name="undo" size={18} />Deshacer (volver a {statusLabel(undo.targetStatus)})</button>}
       <ActionMenu label={`Más acciones de ${order.publicCode}`} disabled={busy} size={kitchen ? 56 : 44}
         items={[{ id: 'detail', label: 'Ver detalle', icon: 'eye', onSelect: onOpen },
-          ...(kitchen ? [] : others.map(transition => ({ id: transition.targetStatus, label: shortLabel(transition), icon: (transition.direction === 'BACKWARD' ? 'undo' : transition.targetStatus === 'REJECTED' ? 'xCircle' : 'ban') as 'undo' | 'xCircle' | 'ban', danger: transition.destructive, onSelect: () => onAction(transition) })))]} />
+          ...others.map(transition => ({ id: transition.targetStatus, label: shortLabel(transition), icon: (transition.direction === 'BACKWARD' ? 'undo' : transition.targetStatus === 'REJECTED' ? 'xCircle' : 'ban') as 'undo' | 'xCircle' | 'ban', danger: transition.destructive, onSelect: () => onAction(transition) }))]} />
     </footer>
   </article>;
 }
@@ -95,7 +94,6 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
   const [filters, setFilters] = useState<Filters>({ ...emptyFilters, ...preset }); const [search, setSearch] = useState(preset?.q ?? ''); const [page, setPage] = useState(0); const [sort, setSort] = useState<OrderSort>('CREATED_DESC');
   const [data, setData] = useState<OrderPage>(); const [facets, setFacets] = useState<Facets>(); const [facetsLoading, setFacetsLoading] = useState(true);
   const [loadError, setLoadError] = useState(''); const [loading, setLoading] = useState(true);
-  const [undos, setUndos] = useState<Record<string, OrderDetail['undo']>>({});
   /** Pedido abierto en detalle; la lista conserva filtros, página y posición al volver. */
   const [detailId, setDetailId] = useState<string>(); const [refreshKey, setRefreshKey] = useState(0); const listScroll = useRef(0);
   const [pending, setPending] = useState<PendingAction>(); const [pendingPayment, setPendingPayment] = useState<PendingPayment>(); const [busy, setBusy] = useState(''); const [actionError, setActionError] = useState('');
@@ -110,11 +108,9 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
     try {
       const result = await api<OrderPage>(`/orders?${params(filters, { page: String(page), size: String(PAGE_SIZE), sort })}`, auth);
       setData(result);
-      // Solo COCINA necesita el detalle para saber si puede deshacer su último cambio.
-      if (kitchen) setUndos(Object.fromEntries(await Promise.all(result.items.map(async item => [item.id, (await api<OrderDetail>(`/orders/${item.id}`, auth)).undo] as const))));
     } catch (caught) { setLoadError(caught instanceof Error ? caught.message : 'No se pudieron cargar los pedidos.'); }
     finally { setLoading(false); }
-  }, [auth, filters, page, sort, kitchen]);
+  }, [auth, filters, page, sort]);
 
   const loadFacets = useCallback(async () => {
     setFacetsLoading(true);
@@ -146,8 +142,7 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
       const result = await api<{ status: string; changeType: string }>(path, auth, { method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: body ? JSON.stringify(body) : undefined });
       setPending(undefined);
       const target = `«${statusLabel(result.status)}»`;
-      setNotice({ tone: 'ok', text: result.changeType === 'DESHACER' ? `Cambio deshecho: ${order.publicCode} volvió a ${target}.`
-        : result.changeType === 'RETROCESO' ? `${order.publicCode} volvió a ${target}.` : `${order.publicCode} pasó a ${target}.` });
+      setNotice({ tone: 'ok', text: result.changeType === 'RETROCESO' ? `${order.publicCode} volvió a ${target}.` : `${order.publicCode} pasó a ${target}.` });
       setRefreshKey(key => key + 1);
       await Promise.all([load(), loadFacets()]);
     } catch (caught) {
@@ -156,8 +151,8 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
     } finally { setBusy(''); }
   }
   function act(order: OrderRef, transition: Transition) {
-    // COCINA avanza con un toque y sin motivo; el resto confirma (y retroceder pide motivo).
-    if (kitchen) { void run(order, `/orders/${order.id}/transitions`, { targetStatus: transition.targetStatus }); return; }
+    // COCINA avanza con un toque y sin motivo; retroceder pide motivo a todos los roles (bloque C) y el resto confirma cada acción.
+    if (kitchen && transition.direction === 'FORWARD') { void run(order, `/orders/${order.id}/transitions`, { targetStatus: transition.targetStatus }); return; }
     setActionError(''); setPending({ order, transition });
   }
   function open(order: OrderSummary) { listScroll.current = window.scrollY; setNotice(undefined); setDetailId(order.id); }
@@ -182,13 +177,13 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
 
   if (detailId) return <>
     <OrderDetailView auth={auth} orderId={detailId} kitchen={kitchen} busy={Boolean(busy)} notice={notice} refreshKey={refreshKey} onBack={closeDetail}
-      onAction={(order, transition) => act(order, transition)} onUndo={order => void run(order, `/orders/${order.id}/undo`)}
+      onAction={(order, transition) => act(order, transition)}
       onConfirmPayment={(order, paymentId, amount) => { setActionError(''); setPendingPayment({ order, paymentId, amount }); }} />
     {dialogs}
   </>;
 
   return <section className="orders">
-    <PageHeader title="Pedidos" subtitle={kitchen ? 'Pedidos aceptados para preparar. Un toque avanza el estado y puedes deshacer tu último cambio por unos minutos.' : 'Revisa las solicitudes y cambia su estado. Solo ves los cambios que tu rol puede hacer.'}
+    <PageHeader title="Pedidos" subtitle={kitchen ? 'Pedidos aceptados para preparar. Un toque avanza el estado; retroceder pide un motivo.' : 'Revisa las solicitudes y cambia su estado. Solo ves los cambios que tu rol puede hacer.'}
       aside={<span className="orders-today"><Icon name="calendar" size={16} />{today}</span>} />
 
     <div className="orders-toolbar">
@@ -231,8 +226,8 @@ export function OrdersPage({ auth, user, preset }: { auth: string; user: User; p
         : data.items.length === 0 ? <div className="ds-card"><EmptyState title={activeCount ? 'No hay pedidos con estos filtros' : 'Aún no hay pedidos'} description={activeCount ? 'Prueba con otro rango de fechas o quita algún filtro.' : 'Las solicitudes confirmadas por los clientes aparecerán aquí.'}
           action={activeCount ? <button type="button" className="ds-btn ds-btn--primary" onClick={clearAll}>Limpiar filtros</button> : undefined} /></div>
           : <div className={`orders-grid ${loading ? 'is-refreshing' : ''}`} aria-busy={loading}>
-            {data.items.map(order => <OrderCard key={order.id} order={order} kitchen={kitchen} busy={busy === order.id} undo={undos[order.id]}
-              onOpen={() => open(order)} onAction={transition => act(order, transition)} onUndo={() => void run(order, `/orders/${order.id}/undo`)}
+            {data.items.map(order => <OrderCard key={order.id} order={order} kitchen={kitchen} busy={busy === order.id}
+              onOpen={() => open(order)} onAction={transition => act(order, transition)}
               onConfirmPayment={() => { setActionError(''); setPendingPayment({ order, paymentId: order.paymentId ?? '', amount: order.total }); }} />)}
           </div>}
 

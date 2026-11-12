@@ -7,12 +7,13 @@ export type OrderPage = { items: OrderSummary[]; page: number; size: number; tot
 export type Facets = { status: Record<string, number>; fulfillment: Record<string, number>; paymentStatus: Record<string, number>; range: Record<string, number> };
 type OrderOption = { type: 'EXTRA' | 'REMOVED_INGREDIENT' | 'INSTRUCTION'; name: string; amount: number | null };
 export type OrderUnit = { id: string; dish: string; variant: string; quantity: number; unitPrice: number | null; extrasTotal: number | null; lineTotal: number | null; options: OrderOption[] };
+/** `DESHACER` solo aparece en filas históricas: el deshacer de cocina se retiró en la segunda ronda (bloque C). */
 export type HistoryEntry = { previousStatus: string; newStatus: string; changeType: 'AVANCE' | 'RETROCESO' | 'DESHACER'; reasonCode: string | null; reason: string; actorEmail: string | null; actorRole: string; createdAt: string };
 /** `GET /orders/{id}`: importes y pago llegan `null` para COCINA. */
 export type OrderDetail = {
   id: string; publicCode: string; status: string; paymentStatus: string | null; fulfillmentType: 'PICKUP' | 'DELIVERY'; customerName: string; phone: string; total: number | null; createdAt: string;
   deliveryAddress: string; deliveryReference: string; deliveryZone: string; pickupTime: string | null; subtotal: number | null; deliveryFee: number | null; customerConfirmedAt: string;
-  restaurantDecisionBy: string | null; units: OrderUnit[]; allowedTransitions: Transition[]; undo: { targetStatus: string; expiresAt: string } | null; history: HistoryEntry[];
+  restaurantDecisionBy: string | null; units: OrderUnit[]; allowedTransitions: Transition[]; history: HistoryEntry[];
 };
 /** `GET /payments?orderId=` (ADMIN, CAJA). */
 export type Payment = { id: string; method: string; amount: number; status: string; reference: string | null; verifiedBy: string | null; verifiedAt: string | null };

@@ -170,7 +170,7 @@ export function DashboardPage({ auth, onNavigate }: { auth: string; onNavigate: 
               {data.soldOutDishes.length > 0 && <p className="db-soldout">{data.soldOutDishes.join(' · ')}</p>}
             </section>
             <section className="ds-card db-card" aria-labelledby="db-back">
-              <div className="db-card__head"><h2 id="db-back">Retrocesos y deshacer</h2><p>Por día, rol y tipo de cambio.</p></div>
+              <div className="db-card__head"><h2 id="db-back">Retrocesos</h2><p>Por día, rol y tipo de cambio (los «deshacer» antiguos siguen contando).</p></div>
               {data.backwards.length ? <div className="ds-table-wrap"><table className="ds-table"><thead><tr><th scope="col">Día</th><th scope="col">Rol</th><th scope="col">Tipo</th><th scope="col" className="is-num">Cantidad</th></tr></thead><tbody>
                 {data.backwards.map(item => <tr key={`${item.day}-${item.role}-${item.changeType}`}><td>{dayFormat.format(new Date(item.day + 'T00:00:00Z'))}</td><td>{roleLabels[item.role] ?? item.role}</td>
                   <td><span className="db-change"><Icon name={item.changeType === 'RETROCESO' ? 'arrowLeft' : 'undo'} size={14} />{item.changeType === 'RETROCESO' ? 'Retroceso' : 'Deshacer'}</span></td><td className="is-num">{item.count}</td></tr>)}

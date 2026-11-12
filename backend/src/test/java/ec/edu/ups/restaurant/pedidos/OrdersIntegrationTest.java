@@ -41,30 +41,36 @@ class OrdersIntegrationTest extends IntegrationTest {
   }
 
   @Test
-  void kitchenAdvancesAndUndoesItsOwnChangeOnce() {
+  void kitchenAdvancesAndGoesBackOneStepWithAReason() {
     UUID id = order(2);
     assertThat(list(get(COCINA, "/api/v1/orders/" + id), "allowedTransitions"))
       .containsExactly(Map.of("targetStatus", "PREPARING", "direction", "FORWARD", "requiresReason", false, "destructive", false));
     transition(COCINA, id, key(), Map.of("targetStatus", "CANCELLED")).expectStatus().isEqualTo(409).expectBody().jsonPath("$.code").isEqualTo("TRANSITION_NOT_ALLOWED");
     transition(COCINA, id, key(), Map.of("targetStatus", "PREPARING")).expectStatus().isOk().expectBody().jsonPath("$.changeType").isEqualTo("AVANCE");
-    assertThat(get(COCINA, "/api/v1/orders/" + id).get("undo")).isNotNull();
+    assertThat(list(get(COCINA, "/api/v1/orders/" + id), "allowedTransitions")).extracting(item -> item.get("targetStatus")).containsExactly("READY", "ACCEPTED");
 
-    as(COCINA).post().uri("/api/v1/orders/{id}/undo", id).header("Idempotency-Key", key()).exchange()
-      .expectStatus().isOk().expectBody().jsonPath("$.status").isEqualTo("ACCEPTED").jsonPath("$.changeType").isEqualTo("DESHACER");
-    as(COCINA).post().uri("/api/v1/orders/{id}/undo", id).header("Idempotency-Key", key()).exchange()
-      .expectStatus().isEqualTo(409).expectBody().jsonPath("$.code").isEqualTo("UNDO_NOT_AVAILABLE");
-    as(CAJA).post().uri("/api/v1/orders/{id}/undo", id).header("Idempotency-Key", key()).exchange().expectStatus().isForbidden()
-      .expectBody().jsonPath("$.code").isEqualTo("FORBIDDEN");
+    // Retroceder exige motivo; «Otro» vale con un toque (sin texto) para cocina; el historial guarda rol, motivo y estados.
+    transition(COCINA, id, key(), Map.of("targetStatus", "ACCEPTED")).expectStatus().isBadRequest().expectBody().jsonPath("$.code").isEqualTo("REASON_REQUIRED");
+    transition(COCINA, id, key(), Map.of("targetStatus", "ACCEPTED", "reasonCode", "OTRO")).expectStatus().isOk()
+      .expectBody().jsonPath("$.status").isEqualTo("ACCEPTED").jsonPath("$.changeType").isEqualTo("RETROCESO");
+    Map<String, Object> last = list(get(CAJA, "/api/v1/orders/" + id), "history").get(0);
+    assertThat(last).containsEntry("changeType", "RETROCESO").containsEntry("reasonCode", "OTRO").containsEntry("actorRole", "COCINA").containsEntry("actorEmail", COCINA)
+      .containsEntry("previousStatus", "PREPARING").containsEntry("newStatus", "ACCEPTED");
+    assertThat(last.get("createdAt")).isNotNull();
+    // Desde Aceptado no se vuelve a Pendiente de decisión, y el endpoint de deshacer ya no existe.
+    assertThat(list(get(COCINA, "/api/v1/orders/" + id), "allowedTransitions")).extracting(item -> item.get("targetStatus")).containsExactly("PREPARING");
+    as(COCINA).post().uri("/api/v1/orders/{id}/undo", id).header("Idempotency-Key", key()).exchange().expectStatus().isNotFound();
   }
 
   @Test
-  void kitchenUndoFailsAfterTheWindow() {
+  void kitchenCannotCompleteFromReady() {
     UUID id = order(14);
-    transition(COCINA, id, key(), Map.of("targetStatus", "PREPARING")).expectStatus().isOk();
-    db.sql("UPDATE order_status_history SET created_at = now() - interval '3 minutes' WHERE order_id = :o AND change_type = 'AVANCE' AND actor_role = 'COCINA'")
-      .bind("o", id).fetch().rowsUpdated().block();
-    as(COCINA).post().uri("/api/v1/orders/{id}/undo", id).header("Idempotency-Key", key()).exchange()
-      .expectStatus().isEqualTo(409).expectBody().jsonPath("$.code").isEqualTo("UNDO_WINDOW_EXPIRED");
+    // Otra prueba puede haber movido este pedido antes: se lleva hasta Listo desde donde esté.
+    if ("ACCEPTED".equals(get(COCINA, "/api/v1/orders/" + id).get("status"))) transition(COCINA, id, key(), Map.of("targetStatus", "PREPARING")).expectStatus().isOk();
+    if ("PREPARING".equals(get(COCINA, "/api/v1/orders/" + id).get("status"))) transition(COCINA, id, key(), Map.of("targetStatus", "READY")).expectStatus().isOk();
+    assertThat(list(get(COCINA, "/api/v1/orders/" + id), "allowedTransitions")).extracting(item -> item.get("targetStatus")).containsExactly("PREPARING");
+    transition(COCINA, id, key(), Map.of("targetStatus", "COMPLETED")).expectStatus().isEqualTo(409).expectBody().jsonPath("$.code").isEqualTo("TRANSITION_NOT_ALLOWED");
+    transition(COCINA, id, key(), Map.of("targetStatus", "PREPARING", "reasonCode", "FALTA_PRODUCTO")).expectStatus().isOk().expectBody().jsonPath("$.changeType").isEqualTo("RETROCESO");
   }
 
   @Test
@@ -72,7 +78,6 @@ class OrdersIntegrationTest extends IntegrationTest {
     UUID id = order(4);
     transition(CAJA, id, key(), Map.of("targetStatus", "PREPARING")).expectStatus().isBadRequest().expectBody().jsonPath("$.code").isEqualTo("REASON_REQUIRED");
     transition(CAJA, id, key(), Map.of("targetStatus", "PREPARING", "reasonCode", "OTRO")).expectStatus().isBadRequest().expectBody().jsonPath("$.code").isEqualTo("REASON_TEXT_REQUIRED");
-    transition(COCINA, id, key(), Map.of("targetStatus", "PREPARING", "reasonCode", "ERROR_AL_AVANZAR")).expectStatus().isEqualTo(409);
     transition(CAJA, id, key(), Map.of("targetStatus", "PREPARING", "reasonCode", "CLIENTE_CAMBIO_PEDIDO")).expectStatus().isOk()
       .expectBody().jsonPath("$.changeType").isEqualTo("RETROCESO");
     Map<String, Object> last = list(get(ADMIN, "/api/v1/orders/" + id), "history").get(0);
@@ -142,6 +147,27 @@ class OrdersIntegrationTest extends IntegrationTest {
     assertThat(list(get(COCINA, "/api/v1/orders?size=100"), "items")).allSatisfy(item -> assertThat(item.get("paymentId")).isNull());
   }
 
+  @Test
+  void sameExtraChosenTwiceArrivesAsTwoRowsAndSumsTwice() {
+    // El modelo guarda una fila por opción elegida (sin columna de cantidad): el mismo extra dos veces son dos filas con el mismo nombre.
+    UUID id = order(2);
+    Map<String, Object> unit = list(get(CAJA, "/api/v1/orders/" + id), "units").get(0);
+    UUID unitId = UUID.fromString((String) unit.get("id"));
+    long before = list(unit, "options").stream().filter(option -> "EXTRA".equals(option.get("type"))).count();
+    db.sql("INSERT INTO order_unit_option(id,restaurante_id,order_unit_id,option_type,name_snapshot,surcharge_snapshot) VALUES(:a,:r,:u,'EXTRA','Camarón',1.75),(:b,:r,:u,'EXTRA','Camarón',1.75)")
+      .bind("a", UUID.randomUUID()).bind("b", UUID.randomUUID()).bind("r", UUID.fromString("11111111-1111-1111-1111-111111111111")).bind("u", unitId).fetch().rowsUpdated().block();
+    Map<String, Object> after = list(get(CAJA, "/api/v1/orders/" + id), "units").get(0);
+    List<Map<String, Object>> extras = list(after, "options").stream().filter(option -> "EXTRA".equals(option.get("type")) && "Camarón".equals(option.get("name"))).toList();
+    assertThat(extras).hasSize(2).allSatisfy(option -> assertThat(((Number) option.get("amount")).doubleValue()).isEqualTo(1.75));
+    assertThat(list(after, "options").stream().filter(option -> "EXTRA".equals(option.get("type"))).count()).isEqualTo(before + 2);
+    assertThat(((Number) after.get("extrasTotal")).doubleValue()).isEqualTo(((Number) unit.get("extrasTotal")).doubleValue() + 3.5);
+    // COCINA ve las dos filas sin importes.
+    Map<String, Object> kitchenUnit = list(get(COCINA, "/api/v1/orders/board"), "cards").stream().filter(card -> id.toString().equals(card.get("id"))).findFirst()
+      .map(card -> list(card, "units").get(0)).orElseGet(() -> list(get(COCINA, "/api/v1/orders/" + id), "units").get(0));
+    assertThat(list(kitchenUnit, "options").stream().filter(option -> "Camarón".equals(option.get("name"))).count()).isEqualTo(2);
+    assertThat(kitchenUnit.get("extrasTotal")).isNull();
+  }
+
   private long total(String email, String query) { return ((Number) get(email, "/api/v1/orders?size=1" + query).get("total")).longValue(); }
 
   @Test
@@ -170,7 +196,7 @@ class OrdersIntegrationTest extends IntegrationTest {
   }
 
   @Test
-  void boardListsActiveOrdersWithUnitsWithoutAmountsAndOwnUndo() {
+  void boardListsActiveOrdersWithUnitsWithoutAmountsAndRoleTransitions() {
     Map<String, Object> board = get(COCINA, "/api/v1/orders/board");
     List<Map<String, Object>> cards = list(board, "cards");
     assertThat(cards).isNotEmpty().allSatisfy(card -> {
@@ -178,15 +204,17 @@ class OrdersIntegrationTest extends IntegrationTest {
       assertThat(list(card, "units")).isNotEmpty().allSatisfy(unit -> assertThat(unit.get("lineTotal")).isNull());
       assertThat(card.get("statusSince")).isNotNull();
     });
-    assertThat(cards.stream().filter(card -> "READY".equals(card.get("status")))).allSatisfy(card -> assertThat(list(card, "allowedTransitions")).isEmpty());
+    assertThat(cards.stream().filter(card -> "READY".equals(card.get("status")))).allSatisfy(card -> assertThat(list(card, "allowedTransitions")).extracting(item -> item.get("targetStatus")).containsExactly("PREPARING"));
 
     Map<String, Object> accepted = cards.stream().filter(card -> "ACCEPTED".equals(card.get("status"))).findFirst().orElseThrow();
     String id = (String) accepted.get("id");
     transition(COCINA, UUID.fromString(id), key(), Map.of("targetStatus", "PREPARING")).expectStatus().isOk();
     Map<String, Object> moved = list(get(COCINA, "/api/v1/orders/board"), "cards").stream().filter(card -> id.equals(card.get("id"))).findFirst().orElseThrow();
     assertThat(moved.get("status")).isEqualTo("PREPARING");
-    assertThat(moved.get("undo")).isNotNull();
-    assertThat(list(get(CAJA, "/api/v1/orders/board"), "cards").stream().filter(card -> id.equals(card.get("id"))).findFirst().orElseThrow().get("undo")).isNull();
+    assertThat(moved).doesNotContainKey("undo");
+    assertThat(list(moved, "allowedTransitions")).extracting(item -> item.get("targetStatus")).containsExactly("READY", "ACCEPTED");
+    assertThat(list(list(get(CAJA, "/api/v1/orders/board"), "cards").stream().filter(card -> id.equals(card.get("id"))).findFirst().orElseThrow(), "allowedTransitions"))
+      .extracting(item -> item.get("targetStatus")).containsExactly("READY", "ACCEPTED");
 
     assertThat(list(get(OTHER_ADMIN, "/api/v1/orders/board"), "cards")).noneSatisfy(card -> assertThat(card.get("id")).isEqualTo(id));
   }

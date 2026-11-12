@@ -8,14 +8,12 @@ import ec.edu.ups.restaurant.security.Tenant;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,7 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Pedidos sintéticos: lista filtrada y paginada, detalle, transiciones por rol y deshacer de cocina.
+ * Pedidos sintéticos: lista filtrada y paginada, detalle y transiciones por rol (avanzar y retroceder con motivo).
  * El restaurante sale siempre del usuario autenticado; COCINA no recibe montos.
  */
 @RestController
@@ -34,12 +32,10 @@ import reactor.core.publisher.Mono;
 public class OrderController {
   private final DatabaseClient db;
   private final TransactionalOperator tx;
-  private final Duration undoWindow;
 
-  public OrderController(DatabaseClient db, TransactionalOperator tx, @Value("${app.orders.kitchen-undo-window:PT2M}") Duration undoWindow) {
+  public OrderController(DatabaseClient db, TransactionalOperator tx) {
     this.db = db;
     this.tx = tx;
-    this.undoWindow = undoWindow;
   }
 
   public record Page<T>(List<T> items, int page, int size, long total) {}
@@ -48,8 +44,7 @@ public class OrderController {
   public record Option(String type, String name, BigDecimal amount) {}
   public record Unit(UUID id, String dish, String variant, int quantity, BigDecimal unitPrice, BigDecimal extrasTotal, BigDecimal lineTotal, List<Option> options) {}
   public record HistoryEntry(String previousStatus, String newStatus, String changeType, String reasonCode, String reason, String actorEmail, String actorRole, OffsetDateTime createdAt) {}
-  public record Undo(String targetStatus, OffsetDateTime expiresAt) {}
-  public record Detail(UUID id, String publicCode, String status, String paymentStatus, String fulfillmentType, String customerName, String phone, String deliveryAddress, String deliveryReference, String deliveryZone, OffsetDateTime pickupTime, BigDecimal subtotal, BigDecimal deliveryFee, BigDecimal total, OffsetDateTime customerConfirmedAt, String restaurantDecisionBy, OffsetDateTime createdAt, List<Unit> units, List<Transition> allowedTransitions, Undo undo, List<HistoryEntry> history) {}
+  public record Detail(UUID id, String publicCode, String status, String paymentStatus, String fulfillmentType, String customerName, String phone, String deliveryAddress, String deliveryReference, String deliveryZone, OffsetDateTime pickupTime, BigDecimal subtotal, BigDecimal deliveryFee, BigDecimal total, OffsetDateTime customerConfirmedAt, String restaurantDecisionBy, OffsetDateTime createdAt, List<Unit> units, List<Transition> allowedTransitions, List<HistoryEntry> history) {}
   public record TransitionInput(@NotBlank String targetStatus, String reasonCode, String reason) {}
   public record TransitionResult(UUID orderId, String status, String changeType) {}
 
@@ -125,7 +120,7 @@ public class OrderController {
 
   /** Tarjeta del tablero de cocina: sin importes para ningún rol. `statusSince` es el último cambio de estado (o la recepción). */
   public record BoardCard(UUID id, String publicCode, String status, String fulfillmentType, String customerName, OffsetDateTime pickupTime, String deliveryZone,
-                          OffsetDateTime createdAt, OffsetDateTime statusSince, List<Unit> units, List<Transition> allowedTransitions, Undo undo) {}
+                          OffsetDateTime createdAt, OffsetDateTime statusSince, List<Unit> units, List<Transition> allowedTransitions) {}
   public record Board(List<BoardCard> cards, OffsetDateTime generatedAt) {}
   private record BoardBase(UUID id, String status, String mode, String customer, OffsetDateTime pickupTime, String zone, OffsetDateTime created, OffsetDateTime since) {}
   static final int BOARD_LIMIT = 200;
@@ -142,9 +137,9 @@ public class OrderController {
       .map((row, metadata) -> new BoardBase(row.get("id", UUID.class), row.get("status", String.class), row.get("fulfillment_mode", String.class), row.get("customer_name", String.class),
         row.get("pickup_time", OffsetDateTime.class), row.get("delivery_zone", String.class), row.get("created_at", OffsetDateTime.class), row.get("status_since", OffsetDateTime.class)))
       .all()
-      .flatMapSequential(base -> Mono.zip(units(restaurantId, base.id, true).collectList(), history(restaurantId, base.id).collectList()).map(values ->
-        new BoardCard(base.id, code(base.id), base.status, base.mode, base.customer, base.pickupTime, base.zone, base.created, base.since, values.getT1(),
-          OrderTransitionPolicy.allowed(base.status, role), role == Role.COCINA ? undoFor(values.getT2(), base.status, user.id()) : null)), 4)
+      .flatMapSequential(base -> units(restaurantId, base.id, true).collectList().map(units ->
+        new BoardCard(base.id, code(base.id), base.status, base.mode, base.customer, base.pickupTime, base.zone, base.created, base.since, units,
+          OrderTransitionPolicy.allowed(base.status, role))), 4)
       .collectList()
       .map(cards -> new Board(cards, OffsetDateTime.now())));
   }
@@ -169,7 +164,7 @@ public class OrderController {
         List<HistoryRow> rows = values.getT2();
         return new Detail(base.id, code(base.id), base.status, kitchen ? null : base.paymentStatus, base.mode, base.customer, base.phone, base.address, base.reference, base.zone,
           base.pickupTime, kitchen ? null : base.subtotal, kitchen ? null : base.fee, kitchen ? null : base.total, base.confirmed, base.decisionBy, base.created, values.getT1(),
-          OrderTransitionPolicy.allowed(base.status, role), kitchen ? undoFor(rows, base.status, user.id()) : null, rows.stream().map(HistoryRow::entry).toList());
+          OrderTransitionPolicy.allowed(base.status, role), rows.stream().map(HistoryRow::entry).toList());
       })));
   }
 
@@ -187,29 +182,6 @@ public class OrderController {
           var reasonCode = OrderTransitionPolicy.RETROCESO.equals(changeType) ? OrderTransitionPolicy.parseReason(input.reasonCode()).name() : null;
           return apply(restaurantId, id, current, target, changeType, reasonCode, input.reason(), user, role);
         }))
-        .switchIfEmpty(currentResult(restaurantId, id))));
-  }
-
-  /** COCINA revierte su propio último avance dentro de la ventana configurada, si el pedido sigue en el estado que dejó. */
-  @PostMapping("/{id}/undo")
-  @PreAuthorize("hasRole('COCINA')")
-  public Mono<TransitionResult> undo(@PathVariable UUID id, @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
-                                     @AuthenticationPrincipal AppPrincipal user) {
-    requireKey(idempotencyKey);
-    return Tenant.restaurantId().flatMap(restaurantId -> tx.transactional(
-      register(restaurantId, "ORDER_UNDO:" + id, idempotencyKey, id)
-        .flatMap(ignored -> lockStatus(restaurantId, id, Role.COCINA).flatMap(current -> db.sql("SELECT previous_status,new_status,change_type,actor_user_id,"
-              + "created_at + make_interval(secs => :w) > now() within_window FROM order_status_history WHERE restaurante_id=:r AND order_id=:o ORDER BY created_at DESC, id LIMIT 1")
-            .bind("w", (double) undoWindow.toSeconds()).bind("r", restaurantId).bind("o", id)
-            .map((row, metadata) -> new LastChange(row.get("previous_status", String.class), row.get("new_status", String.class), row.get("change_type", String.class),
-              row.get("actor_user_id", UUID.class), Boolean.TRUE.equals(row.get("within_window", Boolean.class))))
-            .one()
-            .switchIfEmpty(Mono.error(undoUnavailable()))
-            .flatMap(last -> {
-              if (!user.id().equals(last.actor) || !OrderTransitionPolicy.AVANCE.equals(last.changeType) || !current.equals(last.newStatus)) return Mono.error(undoUnavailable());
-              if (!last.withinWindow) return Mono.error(new ApiException(HttpStatus.CONFLICT, "UNDO_WINDOW_EXPIRED", "Pasó el tiempo para deshacer. Avisa a caja para corregir el estado."));
-              return apply(restaurantId, id, current, last.previousStatus, OrderTransitionPolicy.DESHACER, null, "", user, Role.COCINA);
-            })))
         .switchIfEmpty(currentResult(restaurantId, id))));
   }
 
@@ -275,15 +247,6 @@ public class OrderController {
         row.get("created_at", OffsetDateTime.class)), row.get("actor_user_id", UUID.class))).all();
   }
 
-  /** Indica a COCINA si puede deshacer; el backend vuelve a validar todo al ejecutar la acción. */
-  private Undo undoFor(List<HistoryRow> rows, String status, UUID userId) {
-    if (rows.isEmpty()) return null;
-    HistoryRow last = rows.get(0);
-    OffsetDateTime expiresAt = last.entry.createdAt().plus(undoWindow);
-    boolean mine = userId.equals(last.actorId) && OrderTransitionPolicy.AVANCE.equals(last.entry.changeType()) && status.equals(last.entry.newStatus());
-    return mine && expiresAt.isAfter(OffsetDateTime.now()) ? new Undo(last.entry.previousStatus(), expiresAt) : null;
-  }
-
   private static DatabaseClient.GenericExecuteSpec bindNullable(DatabaseClient.GenericExecuteSpec spec, String name, String value) {
     return value == null ? spec.bindNull(name, String.class) : spec.bind(name, value);
   }
@@ -293,12 +256,10 @@ public class OrderController {
   }
 
   private static ApiException notFound() { return new ApiException(HttpStatus.NOT_FOUND, "ORDER_NOT_FOUND", "Pedido no encontrado"); }
-  private static ApiException undoUnavailable() { return new ApiException(HttpStatus.CONFLICT, "UNDO_NOT_AVAILABLE", "No hay un cambio tuyo reciente para deshacer. Avisa a caja."); }
   static String code(UUID id) { return "PED-" + id.toString().substring(0, 8).toUpperCase(); }
 
   private record Base(UUID id, String status, String paymentStatus, String mode, String customer, String phone, String address, String reference, String zone, OffsetDateTime pickupTime,
                       BigDecimal subtotal, BigDecimal fee, BigDecimal total, OffsetDateTime confirmed, String decisionBy, OffsetDateTime created) {}
   private record UnitBase(UUID id, String dish, String variant, BigDecimal price, BigDecimal total) {}
   private record HistoryRow(HistoryEntry entry, UUID actorId) {}
-  private record LastChange(String previousStatus, String newStatus, String changeType, UUID actor, boolean withinWindow) {}
 }

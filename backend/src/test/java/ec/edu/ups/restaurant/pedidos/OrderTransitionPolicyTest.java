@@ -35,11 +35,17 @@ class OrderTransitionPolicyTest {
   }
 
   @Test
-  void kitchenOnlyAdvancesTwoSteps() {
+  void kitchenMovesOneStepForwardOrBackwardBetweenItsThreeColumns() {
     assertThat(OrderTransitionPolicy.allowed("PENDING_DECISION", Role.COCINA)).isEmpty();
     assertThat(OrderTransitionPolicy.allowed("ACCEPTED", Role.COCINA)).containsExactly(new Transition("PREPARING", Direction.FORWARD, false, false));
-    assertThat(OrderTransitionPolicy.allowed("PREPARING", Role.COCINA)).containsExactly(new Transition("READY", Direction.FORWARD, false, false));
-    assertThat(OrderTransitionPolicy.allowed("READY", Role.COCINA)).isEmpty();
+    assertThat(OrderTransitionPolicy.allowed("PREPARING", Role.COCINA)).containsExactly(
+      new Transition("READY", Direction.FORWARD, false, false), new Transition("ACCEPTED", Direction.BACKWARD, true, false));
+    assertThat(OrderTransitionPolicy.allowed("READY", Role.COCINA)).containsExactly(new Transition("PREPARING", Direction.BACKWARD, true, false));
+    // Retroceder exige motivo también en cocina, pero «Otro» se acepta con un toque, sin texto.
+    assertThatThrownBy(() -> OrderTransitionPolicy.validate("READY", "PREPARING", Role.COCINA, null, null)).extracting("code").isEqualTo("REASON_REQUIRED");
+    assertThat(OrderTransitionPolicy.validate("READY", "PREPARING", Role.COCINA, "OTRO", null)).isEqualTo(OrderTransitionPolicy.RETROCESO);
+    assertThat(OrderTransitionPolicy.validate("PREPARING", "ACCEPTED", Role.COCINA, "FALTA_PRODUCTO", null)).isEqualTo(OrderTransitionPolicy.RETROCESO);
+    assertThatThrownBy(() -> OrderTransitionPolicy.validate("READY", "COMPLETED", Role.COCINA, null, null)).extracting("code").isEqualTo("TRANSITION_NOT_ALLOWED");
     assertThatThrownBy(() -> OrderTransitionPolicy.validate("ACCEPTED", "CANCELLED", Role.COCINA, null, null))
       .isInstanceOf(ApiException.class).extracting("code").isEqualTo("TRANSITION_NOT_ALLOWED");
   }

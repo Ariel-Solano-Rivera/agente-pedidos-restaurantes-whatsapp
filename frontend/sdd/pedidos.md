@@ -7,8 +7,8 @@ Lista de pedidos sintéticos con filtros, búsqueda y paginación resueltos en e
 ## Fuente y dependencias
 
 - Código: `src/features/pedidos/OrdersPage.tsx` (página, tarjetas y rango personalizado), `TransitionDialog.tsx` (confirmación y motivo), `PaymentConfirmDialog.tsx` (confirmación del cobro), `orderTypes.ts` (contrato, textos de acción y formatos), `OrderDetailView.tsx` (detalle; ver `detalle-pedido.md`), `orders.css`; componentes `FilterGroup`, `Dropdown`, `ActionMenu`, `StatusBadge`, `PaymentBadge`, `Icon`, `PageHeader`, `EmptyState` y `Skeleton` de `src/design/`.
-- API: `GET /orders` (paginada, con `sort`), `GET /orders/facets` (conteos por opción), `GET /orders/{id}`, `POST /orders/{id}/transitions`, `POST /orders/{id}/undo` y `POST /payments/{id}/confirm`.
-- Roles: ADMIN y CAJA avanzan, rechazan, cancelan y retroceden con confirmación; COCINA avanza con un toque y puede deshacer su último cambio. El rol solo elige textos y si hay confirmación: las acciones visibles salen de `allowedTransitions` y `undo`.
+- API: `GET /orders` (paginada, con `sort`), `GET /orders/facets` (conteos por opción), `GET /orders/{id}`, `POST /orders/{id}/transitions` y `POST /payments/{id}/confirm`.
+- Roles: ADMIN y CAJA avanzan, rechazan, cancelan y retroceden con confirmación; COCINA avanza con un toque y retrocede un paso con motivo (sin texto con «Otro motivo»); «Deshacer» se retiró en la segunda ronda (bloque C). El rol solo elige textos y si hay confirmación: las acciones visibles salen de `allowedTransitions` y `undo`.
 - Entrada desde Inicio: `App.tsx` pasa un `preset` de filtros (p. ej., estado «Por aceptar»). Elegir Pedidos en el menú abre la lista sin filtros.
 
 ## Comportamiento visible
@@ -28,7 +28,7 @@ Lista de pedidos sintéticos con filtros, búsqueda y paginación resueltos en e
   - Retroceder exige un motivo de la lista (Se avanzó por error, El cliente cambió el pedido, Falta un producto, Otro motivo), presentado como opciones de 44 px. El detalle es obligatorio solo con «Otro motivo», y el diálogo recuerda que retroceder no libera la reserva ni cambia el pago.
   - Las acciones destructivas muestran un aviso rojo.
   - «Cobrado» abre un diálogo corto «Confirmar cobro» con el número, el cliente, el importe y la nota de que no cambia el estado del pedido; al confirmar llama a `POST /payments/{id}/confirm` con `Idempotency-Key`, muestra «Pago de PED-… confirmado.» y recarga lista y contadores. El error del backend (por ejemplo, pago ya confirmado) se muestra en el diálogo.
-- COCINA: avanza con un toque, sin diálogo ni motivo, con botones de 56 px; su menú «⋯» solo contiene «Ver detalle». Si el detalle trae `undo`, aparece «Deshacer (volver a ‹estado›)»; si la ventana venció, se muestra el mensaje del backend.
+- COCINA: avanza con un toque, sin diálogo ni motivo, con botones de 56 px; su menú «⋯» contiene «Ver detalle» y el retroceso, que abre el mismo diálogo de motivo (el detalle es opcional con «Otro motivo» porque el backend no lo exige a cocina).
 - Después de una acción: aviso «PED-… pasó a «‹estado›»», «volvió a…» o «Cambio deshecho: …» (6 s) y recarga de la lista y de los contadores.
 - Paginación de 12 pedidos: «Mostrando 1–12 de N», «Anterior», «Página X de Y» y «Siguiente».
 - Animación: las tarjetas entran con opacidad y 4 px (280 ms) y la cuadrícula se atenúa al recargar; sin movimiento con `prefers-reduced-motion`.

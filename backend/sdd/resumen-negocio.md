@@ -57,7 +57,7 @@ No modifica pedidos, pagos, disponibilidad ni tareas. No calcula ganancia: el si
 | Clientes nuevos y recurrentes | El cliente se identifica por `customer_phone`. Entre los teléfonos con pedidos creados en el período, es nuevo si su primer pedido en el restaurante cae dentro del período; recurrente en otro caso. |
 | Derivaciones sin contestar | Conteo actual de `human_handoff.status='OPEN'`. |
 | Platos agotados | Platos activos sin variante vendible (activa, no `sold_out` y, si `tracked`, con `on_hand - reserved > 0`); misma regla que `available`. |
-| Retrocesos por rol por día | Conteo de entradas `RETROCESO` y `DESHACER` del historial en el período, por día local, `actor_role` y `change_type`. |
+| Retrocesos por rol por día | Conteo de entradas `RETROCESO` (y `DESHACER` históricas, anteriores al bloque C) del historial en el período, por día local, `actor_role` y `change_type`. |
 | Cobrado y por cobrar de hoy (CAJA) | Las mismas definiciones con el período `TODAY`. |
 
 ## Validaciones y efectos de estado

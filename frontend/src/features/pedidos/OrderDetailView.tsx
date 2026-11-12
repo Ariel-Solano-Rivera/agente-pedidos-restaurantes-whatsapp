@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Icon, IconName } from '../../design/Icon';
+import { countByName } from '../cocina/groupUnits';
 import { EmptyState, Skeleton } from '../../design/States';
 import { orderStatuses, PaymentBadge, StatusBadge, statusLabel } from '../../design/StatusBadge';
 import { api } from '../../shared/api';
 import { actionLabel, CONFIRMABLE_PAYMENT, dateTime, HistoryEntry, methodLabels, money, OrderDetail, OrderUnit, Payment, reasonLabels, roleLabels, since, Transition } from './orderTypes';
-import { Countdown } from './Countdown';
 import './order-detail.css';
 
 /** Flujo principal de AGENTS.md, solo para mostrar los próximos pasos en gris; las acciones salen de `allowedTransitions`. */
@@ -35,7 +35,8 @@ function timeline(order: OrderDetail): Step[] {
 }
 
 function Unit({ unit, index, kitchen }: { unit: OrderUnit; index: number; kitchen: boolean }) {
-  const extras = unit.options.filter(option => option.type === 'EXTRA');
+  // El mismo extra elegido dos veces llega como dos filas: se muestra una vez con «x2» y su recargo multiplicado.
+  const extras = countByName(unit.options.filter(option => option.type === 'EXTRA').map(option => option.name)).map(extra => ({ ...extra, amount: unit.options.find(option => option.type === 'EXTRA' && option.name.trim().toLowerCase() === extra.name.toLowerCase())?.amount ?? null }));
   const removed = unit.options.filter(option => option.type === 'REMOVED_INGREDIENT');
   const notes = unit.options.filter(option => option.type === 'INSTRUCTION');
   return <li className="od-unit">
@@ -46,7 +47,7 @@ function Unit({ unit, index, kitchen }: { unit: OrderUnit; index: number; kitche
         {!kitchen && unit.lineTotal !== null && <b className="ds-num">{money(unit.lineTotal)}</b>}
       </div>
       {(extras.length + removed.length + notes.length) > 0 ? <ul className="od-mods" aria-label="Modificaciones">
-        {extras.map(option => <li key={`e-${option.name}`} className="od-mod od-mod--plus"><Icon name="check" size={14} />{option.name}{!kitchen && option.amount ? <span className="ds-num"> +{money(option.amount)}</span> : null}</li>)}
+        {extras.map(extra => <li key={`e-${extra.name}`} className="od-mod od-mod--plus"><Icon name="plus" size={14} />{extra.name} (extra){extra.quantity > 1 ? <span className="ds-num"> x{extra.quantity}</span> : null}{!kitchen && extra.amount ? <span className="ds-num"> +{money(extra.amount * extra.quantity)}</span> : null}</li>)}
         {removed.map(option => <li key={`r-${option.name}`} className="od-mod od-mod--minus"><Icon name="ban" size={14} />Sin {option.name.toLowerCase()}</li>)}
         {notes.map(option => <li key={`n-${option.name}`} className="od-mod"><Icon name="chat" size={14} />{option.name}</li>)}
       </ul> : <p className="od-unit__plain">Sin modificaciones</p>}
@@ -55,9 +56,9 @@ function Unit({ unit, index, kitchen }: { unit: OrderUnit; index: number; kitche
   </li>;
 }
 
-export function OrderDetailView({ auth, orderId, kitchen, busy, notice, onBack, onAction, onUndo, onConfirmPayment, refreshKey }: {
+export function OrderDetailView({ auth, orderId, kitchen, busy, notice, onBack, onAction, onConfirmPayment, refreshKey }: {
   auth: string; orderId: string; kitchen: boolean; busy: boolean; notice?: { tone: 'ok' | 'error'; text: string }; refreshKey: number;
-  onBack: () => void; onAction: (order: OrderDetail, transition: Transition) => void; onUndo: (order: OrderDetail) => void; onConfirmPayment?: (order: OrderDetail, paymentId: string, amount: number | null) => void;
+  onBack: () => void; onAction: (order: OrderDetail, transition: Transition) => void; onConfirmPayment?: (order: OrderDetail, paymentId: string, amount: number | null) => void;
 }) {
   const [order, setOrder] = useState<OrderDetail>(); const [payments, setPayments] = useState<Payment[] | null>(null); const [error, setError] = useState('');
   const load = useCallback(async () => {
@@ -78,7 +79,6 @@ export function OrderDetailView({ auth, orderId, kitchen, busy, notice, onBack, 
   const forward = order.allowedTransitions.filter(item => item.direction === 'FORWARD' && !item.destructive);
   const others = order.allowedTransitions.filter(item => item.direction === 'BACKWARD' || item.destructive);
   const decision = [...order.history].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).find(entry => entry.previousStatus === 'PENDING_DECISION');
-  const undoOpen = kitchen && order.undo && new Date(order.undo.expiresAt).getTime() > Date.now();
 
   return <section className="od" aria-busy={busy}>
     {back}
@@ -87,11 +87,9 @@ export function OrderDetailView({ auth, orderId, kitchen, busy, notice, onBack, 
         <div className="od-header__line"><h1 className="od-code">{order.publicCode}</h1><StatusBadge status={order.status} /></div>
         <p>Recibido {dateTime(order.createdAt)}{Date.now() - new Date(order.createdAt).getTime() < 86_400_000 ? ` · ${since(order.createdAt)}` : ''}</p>
       </div>
-      {(order.allowedTransitions.length > 0 || undoOpen) && <div className="od-actions" aria-label="Acciones del pedido">
+      {order.allowedTransitions.length > 0 && <div className="od-actions" aria-label="Acciones del pedido">
         {others.map(transition => <button key={transition.targetStatus} type="button" className={`ds-btn ds-btn--secondary ${transition.destructive ? 'order-tile__danger' : ''} ${kitchen ? 'ds-btn--lg' : ''}`} disabled={busy} onClick={() => onAction(order, transition)}>
           {transition.direction === 'BACKWARD' && <Icon name="arrowLeft" size={18} />}{actionLabel(order.status, transition)}</button>)}
-        {undoOpen && order.undo && <button type="button" className="ds-btn ds-btn--secondary ds-btn--lg" disabled={busy} onClick={() => onUndo(order)}>
-          <Icon name="undo" size={18} />Deshacer (volver a {statusLabel(order.undo.targetStatus)}) · <Countdown until={order.undo.expiresAt} onExpire={load} /></button>}
         {forward.map(transition => <button key={transition.targetStatus} type="button" className={`ds-btn ds-btn--primary ${kitchen ? 'ds-btn--lg' : ''}`} disabled={busy} onClick={() => onAction(order, transition)}>
           {actionLabel(order.status, transition)}<Icon name="arrowRight" size={18} /></button>)}
       </div>}
