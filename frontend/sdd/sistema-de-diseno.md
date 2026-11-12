@@ -78,7 +78,7 @@ Reglas de maquetación: los hijos de grid o flex que contienen tablas o textos l
 ## Comportamiento visible
 
 - Tipografía: **Geist** para títulos, texto y cifras, y **Geist Mono** solo para el número de pedido `PED-XXXXXXXX`, porque distingue 0/O y 1/l (52 KB en total). Se descartaron Bricolage Grotesque + Inter (más peso, dos familias) e IBM Plex Sans (más ancha).
-- Tema: claro como base. Cada persona elige **Claro, Oscuro o Sistema**; por defecto es Claro para ADMIN y CAJA, y Oscuro para COCINA (paleta inspirada en la referencia `cocina-02`). El shell resuelve «Sistema» con `matchMedia('(prefers-color-scheme: dark)')`, sigue sus cambios y pone `data-theme="dark"` en `<html>`. La preferencia se guarda solo en el navegador (`localStorage`, con `try/catch`); no se envía al backend. Implementado en `src/shared/theme.ts` (etapa 1).
+- Tema: claro como base. Cada persona elige **Claro u Oscuro** («Sistema» se retiró en la segunda ronda, bloque A; un valor guardado «system» se lee como Claro); por defecto es Claro para ADMIN y CAJA, y Oscuro para COCINA (paleta inspirada en la referencia `cocina-02`). El shell pone `data-theme="light"` o `"dark"` en `<html>`. La preferencia se guarda solo en el navegador (`localStorage`, con `try/catch`); no se envía al backend. Implementado en `src/shared/theme.ts` (etapa 1).
 - Dispositivos: menú lateral en pantallas grandes y menú desplegable de pantalla completa en móvil (se construye en la etapa 1).
 
 ## Validaciones y errores
@@ -91,7 +91,7 @@ Carga con `.ds-skeleton`, vacío con `.ds-empty`, error de campo con `.ds-field_
 
 ## Pruebas
 
-- Revisión en la guía viva (`/muestra-sistema.html?theme=light|dark|system&brand=%23RRGGBB`, solo con `npm run dev`): la propia página verifica la carga de fuentes, las cifras tabulares y el contraste de los pares de tokens.
+- Revisión en la guía viva (`/muestra-sistema.html?theme=light|dark&brand=%23RRGGBB`, solo con `npm run dev`): la propia página verifica la carga de fuentes, las cifras tabulares y el contraste de los pares de tokens.
 - Capturas con Chrome sin interfaz a 1280, 820 y 390 px: sin desbordamiento horizontal.
 
 ## TBD / exclusiones

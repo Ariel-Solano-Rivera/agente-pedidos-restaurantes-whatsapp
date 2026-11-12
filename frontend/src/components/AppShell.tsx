@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Icon, IconName } from '../design/Icon';
 import { User } from '../shared/api';
 import { ThemeContext, ThemePreference, useThemePreference } from '../shared/theme';
@@ -10,12 +10,14 @@ type NavItem = { id: View; label: string; icon: IconName; roles?: string[] };
 /** `roles` solo oculta secciones que el backend negaría con 403; la autorización sigue en el backend. */
 const groups: Array<{ label: string; items: NavItem[] }> = [
   { label: 'Operación', items: [{ id: 'inicio', label: 'Inicio', icon: 'home' }, { id: 'pedidos', label: 'Pedidos', icon: 'receipt' }, { id: 'cocina', label: 'Cocina', icon: 'flame' }, { id: 'operacion', label: 'Operación diaria', icon: 'calendar', roles: ['ROLE_ADMIN', 'ROLE_CAJA'] }, { id: 'crm', label: 'CRM', icon: 'chat', roles: ['ROLE_ADMIN', 'ROLE_CAJA'] }, { id: 'derivaciones', label: 'Derivaciones', icon: 'alert', roles: ['ROLE_ADMIN', 'ROLE_CAJA'] }, { id: 'pagos', label: 'Pagos', icon: 'wallet', roles: ['ROLE_ADMIN', 'ROLE_CAJA'] }] },
-  { label: 'Análisis', items: [{ id: 'dashboard', label: 'Dashboard', icon: 'chart', roles: ['ROLE_ADMIN'] }] },
+  // Administrador: Dashboard; Finanzas y Usuarios se añaden con sus páginas (bloques G y F).
+  { label: 'Administrador', items: [{ id: 'dashboard', label: 'Dashboard', icon: 'chart', roles: ['ROLE_ADMIN'] }] },
   { label: 'Carta', items: [{ id: 'menu', label: 'Menú', icon: 'book' }, { id: 'catalogo', label: 'Catálogo', icon: 'tag' }] },
-  { label: 'Ajustes', items: [{ id: 'configuracion', label: 'Configuración', icon: 'settings', roles: ['ROLE_ADMIN'] }] },
+  { label: 'Ajustes', items: [{ id: 'configuracion', label: 'Configuración', icon: 'sliders', roles: ['ROLE_ADMIN'] }] },
 ];
 const roleLabels: Record<string, string> = { ROLE_ADMIN: 'Administración', ROLE_CAJA: 'Caja', ROLE_COCINA: 'Cocina' };
-const themes: Array<{ id: ThemePreference; label: string; icon: IconName }> = [{ id: 'light', label: 'Claro', icon: 'sun' }, { id: 'dark', label: 'Oscuro', icon: 'moon' }, { id: 'system', label: 'Sistema', icon: 'monitor' }];
+const themes: Array<{ id: ThemePreference; label: string; icon: IconName }> = [{ id: 'light', label: 'Claro', icon: 'sun' }, { id: 'dark', label: 'Oscuro', icon: 'moon' }];
+const collapsedKey = (email: string) => `restaurant.nav.collapsed.${email.toLowerCase()}`;
 
 export const viewLabel = (view: View) => groups.flatMap(group => group.items).find(item => item.id === view)?.label ?? '';
 export const canSee = (user: User, view: View) => {
@@ -27,16 +29,37 @@ function visibleGroups(user: User) {
   return groups.map(group => ({ ...group, items: group.items.filter(item => canSee(user, item.id)) })).filter(group => group.items.length);
 }
 
-function Navigation({ user, view, onSelect, variant }: { user: User; view: View; onSelect: (view: View) => void; variant: 'side' | 'sheet' }) {
+/** Grupos contraídos por persona, recordados solo en este navegador. */
+function useCollapsedGroups(user: User) {
+  const [collapsed, setCollapsed] = useState<string[]>(() => {
+    try { const stored = JSON.parse(localStorage.getItem(collapsedKey(user.email)) ?? '[]'); return Array.isArray(stored) ? stored.filter((item): item is string => typeof item === 'string') : []; } catch { return []; }
+  });
+  function toggle(label: string) {
+    setCollapsed(current => {
+      const next = current.includes(label) ? current.filter(item => item !== label) : [...current, label];
+      try { localStorage.setItem(collapsedKey(user.email), JSON.stringify(next)); } catch { /* se mantiene solo en memoria */ }
+      return next;
+    });
+  }
+  return { collapsed, toggle };
+}
+
+function Navigation({ user, view, onSelect, variant, collapsed, onToggle }: { user: User; view: View; onSelect: (view: View) => void; variant: 'side' | 'sheet'; collapsed: string[]; onToggle: (label: string) => void }) {
   return <nav className={`shell-nav shell-nav--${variant}`} aria-label="Secciones principales">
-    {visibleGroups(user).map(group => <div className="shell-nav__group" key={group.label}>
-      <p className="shell-nav__label">{group.label}</p>
-      <ul>{group.items.map(item => <li key={item.id}>
-        <button type="button" className="shell-nav__item" aria-current={view === item.id ? 'page' : undefined} onClick={() => onSelect(item.id)}>
-          <Icon name={item.icon} size={variant === 'sheet' ? 24 : 20} /><span>{item.label}</span>
+    {visibleGroups(user).map(group => {
+      const open = !collapsed.includes(group.label);
+      const listId = `nav-${variant}-${group.label.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '')}`;
+      return <div className="shell-nav__group" key={group.label} data-open={open}>
+        <button type="button" className="shell-nav__label shell-nav__toggle" aria-expanded={open} aria-controls={listId} onClick={() => onToggle(group.label)}>
+          <span>{group.label}</span><Icon name="chevronDown" size={16} className="shell-nav__chevron" />
         </button>
-      </li>)}</ul>
-    </div>)}
+        <ul id={listId} hidden={!open}>{group.items.map(item => <li key={item.id}>
+          <button type="button" className="shell-nav__item" aria-current={view === item.id ? 'page' : undefined} onClick={() => onSelect(item.id)}>
+            <Icon name={item.icon} size={variant === 'sheet' ? 24 : 20} /><span>{item.label}</span>
+          </button>
+        </li>)}</ul>
+      </div>;
+    })}
   </nav>;
 }
 
@@ -60,6 +83,7 @@ function UserCard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
 export function AppShell({ user, logoUrl, view, onViewChange, onLogout, children }: { user: User; logoUrl?: string; view: View; onViewChange: (view: View) => void; onLogout: () => void; children: ReactNode }) {
   const { preference, setPreference } = useThemePreference(user);
+  const { collapsed, toggle } = useCollapsedGroups(user);
   const sheet = useRef<HTMLDialogElement>(null);
   const main = useRef<HTMLElement>(null);
   const logo = logoUrl || '/tesis-logo.png';
@@ -76,7 +100,7 @@ export function AppShell({ user, logoUrl, view, onViewChange, onLogout, children
 
     <aside className="shell-side" aria-label="Navegación">
       <div className="shell-brand"><img src={logo} alt="" /><span>Panel del<br />restaurante</span></div>
-      <Navigation user={user} view={view} onSelect={select} variant="side" />
+      <Navigation user={user} view={view} onSelect={select} variant="side" collapsed={collapsed} onToggle={toggle} />
       <div className="shell-side__footer">
         <ThemeControl preference={preference} onChange={setPreference} />
         <UserCard user={user} onLogout={onLogout} />
@@ -94,7 +118,7 @@ export function AppShell({ user, logoUrl, view, onViewChange, onLogout, children
         <div className="shell-brand"><img src={logo} alt="" /><span>Panel del restaurante</span></div>
         <button type="button" className="ds-btn ds-btn--secondary" onClick={() => sheet.current?.close()}><Icon name="close" />Cerrar</button>
       </div>
-      <Navigation user={user} view={view} onSelect={select} variant="sheet" />
+      <Navigation user={user} view={view} onSelect={select} variant="sheet" collapsed={collapsed} onToggle={toggle} />
       <div className="shell-sheet__footer">
         <ThemeControl preference={preference} onChange={setPreference} />
         <UserCard user={user} onLogout={onLogout} />

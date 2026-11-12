@@ -102,7 +102,6 @@
     <legend class="ds-eyebrow">Tema</legend>
     <button class="ds-chip" type="button" data-value="light" aria-pressed="true"><svg class="ds-chip__check"><use href="#i-check"/></svg>Claro</button>
     <button class="ds-chip" type="button" data-value="dark" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Oscuro</button>
-    <button class="ds-chip" type="button" data-value="system" aria-pressed="false"><svg class="ds-chip__check"><use href="#i-check"/></svg>Sistema</button>
   </fieldset>
   <fieldset class="ds-filter-group" aria-label="Color de marca de ejemplo" data-control="brand">
     <legend class="ds-eyebrow">Marca de ejemplo</legend>
@@ -390,14 +389,13 @@
   function select(group, button) {
     group.querySelectorAll('.ds-chip').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
   }
-  // Preferencia de tema: Claro, Oscuro o Sistema (se resuelve con matchMedia y sigue los cambios del sistema).
-  const darkQuery = matchMedia('(prefers-color-scheme: dark)'); let themePref = 'light';
+  // Preferencia de tema: Claro u Oscuro («Sistema» se retiró en la segunda ronda, bloque A).
+  let themePref = 'light';
   function applyTheme() {
-    const dark = themePref === 'dark' || (themePref === 'system' && darkQuery.matches);
+    const dark = themePref === 'dark';
     if (dark) html.dataset.theme = 'dark'; else delete html.dataset.theme;
     requestAnimationFrame(renderContrast);
   }
-  darkQuery.addEventListener('change', () => { if (themePref === 'system') applyTheme(); });
   document.querySelectorAll('[data-control]').forEach(group => group.addEventListener('click', event => {
     const button = event.target.closest('.ds-chip'); if (!button) return;
     select(group, button);

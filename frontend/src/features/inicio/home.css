@@ -49,13 +49,16 @@
 .home-tiles--cocina .home-tile__value { font-size: 3.25rem; }
 
 /* — ADMIN: dashboard y accesos rápidos — */
-.home-admin { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; margin-bottom: var(--space-10); }
-.home-dashboard-card { display: grid; gap: var(--space-4); align-content: start; padding: var(--space-6); border-radius: var(--radius-xl); border: 1px solid var(--brand-primary-line); background: linear-gradient(135deg, var(--brand-primary-soft), var(--surface) 70%); }
+/* Indicadores y accesos rápidos: mismo ancho y misma altura, alineados (segunda ronda, bloque A). */
+.home-admin { display: grid; gap: var(--space-6); grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; margin-bottom: var(--space-10); }
+.home-dashboard, .home-links { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; }
+.home-dashboard-card { display: grid; gap: var(--space-4); align-content: start; height: 100%; padding: var(--space-6); border-radius: var(--radius-xl); border: 1px solid var(--brand-primary-line); background: linear-gradient(135deg, var(--brand-primary-soft), var(--surface) 70%); }
 .home-dashboard-card__art { display: grid; place-items: center; width: 64px; height: 64px; border-radius: var(--radius-lg); color: var(--on-action); background: var(--action-bg); }
-.home-dashboard-card h2 { font-size: var(--text-xl); }
+.home-dashboard-card h3 { margin: 0; font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--weight-semibold); letter-spacing: -.015em; }
+.home-dashboard-card .ds-btn { margin-top: auto; }
 .home-dashboard-card p { margin: var(--space-2) 0 0; color: var(--text-muted); max-width: 52ch; }
 .home-dashboard-card .ds-btn { justify-self: start; }
-.home-links ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.home-links ul { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-rows: minmax(64px, 1fr); gap: var(--space-2); height: 100%; }
 .home-link { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 64px; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out); }
 .home-link:hover { border-color: var(--border-strong); background: var(--surface-sunken); transform: none; box-shadow: none; color: var(--text); }
 .home-link > svg:first-child { flex: none; color: var(--text-muted); }

@@ -127,7 +127,6 @@ function BrandTab({ auth, branding, logoUrl, onChanged, say }: { auth: string; b
 const THEMES: Array<{ id: ThemePreference; title: string; text: string; icon: IconName }> = [
   { id: 'light', title: 'Claro', text: 'Fondo claro, ideal para caja y oficina.', icon: 'sun' },
   { id: 'dark', title: 'Oscuro', text: 'Menos brillo; por defecto en Cocina.', icon: 'moon' },
-  { id: 'system', title: 'Sistema', text: 'Sigue la configuración del dispositivo.', icon: 'monitor' },
 ];
 
 function AppearanceTab() {

@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from './api';
 
-export type ThemePreference = 'light' | 'dark' | 'system';
+export type ThemePreference = 'light' | 'dark';
 /** Una sola preferencia para el menú lateral y Configuración → Apariencia; la provee AppShell. */
 export const ThemeContext = createContext<{ preference: ThemePreference; setPreference: (next: ThemePreference) => void } | null>(null);
 export const useTheme = () => { const value = useContext(ThemeContext); if (!value) throw new Error('useTheme debe usarse dentro de AppShell'); return value; };
-const PREFERENCES: ThemePreference[] = ['light', 'dark', 'system'];
+const PREFERENCES: ThemePreference[] = ['light', 'dark'];
 const storageKey = (email: string) => `restaurant.theme.${email.toLowerCase()}`;
 
 /** Por defecto: Oscuro para COCINA y Claro para el resto (tema claro como base). */
@@ -15,27 +15,23 @@ function readPreference(user: User): ThemePreference {
   try {
     const stored = localStorage.getItem(storageKey(user.email));
     if (stored && PREFERENCES.includes(stored as ThemePreference)) return stored as ThemePreference;
+    // «Sistema» se retiró (segunda ronda, bloque A): quien lo tenía guardado vuelve a Claro.
+    if (stored === 'system') return 'light';
   } catch { /* almacenamiento bloqueado: se usa el valor por defecto */ }
   return defaultPreference(user);
 }
 
 /**
- * Preferencia de tema por persona, guardada solo en este navegador. «Sistema» sigue a
- * `prefers-color-scheme` y sus cambios. Aplica `data-theme` en <html> y lo quita al cerrar sesión.
+ * Preferencia de tema por persona (Claro u Oscuro), guardada solo en este navegador.
+ * Aplica `data-theme` en <html> y lo quita al cerrar sesión.
  */
 export function useThemePreference(user: User) {
   const [preference, setPreference] = useState<ThemePreference>(() => readPreference(user));
   useEffect(() => { setPreference(readPreference(user)); }, [user]);
 
   useEffect(() => {
-    const query = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () => {
-      const dark = preference === 'dark' || (preference === 'system' && query.matches);
-      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    };
-    apply();
-    query.addEventListener('change', apply);
-    return () => { query.removeEventListener('change', apply); delete document.documentElement.dataset.theme; };
+    document.documentElement.dataset.theme = preference;
+    return () => { delete document.documentElement.dataset.theme; };
   }, [preference]);
 
   function change(next: ThemePreference) {

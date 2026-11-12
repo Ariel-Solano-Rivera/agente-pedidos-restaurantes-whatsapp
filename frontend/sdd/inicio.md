@@ -22,7 +22,7 @@ Primera pantalla tras iniciar sesión: muestra «lo que pide atención ahora» s
   - CAJA: Por aceptar, Cobrado hoy, Por cobrar hoy y Por contestar.
   - COCINA: Por preparar (`ACCEPTED`), En preparación (`PREPARING`) y Listos (`READY`), con cifras más grandes y sin montos.
 - Las tarjetas abren la página que resuelve: Por aceptar → Pedidos con estado «Por aceptar»; Por preparar, En preparación y Listos (COCINA) → tablero de Cocina; Cobrado hoy → hoy con pago confirmado; Por cobrar hoy → hoy (la lista no filtra exactamente «sin pago confirmado»). Elegir Pedidos en el menú abre la lista sin filtros.
-- ADMIN, además: tarjeta «Indicadores del negocio» con botón «Abrir dashboard» y accesos rápidos a Pedidos, CRM, Menú y Configuración.
+- ADMIN, además: dos bloques con el mismo ancho y la misma altura, alineados en una cuadrícula de dos columnas (segunda ronda, bloque A): «Indicadores del negocio» (tarjeta con botón «Abrir dashboard» que ocupa toda la altura) y «Accesos rápidos» (Pedidos, CRM, Menú y Configuración; los enlaces se reparten la altura disponible, mínimo 64 px). Por debajo de 900 px se apilan.
 - Todos: «Plato más vendido» (nombre y unidades vendidas en pedidos registrados, o «Aún sin ventas») junto a «Próximas tareas del equipo» (hora y título, o «Sin tareas programadas»).
 - Se actualiza sola cada 60 s mientras la pestaña está visible.
 - Ya no se muestra la identidad del restaurante con logo (queda en el menú lateral).

@@ -28,7 +28,7 @@ Sección «Configuración», pestaña «Marca», solo para ADMIN: editar el colo
   - vista previa en miniatura del panel (menú lateral con elemento activo, botón «Aceptar», enlace secundario y barras) con los colores elegidos. Si el principal guardado no cumple AA, la vista previa usa el color de acción por defecto, igual que el panel;
   - aviso ámbar si algún color guardado no llega a 4,5:1, y botones «Descartar cambios» y «Guardar colores».
 - **Marca → Logo:** vista previa de 96 px (o «Sin logo»), «Subir logo» o «Reemplazar logo» (PNG, JPEG o WebP, hasta 2 MB; el servidor valida el contenido) y «Quitar logo» con confirmación en un `<dialog>`. Debajo, la fecha de la última actualización y la nota de auditoría.
-- **Apariencia:** tarjetas Claro, Oscuro y Sistema con una miniatura, una descripción y una marca de selección (`role="radio"`). Comparten estado con el selector del menú lateral a través de `ThemeContext`; la preferencia es por persona y se guarda solo en el navegador.
+- **Apariencia:** tarjetas Claro y Oscuro (dos columnas; «Sistema» se retiró en la segunda ronda, bloque A) con una miniatura, una descripción y una marca de selección (`role="radio"`). Comparten estado con el selector del menú lateral a través de `ThemeContext`; la preferencia es por persona y se guarda solo en el navegador.
 - Avisos de éxito o error con icono (6 s).
 
 ## Validaciones y errores

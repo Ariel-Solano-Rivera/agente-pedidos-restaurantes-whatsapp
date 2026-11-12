@@ -118,16 +118,19 @@ export function HomePage({ auth, user, onNavigate }: { auth: string; user: User;
     </div>
 
     {role === 'ADMIN' && <div className="home-admin">
-      <article className="home-dashboard-card">
-        <div className="home-dashboard-card__art" aria-hidden="true"><Icon name="chart" size={40} /></div>
-        <div className="home-dashboard-card__text">
-          <h2>Indicadores del negocio</h2>
-          <p>Cobros, ventas completadas, tiempos de decisión y preparación, platos más vendidos y su comparación con el período anterior.</p>
-        </div>
-        <button type="button" className="ds-btn ds-btn--primary" onClick={() => onNavigate('dashboard')}>Abrir dashboard<Icon name="arrowRight" /></button>
-      </article>
-      <nav className="home-links" aria-label="Accesos rápidos">
-        <h2 className="ds-eyebrow home-section-label">Accesos rápidos</h2>
+      <section className="home-dashboard" aria-labelledby="home-dashboard-title">
+        <h2 id="home-dashboard-title" className="ds-eyebrow home-section-label">Indicadores del negocio</h2>
+        <article className="home-dashboard-card">
+          <div className="home-dashboard-card__art" aria-hidden="true"><Icon name="chart" size={40} /></div>
+          <div className="home-dashboard-card__text">
+            <h3>Dashboard del restaurante</h3>
+            <p>Cobros, ventas completadas, tiempos de decisión y preparación, platos más vendidos y su comparación con el período anterior.</p>
+          </div>
+          <button type="button" className="ds-btn ds-btn--primary" onClick={() => onNavigate('dashboard')}>Abrir dashboard<Icon name="arrowRight" /></button>
+        </article>
+      </section>
+      <nav className="home-links" aria-labelledby="home-links-title">
+        <h2 id="home-links-title" className="ds-eyebrow home-section-label">Accesos rápidos</h2>
         <ul>{quickLinks.map(link => <li key={link.view}><button type="button" className="home-link" onClick={() => onNavigate(link.view)}>
           <Icon name={link.icon} /><span><b>{link.title}</b><small>{link.text}</small></span><Icon name="arrowRight" size={16} className="home-link__arrow" />
         </button></li>)}</ul>
