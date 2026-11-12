@@ -23,5 +23,9 @@ Require-Status 200 "$base/menu/dishes" $admin
 Require-Status 200 "$base/orders" $kitchen
 Require-Status 403 "$base/payments" $kitchen
 Require-Status 404 "$base/menu/dishes/11111111-1111-1111-1111-111111111301" $other
+$kitchenOrders = Invoke-RestMethod -Uri "$base/orders?size=100" -Headers $kitchen
+if (@($kitchenOrders.items | Where-Object { $null -ne $_.total }).Count -gt 0) { throw 'COCINA no debe recibir montos de pedidos' }
+Require-Status 404 "$base/orders/11111111-1111-1111-1111-111111112001" $other
+Require-Status 200 'http://localhost:8080/actuator/health' @{}
 Require-Status 200 'http://localhost:5173' @{}
 Write-Host 'Smoke test correcto: autenticacion, permisos, aislamiento y panel disponibles.'

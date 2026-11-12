@@ -1,0 +1,160 @@
+/*
+ * Sistema de diseño — tokens (etapa 0 del rediseño).
+ * Documentado en frontend/sdd/sistema-de-diseno.md. Cada página lo adopta al rediseñarse.
+ * La marca (--brand-primary / --brand-secondary) la aplica src/shared/branding.ts con GET /branding.
+ */
+
+/* Tipografía elegida (etapa 0): Geist para títulos y texto; Geist Mono para el número de pedido.
+   Autoalojadas en public/fonts, subconjunto latín, licencia OFL 1.1. */
+@font-face { font-family: "Geist"; src: url("/fonts/geist/geist-latin-wght-normal.woff2") format("woff2-variations"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("/fonts/geist-mono/geist-mono-latin-wght-normal.woff2") format("woff2-variations"); font-weight: 100 900; font-display: swap; }
+
+:root {
+  /* — Marca (por defecto; la reemplaza GET /branding) — */
+  --brand-primary: #0a3165;
+  --brand-secondary: #0a5eae;
+
+  /* — Tipografía — */
+  --font-display: "Geist", system-ui, sans-serif;
+  --font-text: "Geist", system-ui, sans-serif;
+  --font-code: "Geist Mono", ui-monospace, monospace;
+  --text-xs: .75rem;    /* 12 · etiquetas en mayúsculas */
+  --text-sm: .875rem;   /* 14 · secundarios, celdas densas */
+  --text-md: 1rem;      /* 16 · cuerpo */
+  --text-lg: 1.125rem;  /* 18 · destacado */
+  --text-xl: 1.375rem;  /* 22 · título de tarjeta */
+  --text-2xl: 1.75rem;  /* 28 · título de página, número de pedido en cocina */
+  --text-3xl: 2.25rem;  /* 36 · cifras de indicadores */
+  --leading-tight: 1.15;
+  --leading-normal: 1.5;
+  --weight-regular: 420;
+  --weight-medium: 540;
+  --weight-semibold: 640;
+  --weight-bold: 720;
+
+  /* — Espacios (base 4 px) — */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px;
+  --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-14: 56px;
+
+  /* — Radios — */
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-xl: 20px; --radius-pill: 999px;
+
+  /* — Objetivos táctiles — */
+  --hit: 44px;          /* panel */
+  --hit-kitchen: 56px;  /* tablero de cocina */
+
+  /* — Movimiento — */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --duration-fast: 150ms;
+  --duration-base: 220ms;
+  --duration-slow: 280ms;   /* máximo permitido: 300 ms */
+
+}
+
+/* Tema claro (base). [data-theme="light"] lo fuerza en una zona (p. ej., páginas aún no rediseñadas). */
+:root, [data-theme="light"] {
+  color-scheme: light;
+  --brand-primary-hover: color-mix(in srgb, var(--brand-primary) 84%, #000);
+  --brand-primary-soft: color-mix(in srgb, var(--brand-primary) 9%, var(--surface));
+  --brand-primary-line: color-mix(in srgb, var(--brand-primary) 28%, var(--surface));
+  --on-brand: #ffffff;
+  /* Acción principal. Si GET /branding marca el color principal sin AA contra blanco
+     (contrast[].passesAA = false), branding.ts pone data-brand-contrast="low" y se usa el color por defecto. */
+  --action-bg: var(--brand-primary);
+  --action-hover: var(--brand-primary-hover);
+  --on-action: var(--on-brand);
+
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-sunken: #eef0f3;
+  --surface-raised: #ffffff;
+  --border: #dfe3e8;
+  --border-strong: #c3cad3;
+  --text: #141c27;
+  --text-muted: #4f5b6b;      /* 7.0:1 sobre --surface */
+  --text-subtle: #5f6a78;     /* 5.5:1 sobre --surface, 4.8:1 sobre --surface-sunken; solo texto auxiliar */
+  --focus-ring: #2f6fed;
+  --overlay: rgb(12 18 28 / .48);
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / .06);
+  --shadow-md: 0 2px 4px rgb(16 24 40 / .04), 0 6px 16px rgb(16 24 40 / .07);
+  --shadow-lg: 0 12px 32px rgb(16 24 40 / .16);
+  --danger: #b42318; --danger-soft: #fdecea; --on-danger: #ffffff;
+  --success: #0f6b3b;
+  /* Datos (una serie, magnitud): validado con la skill dataviz contra --surface (contraste ≥ 3:1, banda de luminosidad). */
+  --data-1: #2f6fed;
+  --data-track: var(--surface-sunken);
+
+  /* — Estados del pedido: texto/icono (fg), fondo (bg) y borde (line) — */
+  --st-pending-fg: #8a4700;   --st-pending-bg: #fff3df;   --st-pending-line: #f3c983;
+  --st-accepted-fg: #1d4fb3;  --st-accepted-bg: #e9f0ff;  --st-accepted-line: #a9c2f5;
+  --st-preparing-fg: #5a36b8; --st-preparing-bg: #f1ecff; --st-preparing-line: #c6b6f2;
+  --st-ready-fg: #0f6b3b;     --st-ready-bg: #e3f5ea;     --st-ready-line: #94d3ae;
+  --st-completed-fg: #3d4a5b; --st-completed-bg: #eef1f4; --st-completed-line: #c9d0d8;
+  --st-rejected-fg: #a5221a;  --st-rejected-bg: #fdecea;  --st-rejected-line: #f0b2ab;
+  --st-cancelled-fg: #8c2f2a; --st-cancelled-bg: #f7eceb; --st-cancelled-line: #dcbcb8;
+  --st-expired-fg: #57606c;   --st-expired-bg: #f0f1f3;   --st-expired-line: #cfd3d9;
+  /* — Estados del pago — */
+  --pay-pending-fg: #4c5767;      --pay-pending-bg: #eef0f3;
+  --pay-verifying-fg: #8a4700;    --pay-verifying-bg: #fff3df;
+  --pay-confirmed-fg: #0f6b3b;    --pay-confirmed-bg: #e3f5ea;
+}
+
+/* Tema oscuro: preferencia de cada persona (Claro, Oscuro o Sistema); por defecto en COCINA. Paleta inspirada en cocina-02.
+   El shell resuelve «Sistema» con matchMedia y pone data-theme en <html>. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d121c;
+  --surface: #151c29;
+  --surface-sunken: #10161f;
+  --surface-raised: #1b2433;
+  --border: #263145;
+  --border-strong: #35425a;
+  --text: #e9eef6;
+  --text-muted: #a9b4c6;      /* 8.3:1 sobre --surface */
+  --text-subtle: #8c98ac;     /* 5.9:1 sobre --surface */
+  --focus-ring: #8fb3ff;
+  --overlay: rgb(3 6 12 / .64);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / .4);
+  --shadow-md: 0 2px 6px rgb(0 0 0 / .35);
+  --shadow-lg: 0 16px 40px rgb(0 0 0 / .5);
+  /* La marca oscura no se lee sobre fondo oscuro: se aclara para acentos y botones. */
+  --brand-primary-hover: color-mix(in srgb, var(--brand-primary) 40%, #b9c6ff);
+  --brand-primary-soft: color-mix(in srgb, var(--brand-primary) 30%, var(--surface));
+  --brand-primary-line: color-mix(in srgb, var(--brand-primary) 45%, #6f84c9);
+  /* Respaldo para navegadores sin color relativo; el bloque @supports de abajo conserva el tono de la marca. */
+  --action-bg: color-mix(in srgb, var(--brand-primary) 35%, #a9bcff);
+  --action-hover: color-mix(in srgb, var(--brand-primary) 20%, #c4d2ff);
+  --on-action: #0d121c;
+  --danger: #ff8a7f; --danger-soft: #3a1d1f; --on-danger: #1a0b0b;
+  --success: #6fdc9d;
+  --data-1: #5b8cf5;
+
+  --st-pending-fg: #ffc46b;   --st-pending-bg: #33260f;   --st-pending-line: #6b4d14;
+  --st-accepted-fg: #9cbcff;  --st-accepted-bg: #17264a;  --st-accepted-line: #2f4b8c;
+  --st-preparing-fg: #c3b0ff; --st-preparing-bg: #251c45; --st-preparing-line: #4a3990;
+  --st-ready-fg: #74dfa2;     --st-ready-bg: #10301f;     --st-ready-line: #1f6440;
+  --st-completed-fg: #b9c3d1; --st-completed-bg: #1f2735; --st-completed-line: #36435a;
+  --st-rejected-fg: #ff9b91;  --st-rejected-bg: #3a1a1a;  --st-rejected-line: #7a2f2a;
+  --st-cancelled-fg: #f0aaa3; --st-cancelled-bg: #321d1d; --st-cancelled-line: #6a3a36;
+  --st-expired-fg: #aab3c0;   --st-expired-bg: #1d232d;   --st-expired-line: #353f4f;
+  --pay-pending-fg: #b9c3d1;   --pay-pending-bg: #1f2735;
+  --pay-verifying-fg: #ffc46b; --pay-verifying-bg: #33260f;
+  --pay-confirmed-fg: #74dfa2; --pay-confirmed-bg: #10301f;
+}
+
+/* Color de marca sin contraste AA contra blanco (según el backend): la acción usa el color por defecto
+   y la marca queda solo como acento (logo, franja lateral, gráficos). */
+:root[data-brand-contrast="low"]:not([data-theme="dark"]),
+:root[data-brand-contrast="low"] [data-theme="light"] { --action-bg: #0a3165; --action-hover: #082850; --on-action: #ffffff; }
+
+/* Tema oscuro: la acción es la marca aclarada (L = 0.80 en OKLCH) con texto oscuro; mantiene el tono de cualquier marca. */
+@supports (color: oklch(from red l c h)) {
+  [data-theme="dark"] {
+    --action-bg: oklch(from var(--brand-primary) 0.80 min(c, 0.13) h);
+    --action-hover: oklch(from var(--brand-primary) 0.87 min(c, 0.10) h);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --duration-fast: 0ms; --duration-base: 0ms; --duration-slow: 0ms; }
+}

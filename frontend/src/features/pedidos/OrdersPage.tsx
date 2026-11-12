@@ -1,51 +1,246 @@
-import { useEffect, useRef, useState } from 'react';
-import { api, User, useLoad } from '../../shared/api';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { ActionMenu } from '../../design/ActionMenu';
+import { Dropdown } from '../../design/Dropdown';
+import { FilterGroup } from '../../design/FilterGroup';
+import { Icon } from '../../design/Icon';
+import { EmptyState, PageHeader, Skeleton } from '../../design/States';
+import { orderStatuses, paymentStatuses, PaymentBadge, StatusBadge, statusLabel } from '../../design/StatusBadge';
+import { api, User } from '../../shared/api';
+import { OrderDetailView } from './OrderDetailView';
+import { clock, CONFIRMABLE_PAYMENT, emptyFilters, Facets, Filters, money, OrderPage, OrderRef, OrderSort, OrderSummary, shortDate, shortLabel, since, sortOptions, Transition } from './orderTypes';
+import { PaymentConfirmDialog, PendingPayment } from './PaymentConfirmDialog';
+import { PendingAction, TransitionDialog } from './TransitionDialog';
+import './orders.css';
 
-type OrderSummary = { id: string; publicCode: string; status: string; fulfillmentType: 'PICKUP' | 'DELIVERY'; customerName: string; phone: string; items: string; total: number; createdAt: string };
-type OrderOption = { type: 'EXTRA' | 'REMOVED_INGREDIENT' | 'INSTRUCTION'; name: string; amount: number };
-type OrderUnit = { id: string; dish: string; variant: string; quantity: number; unitPrice: number; extrasTotal: number; lineTotal: number; options: OrderOption[] };
-type OrderDetail = OrderSummary & { paymentStatus: string; customerName: string; phone: string; deliveryAddress: string; deliveryReference: string; deliveryZone: string; pickupTime: string; subtotal: number; deliveryFee: number; customerConfirmedAt: string; units: OrderUnit[] };
+const PAGE_SIZE = 12;
+const KITCHEN_STATUSES = ['ACCEPTED', 'PREPARING', 'READY', 'COMPLETED'];
 
-const labels: Record<string, string> = { PENDING_DECISION: 'Por aceptar', ACCEPTED: 'Aceptado', PREPARING: 'En preparación', READY: 'Listo', COMPLETED: 'Completado', REJECTED: 'Rechazado', CANCELLED: 'Cancelado', EXPIRED: 'Vencido', PICKUP: 'Retiro', DELIVERY: 'Envío', NOT_REQUIRED: 'No requerido', PENDING: 'Pendiente', PENDING_VERIFICATION: 'Por verificar', CONFIRMED: 'Confirmado' };
-const money = (value: number) => new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(value);
-const dateTime = (value?: string) => value ? new Intl.DateTimeFormat('es-EC', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : 'No registrado';
-const label = (value?: string) => value ? labels[value] || value : 'No registrado';
-
-function UnitLine({ unit }: { unit: OrderUnit }) {
-  const extras = unit.options.filter(option => option.type === 'EXTRA'); const removed = unit.options.filter(option => option.type === 'REMOVED_INGREDIENT'); const instructions = unit.options.filter(option => option.type === 'INSTRUCTION');
-  return <article className="ticket-unit"><div className="ticket-unit-heading"><div><strong>{unit.quantity}× {unit.dish}</strong><span>{unit.variant}</span></div><b>{money(unit.lineTotal)}</b></div>{extras.length > 0 && <p><span>Extras:</span> {extras.map(option => `${option.name}${Number(option.amount) ? ` (+${money(option.amount)})` : ''}`).join(' · ')}</p>}{removed.length > 0 && <p><span>Sin:</span> {removed.map(option => option.name).join(' · ')}</p>}{instructions.length > 0 && <p><span>Preparación:</span> {instructions.map(option => option.name).join(' · ')}</p>}</article>;
+function params(filters: Filters, extra: Record<string, string> = {}) {
+  const search = new URLSearchParams(extra);
+  for (const [key, value] of Object.entries(filters)) {
+    if (!value.trim()) continue;
+    if ((key === 'from' || key === 'to') && filters.range !== 'CUSTOM') continue;
+    search.set(key, value.trim());
+  }
+  return search.toString();
 }
 
-function OrderTicket({ order }: { order: OrderDetail }) {
+function DateRangeDialog({ open, initial, onClose, onApply }: { open: boolean; initial: { from: string; to: string }; onClose: () => void; onApply: (from: string, to: string) => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const [from, setFrom] = useState(initial.from); const [to, setTo] = useState(initial.to); const [error, setError] = useState('');
+  useEffect(() => { if (open) { setFrom(initial.from); setTo(initial.to); setError(''); if (!ref.current?.open) ref.current?.showModal(); } else ref.current?.close(); }, [open, initial.from, initial.to]);
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!from || !to) { setError('Elige la fecha inicial y la final.'); return; }
+    if (to < from) { setError('La fecha final no puede ser anterior a la inicial.'); return; }
+    onApply(from, to);
+  }
+  return <dialog ref={ref} className="ds-modal orders-dialog" aria-labelledby="range-title" onCancel={event => { event.preventDefault(); onClose(); }}>
+    {open && <form onSubmit={submit}>
+      <div className="ds-modal__body">
+        <h2 id="range-title">Rango personalizado</h2>
+        <p className="orders-dialog__customer">Fechas en la zona horaria del restaurante; incluye ambos días.</p>
+        <div className="orders-range">
+          <label className="ds-field"><span className="ds-field__label">Desde</span><input className="ds-input" type="date" value={from} max={to || undefined} onChange={event => setFrom(event.target.value)} /></label>
+          <label className="ds-field"><span className="ds-field__label">Hasta</span><input className="ds-input" type="date" value={to} min={from || undefined} onChange={event => setTo(event.target.value)} /></label>
+        </div>
+        {error && <p className="ds-field__error" role="alert"><Icon name="alert" size={16} />{error}</p>}
+      </div>
+      <div className="ds-modal__actions"><button type="button" className="ds-btn ds-btn--secondary" onClick={onClose}>Cancelar</button><button type="submit" className="ds-btn ds-btn--primary">Aplicar rango</button></div>
+    </form>}
+  </dialog>;
+}
+
+function OrderCard({ order, kitchen, busy, onOpen, onAction, onConfirmPayment }: {
+  order: OrderSummary; kitchen: boolean; busy: boolean; onOpen: () => void; onAction: (transition: Transition) => void; onConfirmPayment: () => void;
+}) {
   const delivery = order.fulfillmentType === 'DELIVERY';
-  return <article className="order-ticket" aria-label={`Comanda ${order.publicCode}`}><header className="ticket-header"><div><p>{order.publicCode}</p><h2>{label(order.status)}</h2></div><span className={`pill ticket-status status-${order.status.toLowerCase()}`}>{label(order.fulfillmentType)}</span></header><section className="ticket-customer"><h3>Cliente</h3><strong>{order.customerName}</strong><span>{order.phone || 'Teléfono no registrado'}</span>{delivery ? <div className="delivery-details"><strong>Envío</strong><span>{order.deliveryAddress || 'Dirección por confirmar'}</span>{order.deliveryReference && <span>Referencia: {order.deliveryReference}</span>}{order.deliveryZone && <span>Zona: {order.deliveryZone}</span>}</div> : <div className="delivery-details"><strong>Retiro</strong><span>{dateTime(order.pickupTime)}</span></div>}</section><section className="ticket-units"><h3>Pedido</h3>{order.units.map(unit => <UnitLine key={unit.id} unit={unit} />)}</section><section className="ticket-summary"><dl><div><dt>Subtotal</dt><dd>{money(order.subtotal)}</dd></div>{delivery && <div><dt>Envío</dt><dd>{money(order.deliveryFee)}</dd></div>}<div className="ticket-total"><dt>Total</dt><dd>{money(order.total)}</dd></div></dl></section><footer className="ticket-footer"><span>Cliente confirmó: {dateTime(order.customerConfirmedAt)}</span><span>Pago: {label(order.paymentStatus)}</span><span>Recibido: {dateTime(order.createdAt)}</span></footer></article>;
+  const forward = order.allowedTransitions.filter(item => item.direction === 'FORWARD' && !item.destructive);
+  const others = order.allowedTransitions.filter(item => item.direction === 'BACKWARD' || item.destructive);
+  const canConfirmPayment = !kitchen && Boolean(order.paymentId) && CONFIRMABLE_PAYMENT.includes(order.paymentStatus ?? '');
+  return <article className="order-tile" data-status={order.status} aria-labelledby={`order-${order.id}`} aria-busy={busy}>
+    <header className="order-tile__head">
+      <div>
+        <h2 id={`order-${order.id}`} className="order-tile__code"><button type="button" className="order-tile__open" onClick={onOpen} aria-label={`Ver detalle de ${order.publicCode}`} title="Ver detalle">{order.publicCode}</button></h2>
+        <p className="order-tile__time"><time dateTime={order.createdAt} title={new Date(order.createdAt).toLocaleString('es-EC')}>{since(order.createdAt)} · {clock(order.createdAt)}</time></p>
+      </div>
+      <StatusBadge status={order.status} />
+    </header>
+    <div className="order-tile__customer">
+      <b>{order.customerName}</b>
+      <span className="order-tile__meta"><Icon name="phone" size={16} />{order.phone || 'Sin teléfono'}</span>
+      <span className="order-tile__meta"><Icon name={delivery ? 'moto' : 'bag'} size={16} />{delivery ? 'Entrega a domicilio' : 'Retiro en local'}</span>
+    </div>
+    <p className="order-tile__items">{order.items}</p>
+    {!kitchen && <div className="order-tile__money">
+      {order.paymentStatus ? <PaymentBadge status={order.paymentStatus} /> : <span />}
+      {order.total !== null && <b className="ds-num">{money(order.total)}</b>}
+    </div>}
+    {/* Acciones compactas (bloque B): botón principal de una palabra, «Cobrado» corto y menú «⋯» para retroceder, rechazar o cancelar. Todo sale de `allowedTransitions`. */}
+    <footer className="order-tile__actions">
+      {forward.map(transition => <button key={transition.targetStatus} type="button" className={`ds-btn ds-btn--primary ${kitchen ? 'ds-btn--lg' : ''}`} disabled={busy} onClick={() => onAction(transition)}>
+        {shortLabel(transition)}
+      </button>)}
+      {canConfirmPayment && <button type="button" className="ds-btn ds-btn--secondary order-tile__paid" disabled={busy} onClick={onConfirmPayment} title="Confirmar el pago recibido"><Icon name="coins" size={18} />Cobrado</button>}
+      <ActionMenu label={`Más acciones de ${order.publicCode}`} disabled={busy} size={kitchen ? 56 : 44}
+        items={[{ id: 'detail', label: 'Ver detalle', icon: 'eye', onSelect: onOpen },
+          ...others.map(transition => ({ id: transition.targetStatus, label: shortLabel(transition), icon: (transition.direction === 'BACKWARD' ? 'undo' : transition.targetStatus === 'REJECTED' ? 'xCircle' : 'ban') as 'undo' | 'xCircle' | 'ban', danger: transition.destructive, onSelect: () => onAction(transition) }))]} />
+    </footer>
+  </article>;
 }
 
-function EyeIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.7" /></svg>; }
+export function OrdersPage({ auth, user, preset }: { auth: string; user: User; preset?: Partial<Filters> }) {
+  const kitchen = user.roles.includes('ROLE_COCINA') && !user.roles.includes('ROLE_ADMIN');
+  const [filters, setFilters] = useState<Filters>({ ...emptyFilters, ...preset }); const [search, setSearch] = useState(preset?.q ?? ''); const [page, setPage] = useState(0); const [sort, setSort] = useState<OrderSort>('CREATED_DESC');
+  const [data, setData] = useState<OrderPage>(); const [facets, setFacets] = useState<Facets>(); const [facetsLoading, setFacetsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(''); const [loading, setLoading] = useState(true);
+  /** Pedido abierto en detalle; la lista conserva filtros, página y posición al volver. */
+  const [detailId, setDetailId] = useState<string>(); const [refreshKey, setRefreshKey] = useState(0); const listScroll = useRef(0);
+  const [pending, setPending] = useState<PendingAction>(); const [pendingPayment, setPendingPayment] = useState<PendingPayment>(); const [busy, setBusy] = useState(''); const [actionError, setActionError] = useState('');
+  const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string }>(); const [rangeOpen, setRangeOpen] = useState(false); const [filtersOpen, setFiltersOpen] = useState(false);
 
-const actionsFor = (status: string) => ({ PENDING_DECISION: [{ label: 'Aceptar', target: 'ACCEPTED' }, { label: 'Rechazar', target: 'REJECTED', destructive: true }], ACCEPTED: [{ label: 'Iniciar preparación', target: 'PREPARING' }, { label: 'Cancelar', target: 'CANCELLED', destructive: true }], PREPARING: [{ label: 'Marcar listo', target: 'READY' }], READY: [{ label: 'Completar pedido', target: 'COMPLETED' }] } as Record<string, Array<{ label: string; target: string; destructive?: boolean }>>)[status] || [];
+  // La búsqueda espera 300 ms antes de consultar.
+  useEffect(() => { const timer = setTimeout(() => { setFilters(current => current.q === search ? current : { ...current, q: search }); setPage(0); }, 300); return () => clearTimeout(timer); }, [search]);
+  useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(undefined), 6000); return () => clearTimeout(timer); }, [notice]);
 
-function OrderCardUnit({ unit }: { unit: OrderUnit }) {
-  const extras = unit.options.filter(option => option.type === 'EXTRA'); const removed = unit.options.filter(option => option.type === 'REMOVED_INGREDIENT'); const instructions = unit.options.filter(option => option.type === 'INSTRUCTION');
-  return <article className="order-card-unit"><div className="order-card-unit-heading"><div><strong>{unit.quantity}× {unit.dish}</strong><span>{unit.variant}</span></div><b>{money(unit.lineTotal)}</b></div>{extras.length > 0 && <p><span>Extras:</span> {extras.map(option => `${option.name}${Number(option.amount) ? ` (+${money(option.amount)})` : ''}`).join(' · ')}</p>}{removed.length > 0 && <p><span>Sin:</span> {removed.map(option => option.name).join(' · ')}</p>}{instructions.length > 0 && <p><span>Preparación:</span> {instructions.map(option => option.name).join(' · ')}</p>}</article>;
-}
+  const load = useCallback(async () => {
+    setLoading(true); setLoadError('');
+    try {
+      const result = await api<OrderPage>(`/orders?${params(filters, { page: String(page), size: String(PAGE_SIZE), sort })}`, auth);
+      setData(result);
+    } catch (caught) { setLoadError(caught instanceof Error ? caught.message : 'No se pudieron cargar los pedidos.'); }
+    finally { setLoading(false); }
+  }, [auth, filters, page, sort]);
 
-function OrderCard({ order, detail, detailFailed, writable, busy, onOpen, onTransition }: { order: OrderSummary; detail?: OrderDetail; detailFailed: boolean; writable: boolean; busy: boolean; onOpen: (id: string) => void; onTransition: (id: string, target: string) => void }) {
-  const actions = writable ? actionsFor(order.status) : [];
-  const delivery = detail?.fulfillmentType === 'DELIVERY';
-  return <article className="order-card"><header><div><p>{order.publicCode}</p><time>{dateTime(order.createdAt)}</time></div><span className={`pill order-card-status status-${order.status.toLowerCase()}`}>{label(order.status)}</span></header><div className="order-card-scroll">{detail ? <><section className="order-card-client"><p className="card-section-label">Cliente</p><h2>{detail.customerName}</h2><span>{detail.phone || 'Teléfono no registrado'}</span></section><section className="order-card-fulfillment"><div className="order-card-fulfillment-head"><strong>{delivery ? 'Envío' : 'Local'}</strong>{delivery && <b>Tarifa {money(detail.deliveryFee)}</b>}</div>{delivery ? <><span>{detail.deliveryAddress || 'Dirección por confirmar'}</span>{detail.deliveryReference && <span>Referencia: {detail.deliveryReference}</span>}{detail.deliveryZone && <span>Zona: {detail.deliveryZone}</span>}</> : <span>Hora acordada: {dateTime(detail.pickupTime)}</span>}</section><section className="order-card-items"><p className="card-section-label">Pedido</p>{detail.units.map(unit => <OrderCardUnit key={unit.id} unit={unit} />)}</section></> : <p className="order-card-loading">{detailFailed ? 'No se pudo cargar la información completa.' : 'Cargando información completa…'}</p>}</div><footer><div className="order-card-total"><span>Total</span><strong>{money(detail?.total ?? order.total)}</strong></div><div className="order-card-tools"><button type="button" className="icon-action" aria-label={`Ver comanda de ${order.publicCode}`} title={`Ver comanda de ${order.publicCode}`} onClick={() => onOpen(order.id)}><EyeIcon /></button>{actions.map(action => <button key={action.target} type="button" className={action.destructive ? 'order-action destructive' : 'order-action'} disabled={busy} onClick={() => onTransition(order.id, action.target)}>{busy ? 'Actualizando…' : action.label}</button>)}</div></footer></article>;
-}
+  const loadFacets = useCallback(async () => {
+    setFacetsLoading(true);
+    try { setFacets(await api<Facets>(`/orders/facets?${params(filters)}`, auth)); } catch { setFacets(undefined); } finally { setFacetsLoading(false); }
+  }, [auth, filters]);
 
-function OrderDetailDialog({ order, onClose }: { order?: OrderDetail; onClose: () => void }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  useEffect(() => { if (order && dialogRef.current && !dialogRef.current.open) dialogRef.current.showModal(); }, [order]);
-  return <dialog className="menu-dialog order-dialog" ref={dialogRef} onClose={onClose} aria-label={order ? `Comanda ${order.publicCode}` : 'Comanda'}>{order && <><div className="dialog-header"><h2>Comanda {order.publicCode}</h2><button type="button" className="dialog-close" onClick={() => dialogRef.current?.close()}>Cerrar</button></div><OrderTicket order={order} /></>}</dialog>;
-}
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void loadFacets(); }, [loadFacets]);
 
-export function OrdersPage({ auth, user }: { auth: string; user: User }) {
-  const orders = useLoad<OrderSummary[]>('/orders', auth); const [selected, setSelected] = useState<OrderDetail>(); const [cardDetails, setCardDetails] = useState<Record<string, OrderDetail>>({}); const [cardDetailsFailed, setCardDetailsFailed] = useState(false); const [detailError, setDetailError] = useState(''); const [loadingDetail, setLoadingDetail] = useState(false); const [transitioning, setTransitioning] = useState(''); const writable = user.roles.some(role => role === 'ROLE_ADMIN' || role === 'ROLE_CAJA');
-  useEffect(() => { if (!orders.data?.length) { setCardDetails({}); return; } let active = true; setCardDetails({}); setCardDetailsFailed(false); void Promise.all(orders.data.map(async order => [order.id, await api<OrderDetail>(`/orders/${order.id}`, auth)] as const)).then(entries => { if (active) setCardDetails(Object.fromEntries(entries)); }).catch(() => { if (active) setCardDetailsFailed(true); }); return () => { active = false; }; }, [auth, orders.data]);
-  async function open(id: string) { setLoadingDetail(true); setDetailError(''); try { setSelected(await api<OrderDetail>(`/orders/${id}`, auth)); } catch (caught) { setDetailError(caught instanceof Error ? caught.message : 'No se pudo cargar la comanda.'); } finally { setLoadingDetail(false); } }
-  async function transition(id: string, target: string) { if ((target === 'REJECTED' || target === 'CANCELLED') && !window.confirm(`¿Confirmas ${target === 'REJECTED' ? 'rechazar' : 'cancelar'} este pedido?`)) return; setTransitioning(id); setDetailError(''); try { await api(`/orders/${id}/transitions`, auth, { method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ targetStatus: target }) }); await orders.reload(); if (selected?.id === id) await open(id); } catch (caught) { setDetailError(caught instanceof Error ? caught.message : 'No se pudo actualizar el estado del pedido.'); } finally { setTransitioning(''); } }
-  return <section className="page-content orders-page"><header className="page-heading"><div><h1>Pedidos</h1><p>Revisa los datos clave de cada solicitud y actualiza solo los estados que el backend autoriza.</p></div></header>{orders.error && <p className="error">No se pudo cargar la cola de pedidos: {orders.error}</p>}{!orders.data && !orders.error && <p className="empty-state">Cargando pedidos…</p>}{orders.data?.length === 0 && <section className="menu-empty"><h2>No hay pedidos</h2><p>Las solicitudes confirmadas aparecerán aquí cuando el canal conversacional esté integrado.</p></section>}{orders.data && orders.data.length > 0 && <section className="order-card-grid">{orders.data.map(order => <OrderCard key={order.id} order={order} detail={cardDetails[order.id]} detailFailed={cardDetailsFailed} writable={writable} busy={transitioning === order.id} onOpen={id => void open(id)} onTransition={(id, target) => void transition(id, target)} />)}</section>}{loadingDetail && <p className="orders-loading">Cargando comanda…</p>}{detailError && <p className="error">{detailError}</p>}<OrderDetailDialog order={selected} onClose={() => setSelected(undefined)} /></section>;
+  function update(changes: Partial<Filters>) { setFilters(current => ({ ...current, ...changes })); setPage(0); }
+  function clearAll() { setFilters(emptyFilters); setSearch(''); setPage(0); setSort('CREATED_DESC'); }
+
+  /** Confirmación manual del pago (ADMIN y CAJA): el backend valida estado, aislamiento e idempotencia. */
+  async function confirmPayment(order: OrderRef, paymentId: string) {
+    setBusy(order.id); setActionError('');
+    try {
+      await api(`/payments/${paymentId}/confirm`, auth, { method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() } });
+      setPendingPayment(undefined);
+      setNotice({ tone: 'ok', text: `Pago de ${order.publicCode} confirmado.` });
+      setRefreshKey(key => key + 1);
+      await Promise.all([load(), loadFacets()]);
+    } catch (caught) { setActionError(caught instanceof Error ? caught.message : 'No se pudo confirmar el pago.'); }
+    finally { setBusy(''); }
+  }
+
+  async function run(order: OrderRef, path: string, body?: object) {
+    setBusy(order.id); setActionError('');
+    try {
+      const result = await api<{ status: string; changeType: string }>(path, auth, { method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: body ? JSON.stringify(body) : undefined });
+      setPending(undefined);
+      const target = `«${statusLabel(result.status)}»`;
+      setNotice({ tone: 'ok', text: result.changeType === 'RETROCESO' ? `${order.publicCode} volvió a ${target}.` : `${order.publicCode} pasó a ${target}.` });
+      setRefreshKey(key => key + 1);
+      await Promise.all([load(), loadFacets()]);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : 'No se pudo actualizar el pedido.';
+      if (pending) setActionError(message); else setNotice({ tone: 'error', text: `${order.publicCode}: ${message}` });
+    } finally { setBusy(''); }
+  }
+  function act(order: OrderRef, transition: Transition) {
+    // COCINA avanza con un toque y sin motivo; retroceder pide motivo a todos los roles (bloque C) y el resto confirma cada acción.
+    if (kitchen && transition.direction === 'FORWARD') { void run(order, `/orders/${order.id}/transitions`, { targetStatus: transition.targetStatus }); return; }
+    setActionError(''); setPending({ order, transition });
+  }
+  function open(order: OrderSummary) { listScroll.current = window.scrollY; setNotice(undefined); setDetailId(order.id); }
+  function closeDetail() {
+    setDetailId(undefined); setNotice(undefined);
+    requestAnimationFrame(() => window.scrollTo({ top: listScroll.current }));
+  }
+
+  const sum = (group?: Record<string, number>) => group ? Object.values(group).reduce((total, value) => total + value, 0) : undefined;
+  const count = (group: keyof Facets, value: string) => facets ? facets[group][value] ?? 0 : null;
+  const statusOptions = Object.entries(orderStatuses).filter(([code]) => !kitchen || KITCHEN_STATUSES.includes(code));
+  const activeCount = [filters.status, filters.fulfillment, filters.paymentStatus, filters.range].filter(Boolean).length + (filters.q ? 1 : 0);
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  const first = data && data.total ? page * PAGE_SIZE + 1 : 0; const last = data ? Math.min(data.total, (page + 1) * PAGE_SIZE) : 0;
+  const today = new Intl.DateTimeFormat('es-EC', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+
+  const dialogs = <>
+    <PaymentConfirmDialog pending={pendingPayment} busy={Boolean(busy)} error={actionError} onCancel={() => setPendingPayment(undefined)} onConfirm={() => pendingPayment && void confirmPayment(pendingPayment.order, pendingPayment.paymentId)} />
+    <TransitionDialog pending={pending} busy={Boolean(busy)} error={actionError} onCancel={() => setPending(undefined)}
+      onConfirm={(reasonCode, reason) => pending && void run(pending.order, `/orders/${pending.order.id}/transitions`, { targetStatus: pending.transition.targetStatus, reasonCode, reason })} />
+  </>;
+
+  if (detailId) return <>
+    <OrderDetailView auth={auth} orderId={detailId} kitchen={kitchen} busy={Boolean(busy)} notice={notice} refreshKey={refreshKey} onBack={closeDetail}
+      onAction={(order, transition) => act(order, transition)}
+      onConfirmPayment={(order, paymentId, amount) => { setActionError(''); setPendingPayment({ order, paymentId, amount }); }} />
+    {dialogs}
+  </>;
+
+  return <section className="orders">
+    <PageHeader title="Pedidos" subtitle={kitchen ? 'Pedidos aceptados para preparar. Un toque avanza el estado; retroceder pide un motivo.' : 'Revisa las solicitudes y cambia su estado. Solo ves los cambios que tu rol puede hacer.'}
+      aside={<span className="orders-today"><Icon name="calendar" size={16} />{today}</span>} />
+
+    <div className="orders-toolbar">
+      <label className="ds-search orders-search">
+        <span className="ds-sr-only">Buscar pedidos</span><Icon name="search" />
+        <input className="ds-input" type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="PED-…, nombre o teléfono" maxLength={80} />
+      </label>
+      <button type="button" className="ds-btn ds-btn--secondary orders-filters-toggle" aria-expanded={filtersOpen} aria-controls="orders-filters" onClick={() => setFiltersOpen(value => !value)}>
+        Filtros{activeCount > 0 && <span className="ds-chip__count">{activeCount}</span>}
+      </button>
+    </div>
+
+    <div id="orders-filters" className="ds-card orders-filters" data-open={filtersOpen}>
+      <FilterGroup legend="Estado" loading={facetsLoading} value={filters.status} onChange={value => update({ status: value })}
+        options={[{ value: '', label: 'Todos', count: facets ? sum(facets.status) : null }, ...statusOptions.map(([code, meta]) => ({ value: code, label: meta.label, count: count('status', code) }))]} />
+      {/* Modalidad, fecha y pago como menús desplegables (bloque B); el estado sigue como botones. */}
+      <div className="orders-filters__row" role="group" aria-label="Más filtros">
+        <Dropdown label="Modalidad" loading={facetsLoading} value={filters.fulfillment} onChange={value => update({ fulfillment: value })}
+          options={[{ value: '', label: 'Todas', count: facets ? sum(facets.fulfillment) : null }, { value: 'PICKUP', label: 'Retiro', count: count('fulfillment', 'PICKUP') }, { value: 'DELIVERY', label: 'Entrega', count: count('fulfillment', 'DELIVERY') }]} />
+        <Dropdown label="Fecha" loading={facetsLoading} value={filters.range} onChange={value => value === 'CUSTOM' ? setRangeOpen(true) : update({ range: value, from: '', to: '' })}
+          options={[{ value: '', label: 'Todas', count: facets?.range.ALL ?? null }, { value: 'TODAY', label: 'Hoy', count: count('range', 'TODAY') }, { value: 'LAST_7_DAYS', label: 'Últimos 7 días', count: count('range', 'LAST_7_DAYS') },
+            { value: 'CUSTOM', label: 'Personalizado', detail: filters.range === 'CUSTOM' && filters.from ? `${shortDate(filters.from)} – ${shortDate(filters.to)}` : undefined, count: filters.range === 'CUSTOM' ? count('range', 'CUSTOM') : undefined }]} />
+        {!kitchen && <Dropdown label="Pago" loading={facetsLoading} value={filters.paymentStatus} onChange={value => update({ paymentStatus: value })}
+          options={[{ value: '', label: 'Todos', count: facets ? sum(facets.paymentStatus) : null }, ...Object.entries(paymentStatuses).map(([code, meta]) => ({ value: code, label: meta.label, count: count('paymentStatus', code) }))]} />}
+      </div>
+    </div>
+
+    <div className="orders-summary">
+      <p aria-live="polite">{loading && !data ? 'Cargando pedidos…' : data ? <><b className="ds-num">{data.total}</b> {data.total === 1 ? 'pedido' : 'pedidos'}{activeCount ? ' con los filtros elegidos' : ''}</> : ''}</p>
+      <div className="orders-summary__tools">
+        {activeCount > 0 && <button type="button" className="ds-btn ds-btn--ghost" onClick={clearAll}><Icon name="close" size={16} />Limpiar filtros</button>}
+        <Dropdown label="Orden" align="end" value={sort} onChange={value => { setSort(value as OrderSort); setPage(0); }} options={sortOptions} />
+      </div>
+    </div>
+
+    {notice && <p className="orders-notice" data-tone={notice.tone} role={notice.tone === 'error' ? 'alert' : 'status'}><Icon name={notice.tone === 'ok' ? 'checkCircle' : 'alert'} size={18} />{notice.text}</p>}
+
+    {loadError ? <div className="ds-card"><EmptyState illustration="error" title="No pudimos cargar los pedidos" description={loadError} action={<button type="button" className="ds-btn ds-btn--primary" onClick={() => void load()}><Icon name="refresh" />Reintentar</button>} /></div>
+      : !data ? <div className="orders-grid" aria-busy="true">{Array.from({ length: 6 }, (_, index) => <div key={index} className="order-tile order-tile--loading"><Skeleton width="45%" height={22} /><Skeleton width="70%" height={16} /><Skeleton width="55%" height={14} /><Skeleton height={44} radius="var(--radius-md)" /></div>)}</div>
+        : data.items.length === 0 ? <div className="ds-card"><EmptyState title={activeCount ? 'No hay pedidos con estos filtros' : 'Aún no hay pedidos'} description={activeCount ? 'Prueba con otro rango de fechas o quita algún filtro.' : 'Las solicitudes confirmadas por los clientes aparecerán aquí.'}
+          action={activeCount ? <button type="button" className="ds-btn ds-btn--primary" onClick={clearAll}>Limpiar filtros</button> : undefined} /></div>
+          : <div className={`orders-grid ${loading ? 'is-refreshing' : ''}`} aria-busy={loading}>
+            {data.items.map(order => <OrderCard key={order.id} order={order} kitchen={kitchen} busy={busy === order.id}
+              onOpen={() => open(order)} onAction={transition => act(order, transition)}
+              onConfirmPayment={() => { setActionError(''); setPendingPayment({ order, paymentId: order.paymentId ?? '', amount: order.total }); }} />)}
+          </div>}
+
+    {data && data.total > PAGE_SIZE && <nav className="orders-pagination" aria-label="Páginas de pedidos">
+      <span className="ds-muted">Mostrando <b className="ds-num">{first}–{last}</b> de <b className="ds-num">{data.total}</b></span>
+      <div>
+        <button type="button" className="ds-btn ds-btn--secondary" disabled={page === 0 || loading} onClick={() => setPage(page - 1)}><Icon name="arrowLeft" size={18} />Anterior</button>
+        <span className="ds-num" aria-current="page">Página {page + 1} de {totalPages}</span>
+        <button type="button" className="ds-btn ds-btn--secondary" disabled={page + 1 >= totalPages || loading} onClick={() => setPage(page + 1)}>Siguiente<Icon name="arrowRight" size={18} /></button>
+      </div>
+    </nav>}
+
+    {dialogs}
+    <DateRangeDialog open={rangeOpen} initial={{ from: filters.from, to: filters.to }} onClose={() => setRangeOpen(false)} onApply={(from, to) => { setRangeOpen(false); update({ range: 'CUSTOM', from, to }); }} />
+  </section>;
 }

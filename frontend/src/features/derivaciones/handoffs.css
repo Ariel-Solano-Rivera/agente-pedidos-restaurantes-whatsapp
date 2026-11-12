@@ -1,0 +1,16 @@
+/* Derivaciones (rediseño, etapa 9). Usa solo tokens. */
+.hf-tabs { margin-bottom: var(--space-4); }
+.hf-tabs .ds-tab { display: inline-flex; align-items: center; gap: var(--space-2); }
+.hf-notice { margin-bottom: var(--space-4); }
+.hf-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.hf-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); border-left: 4px solid var(--border); }
+.hf-item[data-status="OPEN"] { border-left-color: var(--st-rejected-line); }
+.hf-item[data-status="IN_PROGRESS"] { border-left-color: var(--st-accepted-line); }
+.hf-item[aria-busy="true"] { opacity: .65; }
+.hf-item__main { display: grid; gap: var(--space-1); justify-items: start; min-width: 0; flex: 1 1 320px; }
+.hf-item__main h2 { font-size: var(--text-lg); margin-top: var(--space-1); }
+.hf-reason { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: var(--weight-medium); }
+.hf-reason svg { color: var(--st-rejected-fg); flex: none; }
+.hf-meta { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+.hf-item__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+@media (max-width: 680px) { .hf-item__actions { width: 100%; } .hf-item__actions .ds-btn { flex: 1 1 auto; } }

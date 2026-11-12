@@ -35,4 +35,4 @@ Administra los nombres reutilizables de presentaciones e ingredientes del menú,
 
 ## TBD / exclusiones
 
-- Auditoría específica de cambios de catálogo, estados inactivos editables y actualización/eliminación completa de platos.
+- Auditoría específica de cambios de catálogo y estados inactivos editables desde el panel.

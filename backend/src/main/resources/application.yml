@@ -2,11 +2,11 @@ spring:
   application:
     name: restaurant-admin
   r2dbc:
-    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:55432}/${DB_NAME:restaurant_admin}
+    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:55478}/${DB_NAME:restaurant_admin}
     username: ${DB_USER:restaurant_app}
     password: ${DB_PASSWORD:local_demo_only}
   flyway:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:55432}/${DB_NAME:restaurant_admin}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:55478}/${DB_NAME:restaurant_admin}
     user: ${DB_USER:restaurant_app}
     password: ${DB_PASSWORD:local_demo_only}
     locations: classpath:db/migration
@@ -19,3 +19,5 @@ management:
     web:
       exposure:
         include: health
+app:
+  orders:

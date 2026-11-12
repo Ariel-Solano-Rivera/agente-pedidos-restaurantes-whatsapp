@@ -1,70 +1,135 @@
-import { FormEvent, ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Dropdown } from '../../design/Dropdown';
+import { Icon } from '../../design/Icon';
+import { EmptyState, PageHeader, Skeleton } from '../../design/States';
 import { api, User, useLoad } from '../../shared/api';
+import { CatalogItem, Category, Dish, DishDialog, DishEditDialog, DishImage } from './DishForms';
+import '../../design/forms.css';
+import './menu.css';
 
-type Category = { id: string; name: string; description: string; displayOrder: number; active: boolean };
-type Option = { id: string; name: string; surcharge: number; removable?: boolean; active?: boolean };
-type Dish = { id: string; categoryId: string; category: string; name: string; description: string; ingredients: string; active: boolean; hasImage: boolean; variants: Array<{ id: string; name: string; price: number }>; extras: Option[]; removableIngredients: Option[] };
-type CatalogItem = { id: string; name: string; active: boolean };
-type ExtraDraft = { ingredientId: string; name: string; surcharge: string };
+type MenuFilters = { q: string; categoryId: string; availability: '' | 'AVAILABLE' | 'SOLD_OUT'; visibility: '' | 'ACTIVE' | 'INACTIVE' };
+const emptyMenuFilters: MenuFilters = { q: '', categoryId: '', availability: '', visibility: '' };
+const normalize = (value: string) => value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const money = (value: number) => new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(value);
 
-const imageTypes = ['image/jpeg', 'image/png', 'image/webp'];
-
-function DialogFrame({ dialogRef, title, children }: { dialogRef: React.RefObject<HTMLDialogElement | null>; title: string; children: ReactNode }) {
-  const headingId = `${title.toLowerCase().replace(/\s+/g, "-")}-title`;
-  return <dialog className="menu-dialog" ref={dialogRef} aria-labelledby={headingId}><div className="dialog-header"><h2 id={headingId}>{title}</h2><button type="button" className="dialog-close" onClick={() => dialogRef.current?.close()}>Cancelar</button></div>{children}</dialog>;
+/** Filtra en el cliente: el backend entrega el menú completo del restaurante y decide `available`. `skip` omite un grupo para contar sus opciones. */
+function filterDishes(dishes: Dish[], filters: MenuFilters, skip?: keyof MenuFilters) {
+  const terms = normalize(filters.q.trim()).split(/\s+/).filter(Boolean);
+  return dishes.filter(dish => {
+    if (skip !== 'categoryId' && filters.categoryId && dish.categoryId !== filters.categoryId) return false;
+    if (skip !== 'availability' && filters.availability === 'AVAILABLE' && !dish.available) return false;
+    if (skip !== 'availability' && filters.availability === 'SOLD_OUT' && dish.available) return false;
+    if (skip !== 'visibility' && filters.visibility === 'ACTIVE' && !dish.active) return false;
+    if (skip !== 'visibility' && filters.visibility === 'INACTIVE' && dish.active) return false;
+    if (!terms.length) return true;
+    const text = normalize([dish.name, dish.description, dish.ingredients, ...dish.extras.map(item => item.name), ...dish.removableIngredients.map(item => item.name)].join(' '));
+    return terms.every(term => text.includes(term));
+  });
 }
 
-function Icon({ name }: { name: 'edit' | 'power' | 'trash' }) {
-  const paths = { edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L9 17l-4 1 1-4Z" /></>, power: <><path d="M12 2v10" /><path d="M6.3 5.7a9 9 0 1 0 11.4 0" /></>, trash: <><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7" /></> };
-  return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{paths[name]}</svg>;
-}
-
-function SearchSelect({ label, items, value, onChange, placeholder }: { label: string; items: Array<{ id: string; name: string }>; value: string; onChange: (id: string) => void; placeholder: string }) {
-  const listId = useId(); const [open, setOpen] = useState(false); const [term, setTerm] = useState(''); const [active, setActive] = useState(0);
-  const matches = items.filter(item => item.name.toLocaleLowerCase('es').includes(term.trim().toLocaleLowerCase('es')));
-  const selected = items.find(item => item.id === value);
-  function choose(item: { id: string; name: string }) { onChange(item.id); setTerm(''); setActive(0); setOpen(false); }
-  return <div className="search-select" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) { setOpen(false); setTerm(''); } }}><input role="combobox" aria-label={label} aria-autocomplete="list" aria-expanded={open} aria-controls={listId} aria-activedescendant={open && matches[active] ? `${listId}-${matches[active].id}` : undefined} value={open ? term : selected?.name || ''} placeholder={placeholder} autoComplete="off" onFocus={() => { setOpen(true); setTerm(''); setActive(0); }} onChange={event => { setTerm(event.target.value); setActive(0); onChange(''); }} onKeyDown={event => { if (event.key === 'Escape') { setOpen(false); setTerm(''); event.currentTarget.blur(); } else if (event.key === 'ArrowDown') { event.preventDefault(); setActive(index => Math.min(index + 1, matches.length - 1)); } else if (event.key === 'ArrowUp') { event.preventDefault(); setActive(index => Math.max(index - 1, 0)); } else if (event.key === 'Enter' && open) { event.preventDefault(); if (matches[active]) choose(matches[active]); } }} /><span className="search-select-chevron" aria-hidden="true">⌄</span>{open && <div className="search-select-options" id={listId} role="listbox" aria-label={label}>{matches.length ? matches.map((item, index) => <button type="button" role="option" aria-selected={item.id === value} id={`${listId}-${item.id}`} className={index === active ? 'active' : ''} key={item.id} onMouseDown={event => event.preventDefault()} onClick={() => choose(item)}>{item.name}</button>) : <p>Sin coincidencias</p>}</div>}</div>;
-}
-
-function ChipsEditor({ label, hint, catalog, values, onAdd, onRemove, extra }: { label: string; hint: string; catalog: CatalogItem[]; values: Array<{ id: string; name: string; detail?: string }>; onAdd: (item: CatalogItem, detail?: string) => void; onRemove: (index: number) => void; extra?: boolean }) {
-  const [selectedId, setSelectedId] = useState(''); const [detail, setDetail] = useState('0.00'); const available = catalog.filter(item => item.active && !values.some(value => value.id === item.id));
-  function add() { const item = available.find(candidate => candidate.id === selectedId); if (!item) return; onAdd(item, extra ? detail : undefined); setSelectedId(''); setDetail('0.00'); }
-  return <fieldset className="chips-editor"><legend>{label}</legend><p>{hint}</p><div className="add-option-row"><SearchSelect label={label} items={available} value={selectedId} onChange={setSelectedId} placeholder="Busca un ingrediente…" />{extra && <input className="price-input" type="number" min="0" step="0.01" value={detail} onChange={event => setDetail(event.target.value)} aria-label="Recargo del extra" />}<button type="button" className="secondary-action" disabled={!selectedId} onClick={add}>Añadir</button></div>{values.length > 0 && <ul className="option-chips">{values.map((value, index) => <li key={value.id}><span>{value.name}{value.detail ? ` · +$${value.detail}` : ''}</span><button type="button" title={`Eliminar ${value.name}`} aria-label={`Eliminar ${value.name}`} onClick={() => onRemove(index)}><Icon name="trash" /></button></li>)}</ul>}</fieldset>;
-}
-
-function DishDialog({ auth, categories, presentations, ingredients, onCreated }: { auth: string; categories: Category[]; presentations: CatalogItem[]; ingredients: CatalogItem[]; onCreated: () => void }) {
-  const dialogRef = useRef<HTMLDialogElement>(null); const [categoryId, setCategoryId] = useState(''); const [name, setName] = useState(''); const [description, setDescription] = useState(''); const [presentationId, setPresentationId] = useState(''); const [price, setPrice] = useState('1.00'); const [removable, setRemovable] = useState<CatalogItem[]>([]); const [extras, setExtras] = useState<ExtraDraft[]>([]); const [photo, setPhoto] = useState<File | null>(null); const [preview, setPreview] = useState(''); const [error, setError] = useState(''); const [saving, setSaving] = useState(false);
-  useEffect(() => { if (!photo) { setPreview(''); return; } const url = URL.createObjectURL(photo); setPreview(url); return () => URL.revokeObjectURL(url); }, [photo]);
-  function open() { setError(''); setCategoryId(categories[0]?.id || ''); setPresentationId(presentations.find(item => item.active)?.id || ''); dialogRef.current?.showModal(); }
-  function choosePhoto(file?: File) { if (!file) return; if (!imageTypes.includes(file.type) || file.size > 2 * 1024 * 1024) { setError('La foto debe ser PNG, JPEG o WebP y pesar máximo 2 MB.'); return; } setPhoto(file); setError(''); }
-  async function submit(event: FormEvent) { event.preventDefault(); if (!categoryId || !presentationId || !name.trim() || !description.trim()) { setError('Completa categoría, presentación, nombre y descripción del plato.'); return; } setSaving(true); setError(''); try { const dish = await api<Dish>('/admin/dishes', auth, { method: 'POST', body: JSON.stringify({ categoryId, name: name.trim(), description: description.trim(), informationalIngredients: '', active: true, variants: [{ presentationId, price: Number(price), active: true }], extras: extras.map(item => ({ ingredientId: item.ingredientId, surcharge: Number(item.surcharge), active: true })), ingredients: removable.map(item => ({ ingredientId: item.id, removable: true })), instructions: [] }) }); if (photo) { const form = new FormData(); form.append('file', photo); await api<void>(`/admin/dishes/${dish.id}/image`, auth, { method: 'POST', body: form }); } setName(''); setDescription(''); setPresentationId(''); setPrice('1.00'); setRemovable([]); setExtras([]); setPhoto(null); dialogRef.current?.close(); onCreated(); } catch (caught) { setError(caught instanceof Error ? caught.message : 'No se pudo crear el plato.'); } finally { setSaving(false); } }
-  return <><button disabled={!categories.length || !presentations.some(item => item.active)} onClick={open}>Agregar nuevo plato</button><DialogFrame dialogRef={dialogRef} title="Nuevo plato"><form className="menu-form dish-form" onSubmit={submit}><div className="form-grid"><div className="form-field"><span>Categoría</span><SearchSelect label="Categoría" items={categories} value={categoryId} onChange={setCategoryId} placeholder="Busca una categoría…" /></div><label>Nombre del plato<input value={name} onChange={event => setName(event.target.value)} placeholder="Ej.: Encebollado clásico" /></label></div><label>Descripción<input value={description} onChange={event => setDescription(event.target.value)} placeholder="Describe el plato para el menú" /></label><div className="form-grid"><div className="form-field"><span>Presentación</span><SearchSelect label="Presentación" items={presentations.filter(item => item.active)} value={presentationId} onChange={setPresentationId} placeholder="Busca una presentación…" /></div><label>Precio<input type="number" min="0.01" step="0.01" value={price} onChange={event => setPrice(event.target.value)} /></label></div><label className="photo-picker">{preview ? <img src={preview} alt="Vista previa del plato" /> : <span><b>Foto del plato</b><small>PNG, JPEG o WebP · máximo 2 MB</small></span>}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={event => choosePhoto(event.target.files?.[0])} /></label><ChipsEditor label="Ingredientes que se pueden retirar" hint="Selecciona ingredientes del catálogo; el cliente solo podrá retirar los configurados." catalog={ingredients} values={removable.map(item => ({ id: item.id, name: item.name }))} onAdd={item => setRemovable(current => [...current, item])} onRemove={index => setRemovable(current => current.filter((_, itemIndex) => itemIndex !== index))} /><ChipsEditor label="Ingredientes extra" hint="Selecciona un ingrediente del catálogo y define su recargo." extra catalog={ingredients} values={extras.map(item => ({ id: item.ingredientId, name: item.name, detail: item.surcharge }))} onAdd={(item, surcharge) => setExtras(current => [...current, { ingredientId: item.id, name: item.name, surcharge: surcharge || '0.00' }])} onRemove={index => setExtras(current => current.filter((_, itemIndex) => itemIndex !== index))} />{error && <p className="error" role="alert">{error}</p>}<button disabled={saving}>{saving ? 'Creando plato…' : 'Crear plato'}</button></form></DialogFrame></>;
-}
-
-function DishImage({ dish, auth }: { dish: Dish; auth: string }) {
-  const [source, setSource] = useState('');
-  useEffect(() => { if (!dish.hasImage) return; let active = true; let objectUrl = ''; fetch(`/api/v1/menu/dishes/${dish.id}/image`, { headers: { Authorization: `Basic ${auth}` } }).then(response => response.ok ? response.blob() : Promise.reject()).then(blob => { objectUrl = URL.createObjectURL(blob); if (active) setSource(objectUrl); }).catch(() => setSource('')); return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); }; }, [auth, dish.hasImage, dish.id]);
-  if (source) return <img src={source} alt={dish.name} />;
-  return <div className="dish-photo-placeholder"><strong>Foto pendiente</strong><span>Añade una imagen desde Editar.</span></div>;
-}
-
-function DishEditDialog({ dish, auth, categories, presentations, ingredients, onUpdated }: { dish: Dish; auth: string; categories: Category[]; presentations: CatalogItem[]; ingredients: CatalogItem[]; onUpdated: () => void }) {
-  const dialogRef = useRef<HTMLDialogElement>(null); const [categoryId, setCategoryId] = useState(dish.categoryId); const [name, setName] = useState(dish.name); const [description, setDescription] = useState(dish.description); const [presentationId, setPresentationId] = useState(''); const [price, setPrice] = useState(String(dish.variants[0]?.price ?? '')); const [removable, setRemovable] = useState<CatalogItem[]>([]); const [extras, setExtras] = useState<ExtraDraft[]>([]); const [photo, setPhoto] = useState<File | null>(null); const [error, setError] = useState(''); const [saving, setSaving] = useState(false);
-  function open() { setCategoryId(dish.categoryId); setName(dish.name); setDescription(dish.description); setPresentationId(presentations.find(item => item.name === dish.variants[0]?.name && item.active)?.id || ''); setPrice(String(dish.variants[0]?.price ?? '')); setRemovable(dish.removableIngredients.map(option => ingredients.find(item => item.name === option.name)).filter((item): item is CatalogItem => !!item)); setExtras(dish.extras.map(option => { const item = ingredients.find(ingredient => ingredient.name === option.name); return item ? { ingredientId: item.id, name: item.name, surcharge: String(option.surcharge) } : null; }).filter((item): item is ExtraDraft => !!item)); setPhoto(null); setError(''); dialogRef.current?.showModal(); }
-  function choosePhoto(file?: File) { if (!file) return; if (!imageTypes.includes(file.type) || file.size > 2 * 1024 * 1024) { setError('La foto debe ser PNG, JPEG o WebP y pesar máximo 2 MB.'); return; } setPhoto(file); setError(''); }
-  async function submit(event: FormEvent) { event.preventDefault(); if (!categoryId || !presentationId || !name.trim() || !description.trim() || !Number.isFinite(Number(price)) || Number(price) <= 0 || extras.some(item => !Number.isFinite(Number(item.surcharge)) || Number(item.surcharge) < 0)) { setError('Completa los datos del plato con precio y recargos válidos.'); return; } if ([...dish.removableIngredients, ...dish.extras].some(option => !ingredients.some(item => item.name === option.name))) { setError('Hay ingredientes antiguos fuera del catálogo. Configúralos en Catálogo antes de guardar.'); return; } setSaving(true); setError(''); try { await api<Dish>(`/admin/dishes/${dish.id}`, auth, { method: 'PUT', body: JSON.stringify({ categoryId, name: name.trim(), description: description.trim(), presentationId, price: Number(price), extras: extras.map(item => ({ ingredientId: item.ingredientId, surcharge: Number(item.surcharge), active: true })), ingredients: removable.map(item => ({ ingredientId: item.id, removable: true })) }) }); if (photo) { const form = new FormData(); form.append('file', photo); await api<void>(`/admin/dishes/${dish.id}/image`, auth, { method: 'POST', body: form }); } dialogRef.current?.close(); onUpdated(); } catch (caught) { setError(caught instanceof Error ? caught.message : 'No se pudo actualizar el plato.'); } finally { setSaving(false); } }
-  return <><button type="button" className="dish-manage-action edit" title={`Editar ${dish.name}`} aria-label={`Editar ${dish.name}`} onClick={open}><Icon name="edit" /></button><DialogFrame dialogRef={dialogRef} title="Editar plato"><form className="menu-form dish-form" onSubmit={submit}><div className="form-grid"><div className="form-field"><span>Categoría</span><SearchSelect label="Categoría" items={categories} value={categoryId} onChange={setCategoryId} placeholder="Busca una categoría…" /></div><label>Nombre del plato<input value={name} onChange={event => setName(event.target.value)} /></label></div><label>Descripción<input value={description} onChange={event => setDescription(event.target.value)} /></label><div className="form-grid"><div className="form-field"><span>Presentación</span><SearchSelect label="Presentación" items={presentations.filter(item => item.active)} value={presentationId} onChange={setPresentationId} placeholder="Busca una presentación…" /></div><label>Precio<input type="number" min="0.01" step="0.01" value={price} onChange={event => setPrice(event.target.value)} /></label></div><ChipsEditor label="Ingredientes que se pueden retirar" hint="Selecciona ingredientes del catálogo." catalog={ingredients} values={removable.map(item => ({ id: item.id, name: item.name }))} onAdd={item => setRemovable(current => [...current, item])} onRemove={index => setRemovable(current => current.filter((_, itemIndex) => itemIndex !== index))} /><ChipsEditor label="Ingredientes extra" hint="Agrega uno por uno e indica su recargo." extra catalog={ingredients} values={extras.map(item => ({ id: item.ingredientId, name: item.name, detail: item.surcharge }))} onAdd={(item, surcharge) => setExtras(current => [...current, { ingredientId: item.id, name: item.name, surcharge: surcharge || '0.00' }])} onRemove={index => setExtras(current => current.filter((_, itemIndex) => itemIndex !== index))} /><label className="photo-picker dish-edit-photo"><span><b>{photo ? photo.name : 'Actualizar foto (opcional)'}</b><small>PNG, JPEG o WebP · máximo 2 MB</small></span><input type="file" accept="image/png,image/jpeg,image/webp" onChange={event => choosePhoto(event.target.files?.[0])} /></label>{error && <p className="error" role="alert">{error}</p>}<button disabled={saving}>{saving ? 'Actualizando…' : 'Guardar cambios'}</button></form></DialogFrame></>;
-}
-
-function DishCard({ dish, auth, admin, categories, presentations, ingredients, onUpdated }: { dish: Dish; auth: string; admin: boolean; categories: Category[]; presentations: CatalogItem[]; ingredients: CatalogItem[]; onUpdated: () => void }) {
-  const [error, setError] = useState(''); const [working, setWorking] = useState(false);
-  async function setActive(active: boolean) { setWorking(true); setError(''); try { await api<Dish>(`/admin/dishes/${dish.id}/active`, auth, { method: 'PATCH', body: JSON.stringify({ active }) }); onUpdated(); } catch (caught) { setError(caught instanceof Error ? caught.message : 'No se pudo actualizar el estado.'); } finally { setWorking(false); } }
-  async function remove() { if (!window.confirm(`¿Eliminar “${dish.name}”? Esta acción no se puede deshacer.`)) return; setWorking(true); setError(''); try { await api<void>(`/admin/dishes/${dish.id}`, auth, { method: 'DELETE' }); onUpdated(); } catch (caught) { setError(caught instanceof Error ? caught.message : 'No se pudo eliminar el plato.'); } finally { setWorking(false); } }
-  return <article className="menu-dish-card"><div className="dish-photo"><DishImage dish={dish} auth={auth} /><div className="dish-photo-badges"><p className="dish-category">{dish.category}</p><span className={dish.active ? 'dish-state' : 'dish-state unavailable'}>{dish.active ? 'Activo' : 'Desactivado'}</span></div></div><div className="dish-card-content"><h2>{dish.name}</h2><section className="dish-summary"><p className="dish-description">{dish.description}</p><p className="dish-presentation">{dish.variants[0]?.name ?? 'Sin presentación'}</p></section><section className="dish-configuration" aria-label={`Opciones de ${dish.name}`}><div className="dish-options"><section><h3>Retirables</h3>{dish.removableIngredients.length ? <ul>{dish.removableIngredients.map(item => <li key={item.id}>{item.name}</li>)}</ul> : <p>Sin retirables.</p>}</section><section><h3>Extras</h3>{dish.extras.length ? <ul>{dish.extras.map(item => <li key={item.id}>{item.name}{Number(item.surcharge) > 0 ? ` +$${item.surcharge}` : ''}</li>)}</ul> : <p>Sin extras.</p>}</section></div></section><footer className="dish-card-footer"><p className="dish-price"><span>Desde</span>${dish.variants[0]?.price ?? '0.00'}</p>{admin && <div className="dish-card-actions"><DishEditDialog dish={dish} auth={auth} categories={categories} presentations={presentations} ingredients={ingredients} onUpdated={onUpdated} /><button type="button" className="dish-manage-action toggle" title={`${dish.active ? 'Desactivar' : 'Activar'} ${dish.name}`} aria-label={`${dish.active ? 'Desactivar' : 'Activar'} ${dish.name}`} disabled={working} onClick={() => void setActive(!dish.active)}><Icon name="power" /></button><button type="button" className="dish-manage-action delete" title={`Eliminar ${dish.name}`} aria-label={`Eliminar ${dish.name}`} disabled={working} onClick={() => void remove()}><Icon name="trash" /></button></div>}</footer>{error && <p className="card-error" role="alert">{error}</p>}</div></article>;
+function ConfirmDelete({ dish, busy, onCancel, onConfirm }: { dish?: Dish; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => { if (dish) { if (!ref.current?.open) ref.current?.showModal(); } else ref.current?.close(); }, [dish]);
+  return <dialog ref={ref} className="ds-modal" aria-labelledby="mn-delete-title" onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }}>
+    {dish && <><div className="ds-modal__body"><h2 id="mn-delete-title" style={{ fontSize: 'var(--text-xl)' }}>¿Eliminar «{dish.name}»?</h2>
+      <p className="ds-muted" style={{ margin: 0 }}>Se eliminan el plato, su imagen y sus opciones. No se puede deshacer, y el backend lo impide si ya tiene movimientos de disponibilidad. Los pedidos anteriores conservan su copia.</p></div>
+      <div className="ds-modal__actions"><button type="button" className="ds-btn ds-btn--secondary" disabled={busy} onClick={onCancel}>Volver</button><button type="button" className="ds-btn ds-btn--danger" disabled={busy} onClick={onConfirm}>{busy ? 'Eliminando…' : 'Eliminar plato'}</button></div></>}
+  </dialog>;
 }
 
 export function MenuPage({ auth, user }: { auth: string; user: User }) {
-  const menu = useLoad<Dish[]>('/menu/dishes', auth); const categories = useLoad<Category[]>('/menu/categories', auth); const presentations = useLoad<CatalogItem[]>('/menu/catalog/presentations', auth); const ingredients = useLoad<CatalogItem[]>('/menu/catalog/ingredients', auth); const admin = user.roles.includes('ROLE_ADMIN');
-  return <section className="page-content menu-page"><header className="page-heading menu-heading"><div><h1>Menú</h1><p>Configura platos con opciones definidas previamente en el Catálogo.</p></div>{admin && <div className="menu-actions"><DishDialog auth={auth} categories={categories.data || []} presentations={presentations.data || []} ingredients={ingredients.data || []} onCreated={() => menu.reload()} /></div>}</header>{menu.error && <p className="error">No se pudo cargar el menú: {menu.error}</p>}{!menu.data && !menu.error && <p className="empty-state">Cargando menú…</p>}{menu.data?.length === 0 && <section className="menu-empty"><h2>Aún no hay platos</h2><p>Configura el Catálogo y crea el primer plato para empezar.</p></section>}<section className="menu-card-grid">{menu.data?.map(dish => <DishCard key={dish.id} dish={dish} auth={auth} admin={admin} categories={categories.data || []} presentations={presentations.data || []} ingredients={ingredients.data || []} onUpdated={() => menu.reload()} />)}</section></section>;
+  const menu = useLoad<Dish[]>('/menu/dishes', auth); const categories = useLoad<Category[]>('/menu/categories', auth);
+  const presentations = useLoad<CatalogItem[]>('/menu/catalog/presentations', auth); const ingredients = useLoad<CatalogItem[]>('/menu/catalog/ingredients', auth);
+  const admin = user.roles.includes('ROLE_ADMIN'); const canToggle = admin || user.roles.includes('ROLE_CAJA');
+  const [filters, setFilters] = useState<MenuFilters>(emptyMenuFilters); const [busy, setBusy] = useState<string>();
+  const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string }>(); const [deleting, setDeleting] = useState<Dish>();
+  useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(undefined), 6000); return () => clearTimeout(timer); }, [notice]);
+
+  const dishes = useMemo(() => menu.data ?? [], [menu.data]);
+  const visible = useMemo(() => filterDishes(dishes, filters), [dishes, filters]);
+  const countBy = (skip: keyof MenuFilters, test: (dish: Dish) => boolean) => filterDishes(dishes, filters, skip).filter(test).length;
+  const filtering = Object.values(filters).some(Boolean);
+  const set = <K extends keyof MenuFilters>(key: K, value: MenuFilters[K]) => setFilters(current => ({ ...current, [key]: value }));
+  const reloadAll = () => menu.reload();
+
+  /** Interruptor de disponibilidad: marca o quita «agotado» en todas las variantes (ADMIN y CAJA); el backend recalcula `available`. */
+  async function toggleSoldOut(dish: Dish) {
+    const soldOut = dish.available;
+    setBusy(dish.id);
+    try {
+      await api(`/availability/dishes/${dish.id}/sold-out`, auth, { method: 'PUT', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ soldOut }) });
+      const fresh = await api<Dish[]>('/menu/dishes', auth); const now = fresh.find(item => item.id === dish.id);
+      await menu.reload();
+      setNotice(soldOut ? { tone: 'ok', text: `«${dish.name}» quedó agotado.` }
+        : now?.available ? { tone: 'ok', text: `«${dish.name}» vuelve a estar disponible.` }
+          : { tone: 'error', text: `«${dish.name}» ya no está marcado como agotado, pero sigue sin unidades libres. Ajusta la cantidad en Operación.` });
+    } catch (caught) { setNotice({ tone: 'error', text: caught instanceof Error ? caught.message : 'No se pudo cambiar la disponibilidad.' }); }
+    finally { setBusy(undefined); }
+  }
+  async function toggleVisible(dish: Dish) {
+    setBusy(dish.id);
+    try { await api(`/admin/dishes/${dish.id}/active`, auth, { method: 'PATCH', body: JSON.stringify({ active: !dish.active }) }); await menu.reload(); setNotice({ tone: 'ok', text: `«${dish.name}» ${dish.active ? 'ya no se muestra en el menú' : 'vuelve a mostrarse en el menú'}.` }); }
+    catch (caught) { setNotice({ tone: 'error', text: caught instanceof Error ? caught.message : 'No se pudo cambiar la visibilidad.' }); }
+    finally { setBusy(undefined); }
+  }
+  async function remove() {
+    if (!deleting) return; const dish = deleting; setBusy(dish.id);
+    try { await api<void>(`/admin/dishes/${dish.id}`, auth, { method: 'DELETE' }); setDeleting(undefined); await menu.reload(); setNotice({ tone: 'ok', text: `«${dish.name}» se eliminó.` }); }
+    catch (caught) { setDeleting(undefined); setNotice({ tone: 'error', text: caught instanceof Error ? caught.message : 'No se pudo eliminar el plato.' }); }
+    finally { setBusy(undefined); }
+  }
+
+  const forms = { auth, categories: categories.data || [], presentations: presentations.data || [], ingredients: ingredients.data || [] };
+  return <section className="mn">
+    <PageHeader title="Menú" subtitle="Platos con las opciones del Catálogo. El backend decide si cada plato está disponible."
+      aside={admin && <DishDialog {...forms} onCreated={reloadAll} />} />
+
+    <label className="ds-search mn-search"><span className="ds-sr-only">Buscar platos</span><Icon name="search" />
+      <input className="ds-input" type="search" value={filters.q} onChange={event => set('q', event.target.value)} placeholder="Nombre, descripción o ingrediente" maxLength={80} /></label>
+
+    {/* Filtros como menús desplegables accesibles (segunda ronda, bloque D); los contadores se calculan en el cliente sobre el menú completo. */}
+    <div className="ds-card mn-filters" role="group" aria-label="Filtros del menú">
+      <Dropdown label="Categoría" value={filters.categoryId} onChange={value => set('categoryId', value)}
+        options={[{ value: '', label: 'Todas', count: countBy('categoryId', () => true) }, ...(categories.data ?? []).map(category => ({ value: category.id, label: category.name, count: countBy('categoryId', dish => dish.categoryId === category.id) }))]} />
+      <Dropdown label="Disponibilidad" value={filters.availability} onChange={value => set('availability', value as MenuFilters['availability'])}
+        options={[{ value: '', label: 'Todas', count: countBy('availability', () => true) }, { value: 'AVAILABLE', label: 'Disponible', count: countBy('availability', dish => dish.available) }, { value: 'SOLD_OUT', label: 'Agotado', count: countBy('availability', dish => !dish.available) }]} />
+      <Dropdown label="Visibilidad" value={filters.visibility} onChange={value => set('visibility', value as MenuFilters['visibility'])}
+        options={[{ value: '', label: 'Todos', count: countBy('visibility', () => true) }, { value: 'ACTIVE', label: 'Visibles', count: countBy('visibility', dish => dish.active) }, { value: 'INACTIVE', label: 'Ocultos', count: countBy('visibility', dish => !dish.active) }]} />
+    </div>
+
+    <div className="mn-summary">
+      <p aria-live="polite">{menu.data ? <><b className="ds-num">{visible.length}</b> {filtering ? `de ${dishes.length} platos` : visible.length === 1 ? 'plato' : 'platos'}</> : 'Cargando menú…'}</p>
+      {filtering && <button type="button" className="ds-btn ds-btn--ghost" onClick={() => setFilters(emptyMenuFilters)}><Icon name="close" size={16} />Limpiar filtros</button>}
+    </div>
+    {notice && <p className="orders-notice" data-tone={notice.tone} role={notice.tone === 'error' ? 'alert' : 'status'}><Icon name={notice.tone === 'ok' ? 'checkCircle' : 'alert'} size={18} />{notice.text}</p>}
+
+    {menu.error ? <div className="ds-card"><EmptyState illustration="error" title="No pudimos cargar el menú" description={menu.error} action={<button type="button" className="ds-btn ds-btn--primary" onClick={reloadAll}><Icon name="refresh" />Reintentar</button>} /></div>
+      : !menu.data ? <div className="ds-card mn-loading">{[0, 1, 2, 3].map(index => <Skeleton key={index} height={56} radius="var(--radius-md)" />)}</div>
+        : dishes.length === 0 ? <div className="ds-card"><EmptyState title="Aún no hay platos" description="Configura el Catálogo y crea el primer plato para empezar." action={admin ? <DishDialog {...forms} onCreated={reloadAll} /> : undefined} /></div>
+          : visible.length === 0 ? <div className="ds-card"><EmptyState title="Ningún plato coincide" description="Prueba con otra búsqueda o limpia los filtros." action={<button type="button" className="ds-btn ds-btn--primary" onClick={() => setFilters(emptyMenuFilters)}>Limpiar filtros</button>} /></div>
+            : <div className="ds-table-wrap mn-table-wrap"><table className="ds-table mn-table">
+              <thead><tr><th scope="col">Plato</th><th scope="col">Categoría</th><th scope="col" className="is-num">Precio</th><th scope="col">Opciones</th><th scope="col">Disponible</th><th scope="col">Visible</th>{admin && <th scope="col"><span className="ds-sr-only">Acciones</span></th>}</tr></thead>
+              <tbody>{visible.map(dish => {
+                const prices = dish.variants.map(variant => variant.price); const min = prices.length ? Math.min(...prices) : null;
+                return <tr key={dish.id} aria-busy={busy === dish.id} data-inactive={!dish.active}>
+                  <td data-label="Plato"><div className="mn-dish"><span className="mn-thumb"><DishImage dish={dish} auth={auth} /></span><span className="mn-dish__text"><b>{dish.name}</b><span>{dish.description}</span></span></div></td>
+                  <td data-label="Categoría">{dish.category}</td>
+                  <td data-label="Precio" className="is-num">{min === null ? '—' : <>{prices.length > 1 && <span className="mn-from">desde </span>}{money(min)}</>}{prices.length > 1 && <span className="mn-sub">{prices.length} presentaciones</span>}</td>
+                  <td data-label="Opciones"><span className="mn-opts">{dish.extras.length ? `${dish.extras.length} ${dish.extras.length === 1 ? 'extra' : 'extras'}` : 'Sin extras'}{dish.removableIngredients.length > 0 && ` · ${dish.removableIngredients.length} retirable${dish.removableIngredients.length === 1 ? '' : 's'}`}</span></td>
+                  <td data-label="Disponible">
+                    {canToggle ? <label className="ds-switch mn-switch"><input type="checkbox" role="switch" checked={dish.available} disabled={busy === dish.id} onChange={() => void toggleSoldOut(dish)} aria-label={`${dish.name}: ${dish.available ? 'disponible; marcar como agotado' : 'agotado; marcar como disponible'}`} />
+                      <span className="mn-state" data-available={dish.available}>{dish.available ? 'Disponible' : 'Agotado'}</span></label>
+                      : <span className="mn-state" data-available={dish.available}><Icon name={dish.available ? 'checkCircle' : 'utensilsOff'} size={16} />{dish.available ? 'Disponible' : 'Agotado'}</span>}
+                  </td>
+                  <td data-label="Visible"><span className="mn-visible" data-active={dish.active}><Icon name={dish.active ? 'eye' : 'eyeOff'} size={16} />{dish.active ? 'Visible' : 'Oculto'}</span></td>
+                  {admin && <td className="mn-actions" data-label="Acciones">
+                    <DishEditDialog dish={dish} {...forms} onUpdated={reloadAll} />
+                    <button type="button" className="ds-icon-btn" disabled={busy === dish.id} onClick={() => void toggleVisible(dish)} aria-label={`${dish.active ? 'Ocultar' : 'Mostrar'} ${dish.name} en el menú`} title={dish.active ? 'Ocultar del menú' : 'Mostrar en el menú'}><Icon name={dish.active ? 'eyeOff' : 'eye'} size={18} /></button>
+                    <button type="button" className="ds-icon-btn ds-icon-btn--danger" disabled={busy === dish.id} onClick={() => setDeleting(dish)} aria-label={`Eliminar ${dish.name}`} title="Eliminar plato"><Icon name="trash" size={18} /></button>
+                  </td>}
+                </tr>;
+              })}</tbody>
+            </table></div>}
+    <ConfirmDelete dish={deleting} busy={Boolean(busy)} onCancel={() => setDeleting(undefined)} onConfirm={() => void remove()} />
+  </section>;
 }

@@ -13,7 +13,7 @@ Autentica usuarios ficticios con HTTP Basic y propaga el `restaurante_id` del us
 ## Contratos y permisos
 
 - `GET /api/v1/me` devuelve id, correo, rol y restaurante de la sesión.
-- `/actuator/health` es público; `/api/**` exige autenticación; autorización específica se declara por endpoint. Un 401 devuelve JSON `{ "code":"UNAUTHORIZED", "message":"Usuario o contraseña incorrectos." }` sin `WWW-Authenticate`, para que el cliente web controle la recuperación en su formulario.
+- `/actuator/health` es público; `/api/**` exige autenticación; autorización específica se declara por endpoint. Un 401 devuelve JSON `{ "code":"UNAUTHORIZED", "message":"Usuario o contraseña incorrectos." }` sin `WWW-Authenticate`, para que el cliente web controle la recuperación en su formulario. Esto vale también para credenciales incorrectas: `httpBasic` usa el mismo punto de entrada, que no envía `WWW-Authenticate: Basic`, para que el navegador no abra su diálogo nativo (corregido en la etapa 11 del rediseño; antes solo se cumplía sin credenciales). Prueba: `LoginErrorIntegrationTest`.
 - El rol se expone como `ROLE_ADMIN`, `ROLE_CAJA` o `ROLE_COCINA`.
 
 ## Validaciones y efectos de estado
